@@ -1,0 +1,54 @@
+import os
+import sys
+import tempfile
+import pytest
+from unittest.mock import patch, MagicMock
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+
+
+def test_save_log_creates_file_with_content():
+    import runner
+    from datetime import datetime
+    with tempfile.TemporaryDirectory() as tmpdir:
+        with patch('runner.__file__', os.path.join(tmpdir, 'runner.py')):
+            runner.save_log('テストログ内容', '月曜：テーマ決定')
+            now = datetime.now()
+            log_dir = os.path.join(tmpdir, 'logs', now.strftime('%Y-%m'))
+            assert os.path.isdir(log_dir), f"ログディレクトリが作成されていません: {log_dir}"
+            log_files = os.listdir(log_dir)
+            assert len(log_files) == 1
+
+            log_path = os.path.join(log_dir, log_files[0])
+            with open(log_path, encoding='utf-8') as f:
+                content = f.read()
+            assert 'テストログ内容' in content
+            assert '月曜：テーマ決定' in content
+
+
+def test_run_agent_calls_api_and_saves_log():
+    import runner
+    mock_response = MagicMock()
+    mock_response.content = [MagicMock(text='AIの返答テキスト')]
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        agents_dir = os.path.join(tmpdir, 'agents')
+        os.makedirs(agents_dir)
+        with open(os.path.join(agents_dir, 'sommelier.txt'), 'w', encoding='utf-8') as f:
+            f.write('ソムリエシステムプロンプト')
+
+        with patch('runner.__file__', os.path.join(tmpdir, 'runner.py')), \
+             patch('runner.client') as mock_client:
+            mock_client.messages.create.return_value = mock_response
+            result = runner.run_agent('sommelier', 'テーマを提案してください', '月曜：テーマ決定')
+
+        assert result == 'AIの返答テキスト'
+        mock_client.messages.create.assert_called_once()
+
+
+def test_coffee_task_functions_are_callable():
+    import runner
+    assert callable(runner.coffee_monday_task), "coffee_monday_task が存在しません"
+    assert callable(runner.coffee_regional_task), "coffee_regional_task が存在しません"
+    assert callable(runner.coffee_tuesday_task), "coffee_tuesday_task が存在しません"
+    assert callable(runner.coffee_friday_task), "coffee_friday_task が存在しません"
