@@ -164,6 +164,28 @@ def _parse_content_to_blocks(content: str) -> list:
     return blocks
 
 
+def _get_or_create_department_page(token: str, parent_page_id: str, department_name: str) -> Optional[str]:
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "Content-Type": "application/json",
+        "Notion-Version": "2022-06-28",
+    }
+    try:
+        resp = requests.get(
+            f"https://api.notion.com/v1/blocks/{parent_page_id}/children",
+            headers=headers,
+            timeout=15,
+        )
+        if resp.status_code != 200:
+            return None
+        for block in resp.json().get("results", []):
+            if block.get("type") == "child_page" and block.get("child_page", {}).get("title") == department_name:
+                return block["id"]
+    except Exception:
+        return None
+    return _create_child_page(token, parent_page_id, department_name)
+
+
 def _create_child_page(token: str, parent_page_id: str, title: str) -> Optional[str]:
     headers = {
         "Authorization": f"Bearer {token}",
