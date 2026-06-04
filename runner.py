@@ -137,11 +137,9 @@ def tuesday_task():
 
 def wednesday_task():
     try:
-        now = datetime.now()
-        log_path = f"logs/{now.strftime('%Y-%m')}/{now.strftime('%Y-%m-%d')}.txt"
-        message = f"台本が完成しました。{log_path} を確認してレビューしてください。収録は明日（木曜）の予定です。"
+        message = "台本が完成しました。Notion の各部門ページで確認してください。収録は明日（木曜）の予定です。"
         save_log(message, "水曜：レビュー通知")
-        print(f"\n📋 レビュー依頼：{log_path} を確認してください。")
+        print(f"\n📋 レビュー依頼：Notion のワイン部門・コーヒー部門ページを確認してください。")
     except Exception as e:
         print(f"  ❌ 水曜：レビュー通知 失敗: {e}")
 
