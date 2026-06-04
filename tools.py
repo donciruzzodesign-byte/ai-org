@@ -209,13 +209,20 @@ def _create_child_page(token: str, parent_page_id: str, title: str) -> Optional[
         return None
 
 
-def save_to_notion(title: str, content: str) -> str:
+def save_to_notion(title: str, content: str, department: Optional[str] = None) -> str:
     token = os.environ.get("NOTION_API_KEY")
     page_id = os.environ.get("NOTION_PAGE_ID")
     if not token or not page_id:
         return "NOTION_API_KEY または NOTION_PAGE_ID が未設定のためスキップ"
 
-    child_id = _create_child_page(token, page_id, title)
+    if department:
+        target_page_id = _get_or_create_department_page(token, page_id, department)
+        if not target_page_id:
+            return f"部門ページ取得エラー: '{department}' ページを作成できませんでした"
+    else:
+        target_page_id = page_id
+
+    child_id = _create_child_page(token, target_page_id, title)
     if not child_id:
         return "子ページ作成エラー: Notion APIが子ページを作成できませんでした"
 
