@@ -54,7 +54,10 @@ def call_agent(client: anthropic.Anthropic, system_prompt: str, user_message: st
 
 
 def load_agent(name: str) -> str:
-    return (BASE_DIR / "agents" / f"{name}.txt").read_text(encoding="utf-8")
+    path = BASE_DIR / "agents" / f"{name}.txt"
+    if not path.exists():
+        raise FileNotFoundError(f"エージェント '{name}' が見つかりません: {path}")
+    return path.read_text(encoding="utf-8")
 
 
 def process_book(book_text: str, client: anthropic.Anthropic) -> dict:
@@ -94,10 +97,15 @@ def process_book(book_text: str, client: anthropic.Anthropic) -> dict:
     summary_section = ""
     chapter_section = ""
     if "## 全体要約" in book_summary and "## 章別ポイント" in book_summary:
-        parts = book_summary.split("## 章別ポイント")
+        parts = book_summary.split("## 章別ポイント", 1)
         summary_section = parts[0].replace("## 全体要約", "").strip()
-        chapter_section = "## 章別ポイント\n" + parts[1].split("## 読者へのベネフィット")[0].strip()
+        chapter_part = parts[1].split("## 読者へのベネフィット", 1)[0].strip() if "## 読者へのベネフィット" in parts[1] else parts[1].strip()
+        chapter_section = "## 章別ポイント\n" + chapter_part
     else:
+        if "## 全体要約" not in book_summary:
+            print("⚠️ '## 全体要約' が見つかりませんでした")
+        if "## 章別ポイント" not in book_summary:
+            print("⚠️ '## 章別ポイント' が見つかりませんでした")
         summary_section = book_summary
 
     return {
