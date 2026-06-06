@@ -2,7 +2,7 @@ import os
 import pytest
 
 AGENTS_DIR = os.path.join(os.path.dirname(__file__), '..', 'agents')
-AGENT_NAMES = ['ceo', 'sommelier', 'creator', 'marketer', 'barista', 'book_reader']
+AGENT_NAMES = ['ceo', 'sommelier', 'creator', 'marketer', 'barista', 'book_reader', 'writer']
 
 
 def test_all_agent_files_exist():
