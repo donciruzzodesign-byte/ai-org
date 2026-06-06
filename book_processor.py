@@ -79,9 +79,10 @@ def process_book(book_text: str, client: anthropic.Anthropic) -> dict:
     print("✅ note記事完了")
 
     print("🎬 YouTube台本を生成中...")
+    _no_tools = "【重要】今回の呼び出しではツールは使用できません。提供された書籍要約のみをもとにコンテンツを作成してください。\n\n"
     youtube_script = call_agent(
         client,
-        load_agent("creator"),
+        _no_tools + load_agent("creator"),
         f"以下の書籍要約をもとに書籍解説YouTube動画の台本を作成してください:\n\n{book_summary}",
     )
     print("✅ YouTube台本完了")
@@ -89,7 +90,7 @@ def process_book(book_text: str, client: anthropic.Anthropic) -> dict:
     print("📸 Instagram投稿文を生成中...")
     instagram_posts = call_agent(
         client,
-        load_agent("marketer"),
+        _no_tools + load_agent("marketer"),
         f"以下の書籍要約をもとにInstagramの投稿文シリーズ（章ごと）を作成してください:\n\n{book_summary}",
     )
     print("✅ Instagram投稿文完了")

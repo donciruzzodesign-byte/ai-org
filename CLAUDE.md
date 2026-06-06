@@ -68,3 +68,38 @@ NOTION_PAGE_ID=...          # 任意（保存先NotionページのID）
 - `@marketer` — SNS投稿文・マーケティング
 - `@ceo` — 全体戦略・タスク調整
 - `@barista` — コーヒー知識・テーマ相談・地域別コーヒー紹介
+
+## 書籍コンテンツ生成（book_processor.py）
+
+書籍テキストから複数のコンテンツを一括生成するスクリプト。
+
+### 使い方
+
+```bash
+python3 book_processor.py input/books/<book>.txt
+```
+
+### 入力
+
+`input/books/` に `.txt` ファイルを配置する（500文字以上必須）。
+
+### 出力
+
+`output/books/<book_name>/` に以下の5ファイルを生成：
+
+| ファイル | 内容 |
+|---|---|
+| `summary.md` | 全体要約 |
+| `chapter_points.md` | 章別ポイント |
+| `note_article.md` | note記事 |
+| `youtube_script.md` | YouTube動画台本 |
+| `instagram_posts.md` | Instagram投稿文シリーズ |
+
+### エージェント構成
+
+| エージェント | 役割 |
+|---|---|
+| book_reader | 書籍テキストを要約・章別ポイント・ベネフィットに分解 |
+| writer | note記事を執筆 |
+| creator | YouTube動画台本を作成（ツールなし） |
+| marketer | Instagram投稿文シリーズを作成（ツールなし） |
