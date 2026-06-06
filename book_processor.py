@@ -1,6 +1,10 @@
 from pathlib import Path
+import os
+import anthropic
 
 MIN_TEXT_LENGTH = 500
+
+MODEL = "claude-sonnet-4-6"
 
 
 def validate_input(file_path) -> str:
@@ -33,3 +37,15 @@ def save_outputs(book_name: str, outputs: dict, output_dir: Path = OUTPUT_BASE) 
     for key, filename in FILE_MAP.items():
         (book_dir / filename).write_text(outputs.get(key, ""), encoding="utf-8")
     return book_dir
+
+
+def call_agent(client: anthropic.Anthropic, system_prompt: str, user_message: str) -> str:
+    response = client.messages.create(
+        model=MODEL,
+        max_tokens=16000,
+        system=system_prompt,
+        messages=[{"role": "user", "content": user_message}],
+    )
+    return next(
+        (block.text for block in response.content if hasattr(block, "text")), ""
+    )

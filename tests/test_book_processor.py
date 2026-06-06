@@ -1,6 +1,7 @@
 import pytest
 from pathlib import Path
-from book_processor import validate_input, save_outputs
+from unittest.mock import MagicMock, patch
+from book_processor import validate_input, save_outputs, call_agent
 
 
 def test_validate_input_file_not_found(tmp_path):
@@ -44,3 +45,34 @@ def test_save_outputs_creates_nested_directory(tmp_path):
                "note_article": "", "youtube_script": ""}
     book_dir = save_outputs("nested/book", outputs, output_dir=tmp_path)
     assert book_dir.exists()
+
+
+def test_call_agent_returns_text():
+    mock_block = MagicMock()
+    mock_block.type = "text"
+    mock_block.text = "エージェントの回答"
+    mock_response = MagicMock()
+    mock_response.stop_reason = "end_turn"
+    mock_response.content = [mock_block]
+
+    mock_client = MagicMock()
+    mock_client.messages.create.return_value = mock_response
+
+    result = call_agent(mock_client, "システムプロンプト", "ユーザー入力")
+    assert result == "エージェントの回答"
+
+
+def test_call_agent_passes_correct_model():
+    mock_block = MagicMock()
+    mock_block.type = "text"
+    mock_block.text = "回答"
+    mock_response = MagicMock()
+    mock_response.stop_reason = "end_turn"
+    mock_response.content = [mock_block]
+
+    mock_client = MagicMock()
+    mock_client.messages.create.return_value = mock_response
+
+    call_agent(mock_client, "プロンプト", "入力")
+    call_args = mock_client.messages.create.call_args
+    assert call_args.kwargs["model"] == "claude-sonnet-4-6"
