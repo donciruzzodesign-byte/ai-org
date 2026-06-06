@@ -1,5 +1,6 @@
 from pathlib import Path
 import os
+import sys
 import anthropic
 
 MIN_TEXT_LENGTH = 500
@@ -115,3 +116,45 @@ def process_book(book_text: str, client: anthropic.Anthropic) -> dict:
         "youtube_script": youtube_script,
         "instagram_posts": instagram_posts,
     }
+
+
+def _load_env():
+    env_path = BASE_DIR / ".env"
+    if env_path.exists():
+        with open(env_path, encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if line and not line.startswith("#") and "=" in line:
+                    key, _, value = line.partition("=")
+                    os.environ.setdefault(key.strip(), value.strip().strip('"').strip("'"))
+
+
+def main():
+    if len(sys.argv) != 2:
+        print("使い方: python3 book_processor.py <書籍テキストファイル.txt>")
+        sys.exit(1)
+
+    _load_env()
+    input_path = Path(sys.argv[1])
+    book_name = input_path.stem
+
+    try:
+        book_text = validate_input(input_path)
+    except (FileNotFoundError, ValueError) as e:
+        print(f"❌ エラー: {e}")
+        sys.exit(1)
+
+    client = anthropic.Anthropic()
+    outputs = process_book(book_text, client)
+
+    book_dir = save_outputs(book_name, outputs)
+    print(f"\n🎉 完了！コンテンツを保存しました: {book_dir}")
+    print("  - summary.md（全体要約）")
+    print("  - chapter_points.md（章別ポイント）")
+    print("  - note_article.md（note記事）")
+    print("  - youtube_script.md（YouTube台本）")
+    print("  - instagram_posts.md（Instagram投稿文）")
+
+
+if __name__ == "__main__":
+    main()
