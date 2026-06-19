@@ -7,7 +7,7 @@ from datetime import datetime
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
-from runner import run_agent
+from runner import run_agent, run_video_agent, tuesday_video_task, coffee_tuesday_video_task
 
 
 def test_save_log_creates_file_with_content():
@@ -71,3 +71,42 @@ def test_run_agent_saves_to_notion():
         run_agent("sommelier", "テスト", "テストラベル")
 
     mock_notion.assert_called_once_with(f"テストラベル ({today})", "テスト出力")
+
+
+def test_run_video_agent_calls_video_tools(tmp_path):
+    """run_video_agent が VIDEO_TOOL_DEFINITIONS を使って Claude を呼び出すことを確認。"""
+    import runner
+
+    tool_use_block = MagicMock()
+    tool_use_block.type = "tool_use"
+    tool_use_block.name = "generate_narration"
+    tool_use_block.id = "tu_01"
+    tool_use_block.input = {"script_text": "台本", "output_dir": str(tmp_path)}
+
+    tool_use_response = MagicMock()
+    tool_use_response.stop_reason = "tool_use"
+    tool_use_response.content = [tool_use_block]
+
+    final_block = MagicMock()
+    final_block.text = "素材生成完了"
+    final_response = MagicMock()
+    final_response.stop_reason = "end_turn"
+    final_response.content = [final_block]
+
+    with patch("runner.client.messages.create", side_effect=[tool_use_response, final_response]), \
+         patch("runner.execute_video_tool", return_value="ナレーション保存: narration.mp3") as mock_exec, \
+         patch("runner.save_log"):
+        result = run_video_agent("台本テキスト", "イタリアワイン", str(tmp_path))
+
+    mock_exec.assert_called_once_with("generate_narration", {"script_text": "台本", "output_dir": str(tmp_path)})
+    assert result == "素材生成完了"
+
+
+def test_tuesday_video_task_catches_exception(monkeypatch):
+    with patch("runner.run_video_agent", side_effect=Exception("API error")):
+        tuesday_video_task()
+
+
+def test_coffee_tuesday_video_task_catches_exception(monkeypatch):
+    with patch("runner.run_video_agent", side_effect=Exception("API error")):
+        coffee_tuesday_video_task()

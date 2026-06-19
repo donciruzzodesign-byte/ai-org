@@ -4,6 +4,7 @@ import time
 from datetime import datetime
 import anthropic
 from tools import TOOL_DEFINITIONS, execute_tool, save_to_notion
+from tools_video import VIDEO_TOOL_DEFINITIONS, execute_video_tool
 
 _RETRY_DELAYS = [15, 30, 60]
 
@@ -217,6 +218,64 @@ def collab_task(theme: str):
         print(f"  ❌ 連携タスク失敗: {e}")
 
 
+def run_video_agent(script_text: str, topic: str, output_dir: str) -> str:
+    system = load_agent("video")
+    prompt = f"出力先ディレクトリ: {output_dir}\n\nトピック: {topic}\n\n台本：\n{script_text}"
+    messages = [{"role": "user", "content": prompt}]
+
+    while True:
+        response = _with_retry(
+            lambda: client.messages.create(
+                model=MODEL,
+                max_tokens=16000,
+                system=system,
+                tools=VIDEO_TOOL_DEFINITIONS,
+                messages=messages,
+            ),
+            f"video-{topic}",
+        )
+
+        if response.stop_reason == "tool_use":
+            messages.append({"role": "assistant", "content": response.content})
+            tool_results = []
+            for block in response.content:
+                if block.type == "tool_use":
+                    print(f"  🎬 動画エージェント: {block.name}")
+                    result = execute_video_tool(block.name, block.input)
+                    print(f"     → {result}")
+                    tool_results.append({
+                        "type": "tool_result",
+                        "tool_use_id": block.id,
+                        "content": result,
+                    })
+            messages.append({"role": "user", "content": tool_results})
+        else:
+            final_text = next((b.text for b in response.content if hasattr(b, "text")), "")
+            save_log(final_text, f"video-{topic}")
+            print(f"\n✅ 動画素材生成完了: {output_dir}")
+            return final_text
+
+
+def tuesday_video_task():
+    try:
+        script = _read_todays_log()
+        date_str = datetime.now().strftime("%Y-%m-%d")
+        output_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "output", f"{date_str}-wine")
+        run_video_agent(script, "イタリアワイン", output_dir)
+    except Exception as e:
+        print(f"  ❌ 火曜：ワイン動画素材生成 失敗: {e}")
+
+
+def coffee_tuesday_video_task():
+    try:
+        script = _read_todays_log()
+        date_str = datetime.now().strftime("%Y-%m-%d")
+        output_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "output", f"{date_str}-coffee")
+        run_video_agent(script, "イタリアコーヒー", output_dir)
+    except Exception as e:
+        print(f"  ❌ 火曜：コーヒー動画素材生成 失敗: {e}")
+
+
 def coffee_monday_task():
     try:
         run_agent(
@@ -295,12 +354,15 @@ def main():
     schedule.every().monday.at("10:30").do(coffee_regional_task)
     schedule.every().tuesday.at("10:00").do(coffee_tuesday_task)
     schedule.every().friday.at("10:00").do(coffee_friday_task)
+    schedule.every().tuesday.at("11:00").do(tuesday_video_task)
+    schedule.every().tuesday.at("12:00").do(coffee_tuesday_video_task)
 
     print("=" * 50)
     print("AI組織 週次スケジューラー起動中")
     print("月09:00 テーマ決定 / 月09:30 州別ワイン紹介 / 火09:00 台本")
     print("水09:00 レビュー通知 / 金09:00 SNS投稿文 / 日20:00 反応分析")
     print("月10:00 コーヒーテーマ / 月10:30 地域別コーヒー / 火10:00 コーヒー台本 / 金10:00 コーヒーSNS")
+    print("火 11:00 ワイン動画素材 / 火 12:00 コーヒー動画素材")
     print("停止するには Ctrl+C")
     print("=" * 50)
 
