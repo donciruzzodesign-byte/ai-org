@@ -6,7 +6,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
 from unittest.mock import patch, MagicMock
 import tempfile
-from tools_video import generate_narration, generate_scene_image
+from tools_video import generate_narration, generate_scene_image, fetch_broll
 
 
 def test_generate_narration_skips_when_no_key(monkeypatch, tmp_path):
@@ -129,3 +129,59 @@ def test_generate_scene_image_prepends_style_prefix(monkeypatch, tmp_path):
     sent_prompt = mock_post.call_args[1]["json"]["prompt"]
     assert "High quality" in sent_prompt
     assert "Barolo bottle" in sent_prompt
+
+
+def test_fetch_broll_skips_when_no_key(monkeypatch, tmp_path):
+    monkeypatch.delenv("PEXELS_API_KEY", raising=False)
+    result = fetch_broll("Italian vineyard", 1, str(tmp_path))
+    assert "未設定" in result
+
+
+def test_fetch_broll_saves_mp4(monkeypatch, tmp_path):
+    monkeypatch.setenv("PEXELS_API_KEY", "test-key")
+
+    search_resp = MagicMock()
+    search_resp.status_code = 200
+    search_resp.json.return_value = {
+        "videos": [{
+            "video_files": [
+                {"link": "https://example.com/hd.mp4", "quality": "hd", "width": 1280, "height": 720}
+            ]
+        }]
+    }
+
+    clip_resp = MagicMock()
+    clip_resp.iter_content = MagicMock(return_value=[b"fake-video-data"])
+
+    with patch("tools_video.requests.get", side_effect=[search_resp, clip_resp]):
+        result = fetch_broll("Italian vineyard", 1, str(tmp_path))
+
+    assert "broll_01.mp4" in result
+    clip_path = tmp_path / "broll" / "broll_01.mp4"
+    assert clip_path.exists()
+
+
+def test_fetch_broll_skips_existing_file(monkeypatch, tmp_path):
+    monkeypatch.setenv("PEXELS_API_KEY", "test-key")
+    broll_dir = tmp_path / "broll"
+    broll_dir.mkdir()
+    (broll_dir / "broll_01.mp4").write_bytes(b"existing")
+
+    with patch("tools_video.requests.get") as mock_get:
+        result = fetch_broll("wine", 1, str(tmp_path))
+
+    mock_get.assert_not_called()
+    assert "スキップ" in result
+
+
+def test_fetch_broll_returns_message_when_no_videos(monkeypatch, tmp_path):
+    monkeypatch.setenv("PEXELS_API_KEY", "test-key")
+
+    search_resp = MagicMock()
+    search_resp.status_code = 200
+    search_resp.json.return_value = {"videos": []}
+
+    with patch("tools_video.requests.get", return_value=search_resp):
+        result = fetch_broll("xyznotfound", 1, str(tmp_path))
+
+    assert "見つかりません" in result

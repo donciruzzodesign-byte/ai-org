@@ -77,3 +77,42 @@ def generate_scene_image(scene_description: str, scene_number: int, output_dir: 
         return f"画像保存: {image_path}"
     except Exception as e:
         return f"画像生成エラー (scene {scene_number}): {e}"
+
+
+def fetch_broll(keyword: str, clip_index: int, output_dir: str) -> str:
+    api_key = os.environ.get("PEXELS_API_KEY")
+    if not api_key:
+        return "PEXELS_API_KEY が未設定のためスキップ"
+
+    broll_dir = os.path.join(output_dir, "broll")
+    _ensure_dir(broll_dir)
+    clip_path = os.path.join(broll_dir, f"broll_{clip_index:02d}.mp4")
+
+    if os.path.exists(clip_path):
+        return f"スキップ（既存）: {clip_path}"
+
+    try:
+        search_url = "https://api.pexels.com/videos/search"
+        headers = {"Authorization": api_key}
+        params = {"query": keyword, "per_page": 5, "orientation": "landscape", "size": "large"}
+        resp = requests.get(search_url, headers=headers, params=params, timeout=30)
+        if resp.status_code != 200:
+            return f"Pexels検索エラー: {resp.status_code}"
+
+        videos = resp.json().get("videos", [])
+        if not videos:
+            return f"B-roll素材が見つかりません: {keyword}"
+
+        hd_files = [
+            f for f in videos[0]["video_files"]
+            if f.get("quality") in ("hd", "uhd") and f.get("width", 0) >= 1280
+        ]
+        file_url = (hd_files or videos[0]["video_files"])[0]["link"]
+
+        clip_resp = requests.get(file_url, timeout=120, stream=True)
+        with open(clip_path, "wb") as f:
+            for chunk in clip_resp.iter_content(chunk_size=8192):
+                f.write(chunk)
+        return f"B-roll保存: {clip_path} (キーワード: {keyword})"
+    except Exception as e:
+        return f"B-roll取得エラー: {e}"
