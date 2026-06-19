@@ -2,7 +2,6 @@ import os
 import schedule
 import time
 from datetime import datetime
-from typing import Optional
 import anthropic
 from tools import TOOL_DEFINITIONS, execute_tool, save_to_notion
 
@@ -55,7 +54,7 @@ def save_log(content: str, label: str):
         f.write("\n")
 
 
-def run_agent(agent_name: str, prompt: str, label: str, department: Optional[str] = None) -> str:
+def run_agent(agent_name: str, prompt: str, label: str) -> str:
     system = load_agent(agent_name)
     messages = [{"role": "user", "content": prompt}]
 
@@ -92,7 +91,7 @@ def run_agent(agent_name: str, prompt: str, label: str, department: Optional[str
             save_log(final_text, label)
             now = datetime.now()
             print(f"\n✅ {label} 完了")
-            notion_result = save_to_notion(f"{label} ({now.strftime('%Y-%m-%d')})", final_text, department=department)
+            notion_result = save_to_notion(f"{label} ({now.strftime('%Y-%m-%d')})", final_text)
             print(f"   📝 Notion: {notion_result}")
             return final_text
 
@@ -116,7 +115,6 @@ def monday_task():
             "sommelier",
             "今週のコンテンツテーマを1つ提案してください。イタリアワインに関連するテーマで、ターゲット（30〜50代女性、ソムリエ志望）に刺さるものを選んでください。品種・産地・季節・ペアリングの観点から提案してください。",
             "月曜：今週テーマ決定",
-            department="ワイン部門",
         )
     except Exception as e:
         print(f"  ❌ 月曜：今週テーマ決定 失敗: {e}")
@@ -130,16 +128,16 @@ def tuesday_task():
             "テーマ情報がない場合は「イタリアワインの基本：品種と産地の覚え方」で作成してください。"
             "オープニング（1分）・本編（7〜8分）・まとめとCTA（1〜2分）の構成で、話し言葉で書いてください。"
         )
-        run_agent("creator", prompt, "火曜：動画台本作成", department="ワイン部門")
+        run_agent("creator", prompt, "火曜：動画台本作成")
     except Exception as e:
         print(f"  ❌ 火曜：動画台本作成 失敗: {e}")
 
 
 def wednesday_task():
     try:
-        message = "台本が完成しました。Notion の各部門ページで確認してください。収録は明日（木曜）の予定です。"
+        message = "台本が完成しました。Notion で確認してください。収録は明日（木曜）の予定です。"
         save_log(message, "水曜：レビュー通知")
-        print(f"\n📋 レビュー依頼：Notion のワイン部門・コーヒー部門ページを確認してください。")
+        print(f"\n📋 レビュー依頼：Notion ページを確認してください。")
     except Exception as e:
         print(f"  ❌ 水曜：レビュー通知 失敗: {e}")
 
@@ -154,7 +152,7 @@ def friday_task():
             "③アフィリエイト商品リスト（楽天・Amazon想定、3点）"
             "をそれぞれ作成してください。"
         )
-        run_agent("marketer", prompt, "金曜：SNS投稿文＋商品リスト", department="ワイン部門")
+        run_agent("marketer", prompt, "金曜：SNS投稿文＋商品リスト")
     except Exception as e:
         print(f"  ❌ 金曜：SNS投稿文＋商品リスト 失敗: {e}")
 
@@ -198,7 +196,7 @@ def _regional_wines_task_inner():
         "- 30〜50代女性・ソムリエ志望者にわかりやすい言葉で書いてください\n"
         "- Instagram投稿やnote記事にそのまま使えるレベルで仕上げてください"
     )
-    run_agent("sommelier", prompt, "月曜：州別おすすめワイン紹介", department="ワイン部門")
+    run_agent("sommelier", prompt, "月曜：州別おすすめワイン紹介")
 
 
 def collab_task(theme: str):
@@ -209,13 +207,11 @@ def collab_task(theme: str):
             f"以下のテーマについて、動画コンテンツに使える詳細な専門知識をまとめてください。\n\nテーマ：{theme}\n\n"
             "品種・産地・製法・ペアリング・ソムリエ試験ポイントを網羅し、クリエイターが台本を書きやすいよう構造化してください。",
             f"連携：ソムリエ調査（{theme}）",
-            department="ワイン部門",
         )
         run_agent(
             "creator",
             f"以下のソムリエによる専門知識をもとに、10分動画の台本とスライド構成を作成してください。\n\n{sommelier_output}",
             f"連携：クリエイター台本＋スライド（{theme}）",
-            department="ワイン部門",
         )
     except Exception as e:
         print(f"  ❌ 連携タスク失敗: {e}")
@@ -229,7 +225,6 @@ def coffee_monday_task():
             "ターゲット（30〜50代女性、コーヒー文化・ワインに興味がある方）に刺さるものを選んでください。"
             "産地・抽出方法・バール文化・季節・ペアリングの観点から提案してください。",
             "月曜：コーヒーテーマ決定",
-            department="コーヒー部門",
         )
     except Exception as e:
         print(f"  ❌ 月曜：コーヒーテーマ決定 失敗: {e}")
@@ -256,7 +251,7 @@ def coffee_regional_task():
             "- 30〜50代女性・コーヒー初中級者にわかりやすい言葉で書いてください\n"
             "- Instagram投稿やnote記事にそのまま使えるレベルで仕上げてください"
         )
-        run_agent("barista", prompt, "月曜：地域別コーヒー紹介", department="コーヒー部門")
+        run_agent("barista", prompt, "月曜：地域別コーヒー紹介")
     except Exception as e:
         print(f"  ❌ 月曜：地域別コーヒー紹介 失敗: {e}")
 
@@ -269,7 +264,7 @@ def coffee_tuesday_task():
             "テーマ情報がない場合は「イタリアコーヒーの基本：エスプレッソ文化とバールの楽しみ方」で作成してください。"
             "オープニング（1分）・本編（7〜8分）・まとめとCTA（1〜2分）の構成で、話し言葉で書いてください。"
         )
-        run_agent("creator", prompt, "火曜：コーヒー動画台本作成", department="コーヒー部門")
+        run_agent("creator", prompt, "火曜：コーヒー動画台本作成")
     except Exception as e:
         print(f"  ❌ 火曜：コーヒー動画台本作成 失敗: {e}")
 
@@ -284,7 +279,7 @@ def coffee_friday_task():
             "③アフィリエイト商品リスト（楽天・Amazon想定、コーヒー豆・器具3点）"
             "をそれぞれ作成してください。"
         )
-        run_agent("marketer", prompt, "金曜：コーヒーSNS投稿文＋商品リスト", department="コーヒー部門")
+        run_agent("marketer", prompt, "金曜：コーヒーSNS投稿文＋商品リスト")
     except Exception as e:
         print(f"  ❌ 金曜：コーヒーSNS投稿文＋商品リスト 失敗: {e}")
 

@@ -4,7 +4,61 @@ import requests
 from typing import Optional
 
 
-VIDEO_TOOL_DEFINITIONS = []  # 後のタスクで完成させる
+VIDEO_TOOL_DEFINITIONS = [
+    {
+        "name": "generate_narration",
+        "description": "台本テキストをElevenLabs APIでナレーション音声(.mp3)に変換して保存します。",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "script_text": {"type": "string", "description": "読み上げる台本テキスト"},
+                "output_dir": {"type": "string", "description": "保存先ディレクトリ（例: output/2026-06-20-wine）"}
+            },
+            "required": ["script_text", "output_dir"]
+        }
+    },
+    {
+        "name": "generate_scene_image",
+        "description": "シーン説明からDALL-E 3で画像(1792x1024)を生成して保存します。",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "scene_description": {"type": "string", "description": "シーンの説明（英語推奨）"},
+                "scene_number": {"type": "integer", "description": "シーン番号（1始まり）"},
+                "output_dir": {"type": "string", "description": "保存先ディレクトリ"}
+            },
+            "required": ["scene_description", "scene_number", "output_dir"]
+        }
+    },
+    {
+        "name": "fetch_broll",
+        "description": "Pexels APIでキーワードに合うB-roll動画素材(.mp4)を取得して保存します。",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "keyword": {"type": "string", "description": "検索キーワード（英語推奨）"},
+                "clip_index": {"type": "integer", "description": "クリップ番号（1始まり）"},
+                "output_dir": {"type": "string", "description": "保存先ディレクトリ"}
+            },
+            "required": ["keyword", "clip_index", "output_dir"]
+        }
+    },
+    {
+        "name": "save_timeline",
+        "description": "タイムラインデータをtimeline.jsonとedit_guide.mdとして保存します。",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "timeline": {
+                    "type": "object",
+                    "description": "title, duration_sec, narration, scenes, reels_highlights を含むタイムラインデータ"
+                },
+                "output_dir": {"type": "string", "description": "保存先ディレクトリ"}
+            },
+            "required": ["timeline", "output_dir"]
+        }
+    }
+]
 
 
 def _ensure_dir(path: str) -> None:
@@ -116,3 +170,57 @@ def fetch_broll(keyword: str, clip_index: int, output_dir: str) -> str:
         return f"B-roll保存: {clip_path} (キーワード: {keyword})"
     except Exception as e:
         return f"B-roll取得エラー: {e}"
+
+
+def save_timeline(timeline: dict, output_dir: str) -> str:
+    try:
+        _ensure_dir(output_dir)
+
+        json_path = os.path.join(output_dir, "timeline.json")
+        with open(json_path, "w", encoding="utf-8") as f:
+            json.dump(timeline, f, ensure_ascii=False, indent=2)
+
+        guide_path = os.path.join(output_dir, "edit_guide.md")
+        title = timeline.get("title", "動画")
+        scenes = timeline.get("scenes", [])
+        highlights = timeline.get("reels_highlights", [])
+        narration = timeline.get("narration", "audio/narration.mp3")
+
+        lines = [
+            f"# 編集ガイド：{title}",
+            "",
+            "## After Effects への読み込み手順",
+            f"1. `{narration}` → オーディオレイヤーに配置（自録音の場合はミュート）",
+            "2. `images/` → timeline.json の in_sec/out_sec に従いスライドとして配置",
+            "3. `broll/` → 各シーン後半にオーバーレイ（opacity 70%推奨）",
+            "",
+            "## シーン構成",
+        ]
+        for s in scenes:
+            lines.append(f"- シーン{s['id']} ({s['in_sec']}s〜{s['out_sec']}s): {s.get('caption', '')}")
+            if s.get("notes"):
+                lines.append(f"  ※ {s['notes']}")
+
+        if highlights:
+            lines += ["", "## Instagram Reels ハイライト（縦型クロップ推奨）"]
+            for h in highlights:
+                lines.append(f"- {h['in_sec']}s〜{h['out_sec']}s: {h.get('reason', '')}")
+
+        with open(guide_path, "w", encoding="utf-8") as f:
+            f.write("\n".join(lines) + "\n")
+
+        return f"タイムライン保存: {json_path}, {guide_path}"
+    except Exception as e:
+        return f"タイムライン保存エラー: {e}"
+
+
+def execute_video_tool(name: str, inputs: dict) -> str:
+    if name == "generate_narration":
+        return generate_narration(inputs["script_text"], inputs["output_dir"])
+    elif name == "generate_scene_image":
+        return generate_scene_image(inputs["scene_description"], inputs["scene_number"], inputs["output_dir"])
+    elif name == "fetch_broll":
+        return fetch_broll(inputs["keyword"], inputs["clip_index"], inputs["output_dir"])
+    elif name == "save_timeline":
+        return save_timeline(inputs["timeline"], inputs["output_dir"])
+    return f"不明なツール: {name}"

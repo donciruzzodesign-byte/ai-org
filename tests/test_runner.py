@@ -3,8 +3,11 @@ import sys
 import tempfile
 import pytest
 from unittest.mock import patch, MagicMock
+from datetime import datetime
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+
+from runner import run_agent
 
 
 def test_save_log_creates_file_with_content():
@@ -52,3 +55,19 @@ def test_coffee_task_functions_are_callable():
     assert callable(runner.coffee_regional_task), "coffee_regional_task が存在しません"
     assert callable(runner.coffee_tuesday_task), "coffee_tuesday_task が存在しません"
     assert callable(runner.coffee_friday_task), "coffee_friday_task が存在しません"
+
+
+def test_run_agent_saves_to_notion():
+    """run_agent の最終出力が save_to_notion に渡される。"""
+    today = datetime.now().strftime('%Y-%m-%d')
+
+    fake_response = MagicMock()
+    fake_response.stop_reason = "end_turn"
+    fake_response.content = [MagicMock(text="テスト出力", spec=["text"])]
+
+    with patch("runner.client.messages.create", return_value=fake_response), \
+         patch("runner.save_to_notion", return_value="OK") as mock_notion, \
+         patch("runner.save_log"):
+        run_agent("sommelier", "テスト", "テストラベル")
+
+    mock_notion.assert_called_once_with(f"テストラベル ({today})", "テスト出力")

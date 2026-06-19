@@ -185,3 +185,82 @@ def test_fetch_broll_returns_message_when_no_videos(monkeypatch, tmp_path):
         result = fetch_broll("xyznotfound", 1, str(tmp_path))
 
     assert "見つかりません" in result
+
+
+from tools_video import save_timeline, execute_video_tool
+
+
+SAMPLE_TIMELINE = {
+    "title": "バローロ特集",
+    "duration_sec": 600,
+    "narration": "audio/narration.mp3",
+    "scenes": [
+        {
+            "id": 1, "in_sec": 0, "out_sec": 60,
+            "type": "slide", "image": "images/scene_01.png",
+            "broll": "broll/broll_01.mp4",
+            "caption": "バローロはなぜ「ワインの王」と呼ばれるのか？",
+            "notes": "テロップは画面下部"
+        }
+    ],
+    "reels_highlights": [
+        {"id": 1, "in_sec": 45, "out_sec": 75, "reason": "最も印象的なフレーズ"}
+    ]
+}
+
+
+def test_save_timeline_creates_json(tmp_path):
+    result = save_timeline(SAMPLE_TIMELINE, str(tmp_path))
+    assert "timeline.json" in result
+    json_path = tmp_path / "timeline.json"
+    assert json_path.exists()
+    data = json.loads(json_path.read_text(encoding="utf-8"))
+    assert data["title"] == "バローロ特集"
+    assert len(data["scenes"]) == 1
+
+
+def test_save_timeline_creates_edit_guide_md(tmp_path):
+    save_timeline(SAMPLE_TIMELINE, str(tmp_path))
+    guide_path = tmp_path / "edit_guide.md"
+    assert guide_path.exists()
+    content = guide_path.read_text(encoding="utf-8")
+    assert "バローロ特集" in content
+    assert "After Effects" in content
+    assert "Reels" in content
+    assert "0s〜60s" in content
+
+
+def test_execute_video_tool_dispatches_generate_narration(monkeypatch, tmp_path):
+    monkeypatch.delenv("ELEVENLABS_API_KEY", raising=False)
+    result = execute_video_tool("generate_narration", {
+        "script_text": "テスト", "output_dir": str(tmp_path)
+    })
+    assert "未設定" in result
+
+
+def test_execute_video_tool_dispatches_generate_scene_image(monkeypatch, tmp_path):
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+    result = execute_video_tool("generate_scene_image", {
+        "scene_description": "wine", "scene_number": 1, "output_dir": str(tmp_path)
+    })
+    assert "未設定" in result
+
+
+def test_execute_video_tool_dispatches_fetch_broll(monkeypatch, tmp_path):
+    monkeypatch.delenv("PEXELS_API_KEY", raising=False)
+    result = execute_video_tool("fetch_broll", {
+        "keyword": "wine", "clip_index": 1, "output_dir": str(tmp_path)
+    })
+    assert "未設定" in result
+
+
+def test_execute_video_tool_dispatches_save_timeline(tmp_path):
+    result = execute_video_tool("save_timeline", {
+        "timeline": SAMPLE_TIMELINE, "output_dir": str(tmp_path)
+    })
+    assert "timeline.json" in result
+
+
+def test_execute_video_tool_returns_error_for_unknown(tmp_path):
+    result = execute_video_tool("unknown_tool", {})
+    assert "不明" in result

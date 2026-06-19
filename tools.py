@@ -164,28 +164,6 @@ def _parse_content_to_blocks(content: str) -> list:
     return blocks
 
 
-def _get_or_create_department_page(token: str, parent_page_id: str, department_name: str) -> Optional[str]:
-    headers = {
-        "Authorization": f"Bearer {token}",
-        "Content-Type": "application/json",
-        "Notion-Version": "2022-06-28",
-    }
-    try:
-        resp = requests.get(
-            f"https://api.notion.com/v1/blocks/{parent_page_id}/children",
-            headers=headers,
-            timeout=15,
-        )
-        if resp.status_code != 200:
-            return None
-        for block in resp.json().get("results", []):
-            if block.get("type") == "child_page" and block.get("child_page", {}).get("title") == department_name:
-                return block["id"]
-    except Exception:
-        return None
-    return _create_child_page(token, parent_page_id, department_name)
-
-
 def _create_child_page(token: str, parent_page_id: str, title: str) -> Optional[str]:
     headers = {
         "Authorization": f"Bearer {token}",
@@ -209,20 +187,13 @@ def _create_child_page(token: str, parent_page_id: str, title: str) -> Optional[
         return None
 
 
-def save_to_notion(title: str, content: str, department: Optional[str] = None) -> str:
+def save_to_notion(title: str, content: str) -> str:
     token = os.environ.get("NOTION_API_KEY")
     page_id = os.environ.get("NOTION_PAGE_ID")
     if not token or not page_id:
         return "NOTION_API_KEY または NOTION_PAGE_ID が未設定のためスキップ"
 
-    if department:
-        target_page_id = _get_or_create_department_page(token, page_id, department)
-        if not target_page_id:
-            return f"部門ページ取得エラー: '{department}' ページを作成できませんでした"
-    else:
-        target_page_id = page_id
-
-    child_id = _create_child_page(token, target_page_id, title)
+    child_id = _create_child_page(token, page_id, title)
     if not child_id:
         return "子ページ作成エラー: Notion APIが子ページを作成できませんでした"
 
