@@ -6,20 +6,8 @@ from typing import Optional
 
 VIDEO_TOOL_DEFINITIONS = [
     {
-        "name": "generate_narration",
-        "description": "台本テキストをElevenLabs APIでナレーション音声(.mp3)に変換して保存します。",
-        "input_schema": {
-            "type": "object",
-            "properties": {
-                "script_text": {"type": "string", "description": "読み上げる台本テキスト"},
-                "output_dir": {"type": "string", "description": "保存先ディレクトリ（例: output/2026-06-20-wine）"}
-            },
-            "required": ["script_text", "output_dir"]
-        }
-    },
-    {
         "name": "generate_scene_image",
-        "description": "シーン説明からDALL-E 3で画像(1792x1024)を生成して保存します。",
+        "description": "シーン説明からgpt-image-1で画像(1536x1024)を生成して保存します。",
         "input_schema": {
             "type": "object",
             "properties": {
@@ -115,19 +103,19 @@ def generate_scene_image(scene_description: str, scene_number: int, output_dir: 
     if os.path.exists(image_path):
         return f"スキップ（既存）: {image_path}"
 
+    import base64
     prompt = SCENE_IMAGE_STYLE + scene_description
     url = "https://api.openai.com/v1/images/generations"
     headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
-    payload = {"model": "dall-e-3", "prompt": prompt, "size": "1792x1024", "quality": "hd", "n": 1}
+    payload = {"model": "gpt-image-1", "prompt": prompt, "size": "1536x1024", "n": 1}
 
     try:
         resp = requests.post(url, headers=headers, json=payload, timeout=120)
         if resp.status_code != 200:
             return f"画像生成エラー (scene {scene_number}): {resp.status_code} {resp.text[:200]}"
-        image_url = resp.json()["data"][0]["url"]
-        img_resp = requests.get(image_url, timeout=60)
+        b64_data = resp.json()["data"][0]["b64_json"]
         with open(image_path, "wb") as f:
-            f.write(img_resp.content)
+            f.write(base64.b64decode(b64_data))
         return f"画像保存: {image_path}"
     except Exception as e:
         return f"画像生成エラー (scene {scene_number}): {e}"
