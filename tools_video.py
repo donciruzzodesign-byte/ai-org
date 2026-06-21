@@ -6,6 +6,21 @@ from typing import Optional
 
 VIDEO_TOOL_DEFINITIONS = [
     {
+        "name": "generate_ae_script",
+        "description": "タイムラインデータからAfter Effects用JSXスクリプト(auto_edit.jsx)を生成します。素材を自動配置するスクリプトです。",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "timeline": {
+                    "type": "object",
+                    "description": "save_timelineと同じ形式のタイムラインデータ"
+                },
+                "output_dir": {"type": "string", "description": "保存先ディレクトリ"}
+            },
+            "required": ["timeline", "output_dir"]
+        }
+    },
+    {
         "name": "generate_scene_image",
         "description": "シーン説明からgpt-image-1で画像(1536x1024)を生成して保存します。",
         "input_schema": {
@@ -202,8 +217,154 @@ def save_timeline(timeline: dict, output_dir: str) -> str:
         return f"タイムライン保存エラー: {e}"
 
 
+def generate_ae_script(timeline: dict, output_dir: str) -> str:
+    try:
+        _ensure_dir(output_dir)
+
+        title = timeline.get("title", "動画")
+        scenes = timeline.get("scenes", [])
+        highlights = timeline.get("reels_highlights", [])
+        duration = timeline.get("duration_sec", 600)
+
+        def esc(s: str) -> str:
+            return str(s).replace("\\", "\\\\").replace('"', '\\"').replace("\n", " ")
+
+        def scene_num(sid) -> str:
+            if isinstance(sid, str) and "scene_" in sid:
+                return sid.replace("scene_", "")
+            if isinstance(sid, int):
+                return f"{sid:02d}"
+            return str(sid)
+
+        L = []  # lines
+
+        L.append("// auto_edit.jsx — After Effects 自動編集スクリプト")
+        L.append(f'// タイトル: {esc(title)}')
+        L.append("(function() {")
+        L.append('    app.beginUndoGroup("Auto Edit");')
+        L.append("    try {")
+        L.append("")
+        L.append(f'    var outputDir = "{esc(output_dir)}";')
+        L.append("")
+        L.append("    // === YouTube メインコンポジション (1920x1080, 16:9) ===")
+        L.append(f'    var comp = app.project.items.addComp("{esc(title)}", 1920, 1080, 1.0, {duration}, 29.97);')
+        L.append("    comp.bgColor = [0, 0, 0];")
+        L.append("")
+
+        for scene in scenes:
+            sid = scene.get("id", "")
+            in_sec = scene.get("in_sec", 0)
+            out_sec = scene.get("out_sec", 0)
+            caption = scene.get("caption", "")
+            image_rel = scene.get("image", "")
+            broll_rel = scene.get("broll", "")
+            v = f"s{scene_num(sid)}"
+
+            L.append(f'    // --- シーン {scene_num(sid)} ({in_sec}s〜{out_sec}s) ---')
+
+            if image_rel:
+                img_path = esc(os.path.join(output_dir, image_rel))
+                L += [
+                    f'    var imgFile_{v} = new File("{img_path}");',
+                    f'    if (imgFile_{v}.exists) {{',
+                    f'        var imgItem_{v} = app.project.importFile(new ImportOptions(imgFile_{v}));',
+                    f'        var imgLayer_{v} = comp.layers.add(imgItem_{v});',
+                    f'        imgLayer_{v}.name = "Scene{scene_num(sid)}_Image";',
+                    f'        imgLayer_{v}.inPoint = {in_sec};',
+                    f'        imgLayer_{v}.outPoint = {out_sec};',
+                    f'        imgLayer_{v}.property("Transform").property("Scale").setValue([125, 125]);',
+                    f'        imgLayer_{v}.property("Transform").property("Position").setValue([960, 540]);',
+                    f'    }}',
+                ]
+
+            if broll_rel:
+                broll_path = esc(os.path.join(output_dir, broll_rel))
+                L += [
+                    f'    var brollFile_{v} = new File("{broll_path}");',
+                    f'    if (brollFile_{v}.exists) {{',
+                    f'        var brollItem_{v} = app.project.importFile(new ImportOptions(brollFile_{v}));',
+                    f'        var brollLayer_{v} = comp.layers.add(brollItem_{v});',
+                    f'        brollLayer_{v}.name = "Scene{scene_num(sid)}_Broll";',
+                    f'        brollLayer_{v}.inPoint = {in_sec};',
+                    f'        brollLayer_{v}.outPoint = {out_sec};',
+                    f'        brollLayer_{v}.property("Transform").property("Opacity").setValue(70);',
+                    f'        brollLayer_{v}.property("Transform").property("Scale").setValue([178, 178]);',
+                    f'    }}',
+                ]
+
+            if caption:
+                L += [
+                    f'    var textLayer_{v} = comp.layers.addText("{esc(caption)}");',
+                    f'    textLayer_{v}.name = "Scene{scene_num(sid)}_Caption";',
+                    f'    textLayer_{v}.inPoint = {in_sec};',
+                    f'    textLayer_{v}.outPoint = {out_sec};',
+                    f'    var textProp_{v} = textLayer_{v}.property("Source Text");',
+                    f'    var textDoc_{v} = textProp_{v}.value;',
+                    f'    textDoc_{v}.fontSize = 52;',
+                    f'    textDoc_{v}.fillColor = [1.0, 1.0, 1.0];',
+                    f'    textDoc_{v}.justification = ParagraphJustification.CENTER_JUSTIFY;',
+                    f'    textProp_{v}.setValue(textDoc_{v});',
+                    f'    textLayer_{v}.property("Transform").property("Position").setValue([960, 1020]);',
+                ]
+
+            L.append("")
+
+        if highlights:
+            total_reels = sum(h.get("out_sec", 0) - h.get("in_sec", 0) for h in highlights)
+            L.append("    // === Instagram Reels コンポジション (1080x1920, 9:16) ===")
+            L.append(f'    var reelsComp = app.project.items.addComp("{esc(title)}_Reels", 1080, 1920, 1.0, {total_reels}, 29.97);')
+            L.append("    reelsComp.bgColor = [0, 0, 0];")
+            L.append("")
+
+            offset = 0
+            for i, h in enumerate(highlights):
+                h_in = h.get("in_sec", 0)
+                h_out = h.get("out_sec", 0)
+                h_dur = h_out - h_in
+                for scene in scenes:
+                    if scene.get("in_sec", 0) <= h_in < scene.get("out_sec", 0):
+                        broll_rel = scene.get("broll", "")
+                        if broll_rel:
+                            bp = esc(os.path.join(output_dir, broll_rel))
+                            L += [
+                                f'    var reelsBroll_{i} = new File("{bp}");',
+                                f'    if (reelsBroll_{i}.exists) {{',
+                                f'        var reelsBrollItem_{i} = app.project.importFile(new ImportOptions(reelsBroll_{i}));',
+                                f'        var reelsBrollLayer_{i} = reelsComp.layers.add(reelsBrollItem_{i});',
+                                f'        reelsBrollLayer_{i}.name = "Reels_Highlight_{i + 1}";',
+                                f'        reelsBrollLayer_{i}.inPoint = {offset};',
+                                f'        reelsBrollLayer_{i}.outPoint = {offset + h_dur};',
+                                f'        reelsBrollLayer_{i}.property("Transform").property("Scale").setValue([178, 178]);',
+                                f'    }}',
+                            ]
+                        break
+                offset += h_dur
+            L.append("")
+
+        reels_note = "とReels用（1080x1920）" if highlights else ""
+        L += [
+            f'    alert("✅ Auto Edit 完了！\\n\\nYouTube用（1920x1080）{reels_note}が作成されました。\\n\\n次のステップ:\\n1. Render Queue を開く\\n2. 出力形式を確認してレンダリング開始\\n\\n出力先: {esc(output_dir)}");',
+            "",
+            "    } catch(e) {",
+            '        alert("エラー: " + e.toString() + "\\nLine: " + e.line);',
+            "    }",
+            "    app.endUndoGroup();",
+            "})();",
+        ]
+
+        jsx_path = os.path.join(output_dir, "auto_edit.jsx")
+        with open(jsx_path, "w", encoding="utf-8") as f:
+            f.write("\n".join(L) + "\n")
+
+        return f"AEスクリプト保存: {jsx_path}"
+    except Exception as e:
+        return f"AEスクリプト生成エラー: {e}"
+
+
 def execute_video_tool(name: str, inputs: dict) -> str:
-    if name == "generate_narration":
+    if name == "generate_ae_script":
+        return generate_ae_script(inputs["timeline"], inputs["output_dir"])
+    elif name == "generate_narration":
         return generate_narration(inputs["script_text"], inputs["output_dir"])
     elif name == "generate_scene_image":
         return generate_scene_image(inputs["scene_description"], inputs["scene_number"], inputs["output_dir"])

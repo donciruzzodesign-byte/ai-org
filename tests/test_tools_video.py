@@ -6,7 +6,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
 from unittest.mock import patch, MagicMock
 import tempfile
-from tools_video import generate_narration, generate_scene_image, fetch_broll
+from tools_video import generate_narration, generate_scene_image, fetch_broll, generate_ae_script
 
 
 def test_generate_narration_skips_when_no_key(monkeypatch, tmp_path):
@@ -65,17 +65,14 @@ def test_generate_scene_image_skips_when_no_key(monkeypatch, tmp_path):
 
 
 def test_generate_scene_image_saves_png(monkeypatch, tmp_path):
+    import base64
     monkeypatch.setenv("OPENAI_API_KEY", "test-key")
 
     gen_resp = MagicMock()
     gen_resp.status_code = 200
-    gen_resp.json.return_value = {"data": [{"url": "https://example.com/img.png"}]}
+    gen_resp.json.return_value = {"data": [{"b64_json": base64.b64encode(b"fake-png-data").decode()}]}
 
-    img_resp = MagicMock()
-    img_resp.content = b"fake-png-data"
-
-    with patch("tools_video.requests.post", return_value=gen_resp), \
-         patch("tools_video.requests.get", return_value=img_resp):
+    with patch("tools_video.requests.post", return_value=gen_resp):
         result = generate_scene_image("a bottle of Barolo wine", 1, str(tmp_path))
 
     assert "scene_01.png" in result
@@ -85,16 +82,14 @@ def test_generate_scene_image_saves_png(monkeypatch, tmp_path):
 
 
 def test_generate_scene_image_zero_pads_number(monkeypatch, tmp_path):
+    import base64
     monkeypatch.setenv("OPENAI_API_KEY", "test-key")
 
     gen_resp = MagicMock()
     gen_resp.status_code = 200
-    gen_resp.json.return_value = {"data": [{"url": "https://example.com/img.png"}]}
-    img_resp = MagicMock()
-    img_resp.content = b"data"
+    gen_resp.json.return_value = {"data": [{"b64_json": base64.b64encode(b"data").decode()}]}
 
-    with patch("tools_video.requests.post", return_value=gen_resp), \
-         patch("tools_video.requests.get", return_value=img_resp):
+    with patch("tools_video.requests.post", return_value=gen_resp):
         generate_scene_image("vineyard at sunset", 9, str(tmp_path))
 
     assert (tmp_path / "images" / "scene_09.png").exists()
@@ -114,16 +109,14 @@ def test_generate_scene_image_skips_existing_file(monkeypatch, tmp_path):
 
 
 def test_generate_scene_image_prepends_style_prefix(monkeypatch, tmp_path):
+    import base64
     monkeypatch.setenv("OPENAI_API_KEY", "test-key")
 
     gen_resp = MagicMock()
     gen_resp.status_code = 200
-    gen_resp.json.return_value = {"data": [{"url": "https://example.com/img.png"}]}
-    img_resp = MagicMock()
-    img_resp.content = b"data"
+    gen_resp.json.return_value = {"data": [{"b64_json": base64.b64encode(b"data").decode()}]}
 
-    with patch("tools_video.requests.post", return_value=gen_resp) as mock_post, \
-         patch("tools_video.requests.get", return_value=img_resp):
+    with patch("tools_video.requests.post", return_value=gen_resp) as mock_post:
         generate_scene_image("Barolo bottle", 1, str(tmp_path))
 
     sent_prompt = mock_post.call_args[1]["json"]["prompt"]
@@ -264,3 +257,57 @@ def test_execute_video_tool_dispatches_save_timeline(tmp_path):
 def test_execute_video_tool_returns_error_for_unknown(tmp_path):
     result = execute_video_tool("unknown_tool", {})
     assert "不明" in result
+
+
+def test_generate_ae_script_creates_jsx(tmp_path):
+    result = generate_ae_script(SAMPLE_TIMELINE, str(tmp_path))
+    assert "auto_edit.jsx" in result
+    jsx_path = tmp_path / "auto_edit.jsx"
+    assert jsx_path.exists()
+
+
+def test_generate_ae_script_jsx_contains_title(tmp_path):
+    generate_ae_script(SAMPLE_TIMELINE, str(tmp_path))
+    content = (tmp_path / "auto_edit.jsx").read_text(encoding="utf-8")
+    assert "バローロ特集" in content
+
+
+def test_generate_ae_script_jsx_references_image(tmp_path):
+    generate_ae_script(SAMPLE_TIMELINE, str(tmp_path))
+    content = (tmp_path / "auto_edit.jsx").read_text(encoding="utf-8")
+    assert "scene_01.png" in content
+
+
+def test_generate_ae_script_jsx_references_broll(tmp_path):
+    generate_ae_script(SAMPLE_TIMELINE, str(tmp_path))
+    content = (tmp_path / "auto_edit.jsx").read_text(encoding="utf-8")
+    assert "broll_01.mp4" in content
+
+
+def test_generate_ae_script_jsx_sets_in_out_points(tmp_path):
+    generate_ae_script(SAMPLE_TIMELINE, str(tmp_path))
+    content = (tmp_path / "auto_edit.jsx").read_text(encoding="utf-8")
+    assert "inPoint = 0" in content
+    assert "outPoint = 60" in content
+
+
+def test_generate_ae_script_jsx_creates_reels_comp(tmp_path):
+    generate_ae_script(SAMPLE_TIMELINE, str(tmp_path))
+    content = (tmp_path / "auto_edit.jsx").read_text(encoding="utf-8")
+    assert "Reels" in content
+    assert "1080, 1920" in content
+
+
+def test_generate_ae_script_works_without_highlights(tmp_path):
+    timeline_no_highlights = {**SAMPLE_TIMELINE, "reels_highlights": []}
+    result = generate_ae_script(timeline_no_highlights, str(tmp_path))
+    assert "auto_edit.jsx" in result
+    content = (tmp_path / "auto_edit.jsx").read_text(encoding="utf-8")
+    assert "1920, 1080" in content
+
+
+def test_execute_video_tool_dispatches_generate_ae_script(tmp_path):
+    result = execute_video_tool("generate_ae_script", {
+        "timeline": SAMPLE_TIMELINE, "output_dir": str(tmp_path)
+    })
+    assert "auto_edit.jsx" in result
