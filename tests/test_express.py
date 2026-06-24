@@ -61,3 +61,11 @@ def test_reels_cover_is_correct_size(tmp_path):
         content = f.read()
     assert 'width="1080"' in content
     assert 'height="1920"' in content
+
+
+def test_title_card_is_correct_size(tmp_path):
+    generate_brand_svgs(str(tmp_path))
+    with open(os.path.join(str(tmp_path), "title_card.svg"), encoding="utf-8") as f:
+        content = f.read()
+    assert 'width="1920"' in content
+    assert 'height="1080"' in content

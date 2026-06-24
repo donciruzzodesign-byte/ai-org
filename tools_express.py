@@ -69,7 +69,7 @@ def _title_card_svg() -> str:
 </svg>'''
 
 
-def generate_brand_svgs(templates_dir: str = TEMPLATES_DIR) -> dict:
+def generate_brand_svgs(templates_dir: str = TEMPLATES_DIR) -> dict[str, str]:
     _ensure_dir(templates_dir)
     templates = {
         "youtube_thumbnail.svg": _youtube_thumbnail_svg(),
