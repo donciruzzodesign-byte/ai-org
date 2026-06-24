@@ -19,6 +19,8 @@ def _ensure_dir(path: str) -> None:
 
 
 def get_weekly_dir(date_str: str, theme: str, base_dir: str = WEEKLY_BASE_DIR) -> str:
+    if theme not in ("wine", "coffee"):
+        raise ValueError(f"Invalid theme '{theme}': must be 'wine' or 'coffee'")
     path = os.path.join(base_dir, f"{date_str}-{theme}")
     _ensure_dir(path)
     return path
@@ -33,11 +35,11 @@ def _youtube_thumbnail_svg() -> str:
   <rect x="640" y="0" width="640" height="720" fill="{PRIMARY}"/>
   <line x1="680" y1="80" x2="1240" y2="80" stroke="{ACCENT}" stroke-width="2"/>
   <line x1="680" y1="640" x2="1240" y2="640" stroke="{ACCENT}" stroke-width="2"/>
-  <text data-field="title" x="960" y="310" font-family="Georgia, serif" fill="{BACKGROUND}"
+  <text data-field="title" x="960" y="310" font-family="'Cormorant Garamond', Georgia, serif" fill="{BACKGROUND}"
         font-size="52" text-anchor="middle" font-weight="bold">{{{{title}}}}</text>
-  <text data-field="subtitle" x="960" y="400" font-family="Arial, sans-serif" fill="{ACCENT}"
+  <text data-field="subtitle" x="960" y="400" font-family="Montserrat, Arial, sans-serif" fill="{ACCENT}"
         font-size="30" text-anchor="middle">{{{{subtitle}}}}</text>
-  <text x="960" y="610" font-family="Georgia, serif" fill="{ACCENT}"
+  <text x="960" y="610" font-family="'Cormorant Garamond', Georgia, serif" fill="{ACCENT}"
         font-size="18" text-anchor="middle" letter-spacing="5">{BRAND}</text>
 </svg>'''
 
@@ -48,11 +50,11 @@ def _reels_cover_svg() -> str:
   <rect width="1080" height="1920" fill="{PRIMARY}"/>
   <line x1="80" y1="220" x2="1000" y2="220" stroke="{ACCENT}" stroke-width="3"/>
   <line x1="80" y1="1700" x2="1000" y2="1700" stroke="{ACCENT}" stroke-width="3"/>
-  <text data-field="title" x="540" y="900" font-family="Georgia, serif" fill="{BACKGROUND}"
+  <text data-field="title" x="540" y="900" font-family="'Cormorant Garamond', Georgia, serif" fill="{BACKGROUND}"
         font-size="80" text-anchor="middle" font-weight="bold">{{{{title}}}}</text>
-  <text data-field="subtitle" x="540" y="1020" font-family="Arial, sans-serif" fill="{ACCENT}"
+  <text data-field="subtitle" x="540" y="1020" font-family="Montserrat, Arial, sans-serif" fill="{ACCENT}"
         font-size="44" text-anchor="middle">{{{{subtitle}}}}</text>
-  <text x="540" y="1660" font-family="Georgia, serif" fill="{ACCENT}"
+  <text x="540" y="1660" font-family="'Cormorant Garamond', Georgia, serif" fill="{ACCENT}"
         font-size="28" text-anchor="middle" letter-spacing="8">{BRAND}</text>
 </svg>'''
 
@@ -63,11 +65,11 @@ def _title_card_svg() -> str:
   <rect width="1920" height="1080" fill="{BACKGROUND}"/>
   <rect x="50" y="50" width="1820" height="980" fill="none" stroke="{ACCENT}" stroke-width="4"/>
   <rect x="70" y="70" width="1780" height="940" fill="none" stroke="{ACCENT}" stroke-width="1"/>
-  <text data-field="title" x="960" y="480" font-family="Georgia, serif" fill="{PRIMARY}"
+  <text data-field="title" x="960" y="480" font-family="'Cormorant Garamond', Georgia, serif" fill="{PRIMARY}"
         font-size="88" text-anchor="middle" font-weight="bold">{{{{title}}}}</text>
-  <text data-field="subtitle" x="960" y="610" font-family="Arial, sans-serif" fill="{TEXT}"
+  <text data-field="subtitle" x="960" y="610" font-family="Montserrat, Arial, sans-serif" fill="{TEXT}"
         font-size="44" text-anchor="middle">{{{{subtitle}}}}</text>
-  <text x="960" y="920" font-family="Georgia, serif" fill="{ACCENT}"
+  <text x="960" y="920" font-family="'Cormorant Garamond', Georgia, serif" fill="{ACCENT}"
         font-size="26" text-anchor="middle" letter-spacing="10">{BRAND}</text>
 </svg>'''
 
@@ -110,33 +112,52 @@ def fill_svg_template(template_path: str, title: str, subtitle: str, output_path
 
 
 def svg_to_png(svg_path: str, png_path: str) -> str:
+    import subprocess
+
     try:
         import cairosvg
         cairosvg.svg2png(url=svg_path, write_to=png_path)
         return png_path
     except (OSError, ImportError):
-        # Fallback: use ImageMagick convert if available
-        import subprocess
-        convert_path = shutil.which("convert")
-        if convert_path is None:
-            raise RuntimeError("cairo not available and ImageMagick 'convert' not found in PATH. Run: brew install cairo")
-        subprocess.run(
-            [convert_path, svg_path, png_path],
+        pass
+
+    # Fallback: use qlmanage (macOS Quick Look, no extra dependencies)
+    ql_path = shutil.which("qlmanage")
+    if ql_path is not None:
+        out_dir = os.path.dirname(os.path.abspath(png_path))
+        _ensure_dir(out_dir)
+        r = subprocess.run(
+            [ql_path, "-t", "-s", "1920", "-o", out_dir, svg_path],
             capture_output=True,
         )
-        if os.path.exists(png_path):
+        ql_out = os.path.join(out_dir, os.path.basename(svg_path) + ".png")
+        if r.returncode == 0 and os.path.exists(ql_out):
+            os.replace(ql_out, png_path)
             return png_path
+
+    # Fallback: use ImageMagick convert if available
+    convert_path = shutil.which("convert")
+    if convert_path is None:
         raise RuntimeError(
-            f"svg_to_png failed: cairosvg native library not available "
-            f"and ImageMagick fallback did not produce {png_path}"
+            "cairo not available, qlmanage failed, and ImageMagick 'convert' not found in PATH. "
+            "Run: brew install cairo"
         )
+    result = subprocess.run(
+        [convert_path, svg_path, png_path],
+        capture_output=True,
+    )
+    if result.returncode != 0:
+        raise RuntimeError(
+            f"ImageMagick failed to convert {svg_path}: {result.stderr.decode(errors='replace')}"
+        )
+    return png_path
 
 
 def parse_creator_metadata(text: str) -> Optional[dict]:
-    match = re.search(r"---METADATA---\n(.+?)---END---", text, re.DOTALL)
-    if not match:
+    matches = list(re.finditer(r"---METADATA---\n(.+?)---END---", text, re.DOTALL))
+    if not matches:
         return None
-    block = match.group(1)
+    block = matches[-1].group(1)
     result = {}
     for line in block.strip().splitlines():
         if ":" in line:

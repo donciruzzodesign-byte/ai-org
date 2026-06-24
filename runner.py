@@ -289,7 +289,7 @@ def tuesday_express_task():
             title=meta["title"],
             subtitle=meta["subtitle"],
             date_str=date_str,
-            theme=meta.get("theme", "wine"),
+            theme=meta["theme"],
         )
         for r in results:
             print(f"  🎨 {r}")
@@ -310,7 +310,7 @@ def coffee_tuesday_express_task():
             title=meta["title"],
             subtitle=meta["subtitle"],
             date_str=date_str,
-            theme=meta.get("theme", "coffee"),
+            theme=meta["theme"],
         )
         for r in results:
             print(f"  🎨 {r}")
