@@ -8,6 +8,7 @@ from tools_express import (
     fill_svg_template,
     svg_to_png,
     generate_weekly_assets,
+    parse_creator_metadata,
 )
 
 
@@ -137,3 +138,40 @@ def test_generate_weekly_assets_creates_three_pngs(tmp_path):
     assert os.path.exists(os.path.join(weekly_dir, "reels_cover.png"))
     assert os.path.exists(os.path.join(weekly_dir, "title_card.png"))
     assert len(results) == 3
+
+
+def test_parse_creator_metadata_valid():
+    text = """
+台本本文...
+
+---METADATA---
+title: バローロの魅力
+subtitle: 王のワイン入門
+keyword: Barolo wine Piedmont Italy
+theme: wine
+---END---
+"""
+    meta = parse_creator_metadata(text)
+    assert meta is not None
+    assert meta["title"] == "バローロの魅力"
+    assert meta["subtitle"] == "王のワイン入門"
+    assert meta["keyword"] == "Barolo wine Piedmont Italy"
+    assert meta["theme"] == "wine"
+
+
+def test_parse_creator_metadata_missing_returns_none():
+    text = "台本本文のみ、メタデータブロックなし"
+    assert parse_creator_metadata(text) is None
+
+
+def test_parse_creator_metadata_coffee():
+    text = """
+---METADATA---
+title: エスプレッソの秘密
+subtitle: ナポリバール文化
+keyword: espresso Naples Italy coffee
+theme: coffee
+---END---
+"""
+    meta = parse_creator_metadata(text)
+    assert meta["theme"] == "coffee"

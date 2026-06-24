@@ -1,5 +1,7 @@
 import os
+import re
 import shutil
+from typing import Optional
 
 DESKTOP_DIR = os.path.expanduser("~/Desktop/CUBOCCI_STUDIO")
 TEMPLATES_DIR = os.path.join(DESKTOP_DIR, "templates")
@@ -128,6 +130,22 @@ def svg_to_png(svg_path: str, png_path: str) -> str:
             f"svg_to_png failed: cairosvg native library not available "
             f"and ImageMagick fallback did not produce {png_path}"
         )
+
+
+def parse_creator_metadata(text: str) -> Optional[dict]:
+    match = re.search(r"---METADATA---\n(.+?)---END---", text, re.DOTALL)
+    if not match:
+        return None
+    block = match.group(1)
+    result = {}
+    for line in block.strip().splitlines():
+        if ":" in line:
+            key, _, value = line.partition(":")
+            result[key.strip()] = value.strip()
+    required = {"title", "subtitle", "keyword", "theme"}
+    if not required.issubset(result.keys()):
+        return None
+    return result
 
 
 def generate_weekly_assets(
