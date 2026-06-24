@@ -1,4 +1,5 @@
 import os
+import shutil
 
 DESKTOP_DIR = os.path.expanduser("~/Desktop/CUBOCCI_STUDIO")
 TEMPLATES_DIR = os.path.join(DESKTOP_DIR, "templates")
@@ -114,8 +115,11 @@ def svg_to_png(svg_path: str, png_path: str) -> str:
     except (OSError, ImportError):
         # Fallback: use ImageMagick convert if available
         import subprocess
+        convert_path = shutil.which("convert")
+        if convert_path is None:
+            raise RuntimeError("cairo not available and ImageMagick 'convert' not found in PATH. Run: brew install cairo")
         subprocess.run(
-            ["/opt/ImageMagick/bin/convert", svg_path, png_path],
+            [convert_path, svg_path, png_path],
             capture_output=True,
         )
         if os.path.exists(png_path):
@@ -133,7 +137,7 @@ def generate_weekly_assets(
     theme: str,
     templates_dir: str = TEMPLATES_DIR,
     base_dir: str = WEEKLY_BASE_DIR,
-) -> list:
+) -> list[str]:
     weekly_dir = get_weekly_dir(date_str, theme, base_dir)
     template_map = [
         ("youtube_thumbnail.svg", "youtube_thumbnail.png"),
