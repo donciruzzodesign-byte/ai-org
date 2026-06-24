@@ -5,6 +5,7 @@ from datetime import datetime
 import anthropic
 from tools import TOOL_DEFINITIONS, execute_tool, save_to_notion
 from tools_video import VIDEO_TOOL_DEFINITIONS, execute_video_tool
+from tools_express import generate_weekly_assets, parse_creator_metadata
 
 _RETRY_DELAYS = [15, 30, 60]
 
@@ -276,6 +277,48 @@ def coffee_tuesday_video_task():
         print(f"  ❌ 火曜：コーヒー動画素材生成 失敗: {e}")
 
 
+def tuesday_express_task():
+    try:
+        script = _read_todays_log()
+        meta = parse_creator_metadata(script)
+        if not meta:
+            print("  ⚠️ Express: メタデータが見つかりませんでした。スキップします。")
+            return
+        date_str = datetime.now().strftime("%Y-%m-%d")
+        results = generate_weekly_assets(
+            title=meta["title"],
+            subtitle=meta["subtitle"],
+            date_str=date_str,
+            theme=meta.get("theme", "wine"),
+        )
+        for r in results:
+            print(f"  🎨 {r}")
+        save_log("\n".join(results), "火曜：Express素材生成（ワイン）")
+    except Exception as e:
+        print(f"  ❌ 火曜：Express素材生成 失敗: {e}")
+
+
+def coffee_tuesday_express_task():
+    try:
+        script = _read_todays_log()
+        meta = parse_creator_metadata(script)
+        if not meta:
+            print("  ⚠️ Express: メタデータが見つかりませんでした。スキップします。")
+            return
+        date_str = datetime.now().strftime("%Y-%m-%d")
+        results = generate_weekly_assets(
+            title=meta["title"],
+            subtitle=meta["subtitle"],
+            date_str=date_str,
+            theme=meta.get("theme", "coffee"),
+        )
+        for r in results:
+            print(f"  🎨 {r}")
+        save_log("\n".join(results), "火曜：Express素材生成（コーヒー）")
+    except Exception as e:
+        print(f"  ❌ 火曜：コーヒーExpress素材生成 失敗: {e}")
+
+
 def coffee_monday_task():
     try:
         run_agent(
@@ -356,6 +399,8 @@ def main():
     schedule.every().friday.at("10:00").do(coffee_friday_task)
     schedule.every().tuesday.at("11:00").do(tuesday_video_task)
     schedule.every().tuesday.at("12:00").do(coffee_tuesday_video_task)
+    schedule.every().tuesday.at("09:30").do(tuesday_express_task)
+    schedule.every().tuesday.at("10:30").do(coffee_tuesday_express_task)
 
     print("=" * 50)
     print("AI組織 週次スケジューラー起動中")
@@ -363,6 +408,7 @@ def main():
     print("水09:00 レビュー通知 / 金09:00 SNS投稿文 / 日20:00 反応分析")
     print("月10:00 コーヒーテーマ / 月10:30 地域別コーヒー / 火10:00 コーヒー台本 / 金10:00 コーヒーSNS")
     print("火 11:00 ワイン動画素材 / 火 12:00 コーヒー動画素材")
+    print("火 09:30 ワインExpress素材 / 火 10:30 コーヒーExpress素材")
     print("停止するには Ctrl+C")
     print("=" * 50)
 

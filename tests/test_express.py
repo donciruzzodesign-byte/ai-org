@@ -1,5 +1,6 @@
 import os
 import pytest
+from unittest.mock import patch, MagicMock
 from tools_express import (
     get_weekly_dir,
     TEMPLATES_DIR,
@@ -175,3 +176,29 @@ theme: coffee
 """
     meta = parse_creator_metadata(text)
     assert meta["theme"] == "coffee"
+
+
+def test_parse_then_generate_full_flow(tmp_path):
+    script_with_meta = """台本本文
+
+---METADATA---
+title: バローロ完全ガイド
+subtitle: ピエモンテの至宝
+keyword: Barolo wine aging Italy
+theme: wine
+---END---
+"""
+    tpl_dir = str(tmp_path / "tpl")
+    generate_brand_svgs(tpl_dir)
+    meta = parse_creator_metadata(script_with_meta)
+    assert meta is not None
+    results = generate_weekly_assets(
+        title=meta["title"],
+        subtitle=meta["subtitle"],
+        date_str="2026-06-24",
+        theme=meta["theme"],
+        templates_dir=tpl_dir,
+        base_dir=str(tmp_path / "weekly"),
+    )
+    assert all("生成:" in r for r in results)
+    assert len(results) == 3
