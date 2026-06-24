@@ -83,3 +83,72 @@ def generate_brand_svgs(templates_dir: str = TEMPLATES_DIR) -> dict[str, str]:
             f.write(content)
         paths[name] = path
     return paths
+
+
+def fill_svg_template(template_path: str, title: str, subtitle: str, output_path: str) -> str:
+    with open(template_path, encoding="utf-8") as f:
+        content = f.read()
+
+    def xml_escape(s: str) -> str:
+        return (s.replace("&", "&amp;")
+                 .replace("<", "&lt;")
+                 .replace(">", "&gt;")
+                 .replace('"', "&quot;"))
+
+    content = content.replace("{{title}}", xml_escape(title))
+    content = content.replace("{{subtitle}}", xml_escape(subtitle))
+
+    out_dir = os.path.dirname(output_path)
+    if out_dir:
+        _ensure_dir(out_dir)
+    with open(output_path, "w", encoding="utf-8") as f:
+        f.write(content)
+    return output_path
+
+
+def svg_to_png(svg_path: str, png_path: str) -> str:
+    try:
+        import cairosvg
+        cairosvg.svg2png(url=svg_path, write_to=png_path)
+        return png_path
+    except (OSError, ImportError):
+        # Fallback: use ImageMagick convert if available
+        import subprocess
+        subprocess.run(
+            ["/opt/ImageMagick/bin/convert", svg_path, png_path],
+            capture_output=True,
+        )
+        if os.path.exists(png_path):
+            return png_path
+        raise RuntimeError(
+            f"svg_to_png failed: cairosvg native library not available "
+            f"and ImageMagick fallback did not produce {png_path}"
+        )
+
+
+def generate_weekly_assets(
+    title: str,
+    subtitle: str,
+    date_str: str,
+    theme: str,
+    templates_dir: str = TEMPLATES_DIR,
+    base_dir: str = WEEKLY_BASE_DIR,
+) -> list:
+    weekly_dir = get_weekly_dir(date_str, theme, base_dir)
+    template_map = [
+        ("youtube_thumbnail.svg", "youtube_thumbnail.png"),
+        ("reels_cover.svg", "reels_cover.png"),
+        ("title_card.svg", "title_card.png"),
+    ]
+    results = []
+    for svg_name, png_name in template_map:
+        template_path = os.path.join(templates_dir, svg_name)
+        if not os.path.exists(template_path):
+            results.append(f"テンプレートが見つかりません: {template_path}")
+            continue
+        filled_svg = os.path.join(weekly_dir, svg_name)
+        fill_svg_template(template_path, title, subtitle, filled_svg)
+        png_path = os.path.join(weekly_dir, png_name)
+        svg_to_png(filled_svg, png_path)
+        results.append(f"生成: {png_path}")
+    return results

@@ -1,6 +1,14 @@
 import os
 import pytest
-from tools_express import get_weekly_dir, TEMPLATES_DIR, WEEKLY_BASE_DIR, generate_brand_svgs
+from tools_express import (
+    get_weekly_dir,
+    TEMPLATES_DIR,
+    WEEKLY_BASE_DIR,
+    generate_brand_svgs,
+    fill_svg_template,
+    svg_to_png,
+    generate_weekly_assets,
+)
 
 
 def test_get_weekly_dir_creates_directory(tmp_path):
@@ -69,3 +77,63 @@ def test_title_card_is_correct_size(tmp_path):
         content = f.read()
     assert 'width="1920"' in content
     assert 'height="1080"' in content
+
+
+def test_fill_svg_template_replaces_placeholders(tmp_path):
+    tpl_dir = str(tmp_path / "tpl")
+    generate_brand_svgs(tpl_dir)
+    out = str(tmp_path / "out.svg")
+    fill_svg_template(
+        os.path.join(tpl_dir, "youtube_thumbnail.svg"),
+        title="バローロの魅力",
+        subtitle="王のワイン入門",
+        output_path=out,
+    )
+    content = open(out, encoding="utf-8").read()
+    assert "バローロの魅力" in content
+    assert "王のワイン入門" in content
+    assert "{{title}}" not in content
+    assert "{{subtitle}}" not in content
+
+
+def test_fill_svg_template_escapes_ampersand(tmp_path):
+    tpl_dir = str(tmp_path / "tpl")
+    generate_brand_svgs(tpl_dir)
+    out = str(tmp_path / "out.svg")
+    fill_svg_template(
+        os.path.join(tpl_dir, "youtube_thumbnail.svg"),
+        title="Wine & Food",
+        subtitle="test",
+        output_path=out,
+    )
+    content = open(out, encoding="utf-8").read()
+    assert "&amp;" in content
+    assert "Wine & Food" not in content
+
+
+def test_svg_to_png_creates_file(tmp_path):
+    tpl_dir = str(tmp_path / "tpl")
+    generate_brand_svgs(tpl_dir)
+    svg_path = os.path.join(tpl_dir, "youtube_thumbnail.svg")
+    png_path = str(tmp_path / "thumb.png")
+    result = svg_to_png(svg_path, png_path)
+    assert os.path.exists(result)
+    assert result.endswith(".png")
+
+
+def test_generate_weekly_assets_creates_three_pngs(tmp_path):
+    tpl_dir = str(tmp_path / "tpl")
+    generate_brand_svgs(tpl_dir)
+    results = generate_weekly_assets(
+        title="バローロ入門",
+        subtitle="ピエモンテの王様",
+        date_str="2026-06-24",
+        theme="wine",
+        templates_dir=tpl_dir,
+        base_dir=str(tmp_path / "weekly"),
+    )
+    weekly_dir = os.path.join(str(tmp_path / "weekly"), "2026-06-24-wine")
+    assert os.path.exists(os.path.join(weekly_dir, "youtube_thumbnail.png"))
+    assert os.path.exists(os.path.join(weekly_dir, "reels_cover.png"))
+    assert os.path.exists(os.path.join(weekly_dir, "title_card.png"))
+    assert len(results) == 3
