@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="1000" viewBox="0 0 800 1000">
+  <!-- Background -->
+  <rect width="800" height="1000" fill="#F5F0E8"/>
+  <!-- Outer gold border frame (inset 30px) -->
+  <rect x="30" y="30" width="740" height="940" fill="none" stroke="#C9A84C" stroke-width="2"/>
+  <!-- Inner gold border frame (inset 38px) -->
+  <rect x="38" y="38" width="724" height="924" fill="none" stroke="#C9A84C" stroke-width="1" opacity="0.5"/>
+  <!-- Title line 1 -->
+  <text x="400" y="370" font-family="'Cormorant Garamond', Georgia, serif" font-size="42"
+        fill="#6B1A2A" text-anchor="middle" font-weight="600">イタリアワイン選び</text>
+  <!-- Title line 2 -->
+  <text x="400" y="430" font-family="'Cormorant Garamond', Georgia, serif" font-size="42"
+        fill="#6B1A2A" text-anchor="middle" font-weight="600">最短攻略BOOK</text>
+  <!-- Gold decorative line between title and subtitle -->
+  <line x1="280" y1="470" x2="520" y2="470" stroke="#C9A84C" stroke-width="1.5"/>
+  <!-- Subtitle -->
+  <text x="400" y="510" font-family="'Noto Sans JP', sans-serif" font-size="18"
+        fill="#6B1A2A" text-anchor="middle" opacity="0.8">知識ゼロ・予算1,500円から始める</text>
+  <!-- Bottom gold label -->
+  <text x="400" y="920" font-family="Georgia, serif" font-size="13" fill="#C9A84C"
+        text-anchor="middle" letter-spacing="5">ITALIAN WINE GUIDE</text>
+</svg>

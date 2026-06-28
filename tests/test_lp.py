@@ -158,7 +158,20 @@ def test_generate_lp_embeds_hero_when_exists(tmp_path):
     content = load_content()
     assets_dir = tmp_path / "assets"
     assets_dir.mkdir()
-    # ダミーのhero.pngを作成
-    (assets_dir / "hero.png").write_bytes(b"\x89PNG\r\n")
+    # ダミーのhero.svgを作成（SVGが優先される）
+    (assets_dir / "hero.svg").write_text("<svg></svg>", encoding="utf-8")
     html = generate_lp(content, assets_rel=str(assets_dir))
-    assert "hero.png" in html
+    assert "hero.svg" in html
+
+
+def test_generate_assets_creates_svg_files(tmp_path):
+    from tools_lp import generate_assets
+    content = load_content()
+    assets_dir = tmp_path / "assets"
+    result = generate_assets(content, assets_dir=str(assets_dir))
+    hero_path = assets_dir / "hero.svg"
+    gift_cover_path = assets_dir / "gift_cover.svg"
+    assert hero_path.exists(), "hero.svg が生成されていません"
+    assert gift_cover_path.exists(), "gift_cover.svg が生成されていません"
+    assert "<svg" in hero_path.read_text(encoding="utf-8")
+    assert "<svg" in gift_cover_path.read_text(encoding="utf-8")

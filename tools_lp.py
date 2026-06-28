@@ -167,9 +167,19 @@ def generate_lp(content: dict, assets_rel: str = "assets") -> str:
     colors = c["meta"]["colors"]
     line_url = c["meta"]["line_url"]
 
-    # hero.pngが存在すればCSS背景として使用
-    hero_abs = os.path.join(LP_DIR, assets_rel, "hero.png") if not os.path.isabs(assets_rel) else os.path.join(assets_rel, "hero.png")
-    hero_style = f'style="background-image: url(\'{assets_rel}/hero.png\'); background-size: cover; background-position: center;"' if os.path.exists(hero_abs) else ""
+    # hero.svgまたはhero.pngが存在すればCSS背景として使用（SVGを優先）
+    def _hero_path(ext: str) -> str:
+        base = os.path.join(LP_DIR, assets_rel) if not os.path.isabs(assets_rel) else assets_rel
+        return os.path.join(base, f"hero.{ext}")
+
+    if os.path.exists(_hero_path("svg")):
+        _hero_rel = f"{assets_rel}/hero.svg"
+        hero_style = f'style="background-image: url(\'{_hero_rel}\'); background-size: cover; background-position: center;"'
+    elif os.path.exists(_hero_path("png")):
+        _hero_rel = f"{assets_rel}/hero.png"
+        hero_style = f'style="background-image: url(\'{_hero_rel}\'); background-size: cover; background-position: center;"'
+    else:
+        hero_style = ""
 
     worries_html = "\n".join(f"<li>{w}</li>" for w in c["worries"])
     ideals_html = "\n".join(f"<li>{i}</li>" for i in c["ideals"])
@@ -326,21 +336,86 @@ document.querySelectorAll('.accordion-btn').forEach(function(btn) {{
 </html>"""
 
 
-def generate_assets(content: dict, assets_dir: str = None) -> dict:
-    """Adobe Express MCPを使ってビジュアルアセットを生成する。
+def _build_hero_svg() -> str:
+    """Generate hero.svg (1200x600) programmatically."""
+    # Diagonal decorative lines as subtle texture
+    diag_lines = "\n".join(
+        f'  <line x1="{x}" y1="0" x2="{x + 600}" y2="600" stroke="#C9A84C" stroke-width="1" opacity="0.15"/>'
+        for x in range(-600, 1200, 80)
+    )
+    return f"""<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="600" viewBox="0 0 1200 600">
+  <!-- Background -->
+  <rect width="1200" height="600" fill="#6B1A2A"/>
+  <!-- Diagonal texture -->
+{diag_lines}
+  <!-- Top horizontal gold line -->
+  <line x1="0" y1="40" x2="1200" y2="40" stroke="#C9A84C" stroke-width="2"/>
+  <!-- Bottom horizontal gold line -->
+  <line x1="0" y1="560" x2="1200" y2="560" stroke="#C9A84C" stroke-width="2"/>
+  <!-- Minimalist wine glass silhouette (centered, white/cream, subtle) -->
+  <g transform="translate(600, 300)" opacity="0.12">
+    <!-- Bowl -->
+    <ellipse cx="0" cy="-60" rx="60" ry="80" fill="#F5F0E8"/>
+    <!-- Stem -->
+    <rect x="-4" y="20" width="8" height="80" fill="#F5F0E8"/>
+    <!-- Base -->
+    <ellipse cx="0" cy="100" rx="36" ry="8" fill="#F5F0E8"/>
+    <!-- Inner bowl cutout to make it hollow-ish -->
+    <ellipse cx="0" cy="-60" rx="52" ry="70" fill="#6B1A2A" opacity="0.88"/>
+  </g>
+  <!-- Gold centered text -->
+  <text x="600" y="310" font-family="Georgia, serif" font-size="18" fill="#C9A84C"
+        text-anchor="middle" letter-spacing="8" opacity="0.6">VINO ITALIANO</text>
+</svg>"""
 
-    セッション外では空辞書を返してスキップする。
-    Returns: {"hero": path, "gift_cover": path} or {}
+
+def _build_gift_cover_svg() -> str:
+    """Generate gift_cover.svg (800x1000) programmatically."""
+    return """<svg xmlns="http://www.w3.org/2000/svg" width="800" height="1000" viewBox="0 0 800 1000">
+  <!-- Background -->
+  <rect width="800" height="1000" fill="#F5F0E8"/>
+  <!-- Outer gold border frame (inset 30px) -->
+  <rect x="30" y="30" width="740" height="940" fill="none" stroke="#C9A84C" stroke-width="2"/>
+  <!-- Inner gold border frame (inset 38px) -->
+  <rect x="38" y="38" width="724" height="924" fill="none" stroke="#C9A84C" stroke-width="1" opacity="0.5"/>
+  <!-- Title line 1 -->
+  <text x="400" y="370" font-family="'Cormorant Garamond', Georgia, serif" font-size="42"
+        fill="#6B1A2A" text-anchor="middle" font-weight="600">イタリアワイン選び</text>
+  <!-- Title line 2 -->
+  <text x="400" y="430" font-family="'Cormorant Garamond', Georgia, serif" font-size="42"
+        fill="#6B1A2A" text-anchor="middle" font-weight="600">最短攻略BOOK</text>
+  <!-- Gold decorative line between title and subtitle -->
+  <line x1="280" y1="470" x2="520" y2="470" stroke="#C9A84C" stroke-width="1.5"/>
+  <!-- Subtitle -->
+  <text x="400" y="510" font-family="'Noto Sans JP', sans-serif" font-size="18"
+        fill="#6B1A2A" text-anchor="middle" opacity="0.8">知識ゼロ・予算1,500円から始める</text>
+  <!-- Bottom gold label -->
+  <text x="400" y="920" font-family="Georgia, serif" font-size="13" fill="#C9A84C"
+        text-anchor="middle" letter-spacing="5">ITALIAN WINE GUIDE</text>
+</svg>"""
+
+
+def generate_assets(content: dict, assets_dir: str = None) -> dict:
+    """SVGアセットをプログラムで生成して保存する。
+
+    Returns: {"hero": path_to_hero_svg, "gift_cover": path_to_gift_cover_svg}
     """
     if assets_dir is None:
         assets_dir = os.path.join(LP_DIR, "assets")
     os.makedirs(assets_dir, exist_ok=True)
-    print("ℹ️  generate_assets() はClaude Codeセッション内でAdobe Express MCPを使って実行してください。")
-    print(f"   保存先: {assets_dir}")
-    print("   必要なファイル:")
-    print("   - hero.png (1200x600): ワインレッド背景にゴールドラインのヘッダービジュアル")
-    print("   - gift_cover.png (800x1000): BOOKタイトル入り表紙イメージ")
-    return {}
+
+    hero_path = os.path.join(assets_dir, "hero.svg")
+    gift_cover_path = os.path.join(assets_dir, "gift_cover.svg")
+
+    with open(hero_path, "w", encoding="utf-8") as f:
+        f.write(_build_hero_svg())
+    print(f"✅ hero.svg 生成完了: {hero_path}")
+
+    with open(gift_cover_path, "w", encoding="utf-8") as f:
+        f.write(_build_gift_cover_svg())
+    print(f"✅ gift_cover.svg 生成完了: {gift_cover_path}")
+
+    return {"hero": hero_path, "gift_cover": gift_cover_path}
 
 
 def write_lp(content: dict, path: str = OUTPUT_PATH) -> None:
