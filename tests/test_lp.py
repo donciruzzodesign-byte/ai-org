@@ -83,3 +83,71 @@ def test_profile_structure():
     content = load_content()
     assert "name" in content["profile"]
     assert "body" in content["profile"]
+
+
+def test_generate_lp_returns_html():
+    from tools_lp import generate_lp
+    content = load_content()
+    html = generate_lp(content)
+    assert html.startswith("<!DOCTYPE html>")
+
+
+def test_generate_lp_contains_all_sections():
+    from tools_lp import generate_lp
+    content = load_content()
+    html = generate_lp(content)
+    assert content["headline"]["catch"] in html
+    assert content["headline"]["sub"] in html
+    assert content["worries"][0] in html
+    assert content["ideals"][0] in html
+    assert content["gift"]["title"] in html
+    assert content["cta_text"] in html
+    assert content["meta"]["line_url"] in html
+    assert content["profile"]["name"] in html
+    assert content["story"][0]["title"] in html
+    assert content["qa"][0]["q"] in html
+    assert content["postscript"][:20] in html
+
+
+def test_generate_lp_uses_correct_colors():
+    from tools_lp import generate_lp
+    content = load_content()
+    html = generate_lp(content)
+    assert "#F5F0E8" in html
+    assert "#6B1A2A" in html
+    assert "#C9A84C" in html
+
+
+def test_generate_lp_has_google_fonts():
+    from tools_lp import generate_lp
+    content = load_content()
+    html = generate_lp(content)
+    assert "fonts.googleapis.com" in html
+    assert "Cormorant+Garamond" in html
+    assert "Noto+Sans+JP" in html
+
+
+def test_generate_lp_is_responsive():
+    from tools_lp import generate_lp
+    content = load_content()
+    html = generate_lp(content)
+    assert "viewport" in html
+    assert "max-width" in html
+
+
+def test_generate_lp_no_cubocci_studio():
+    from tools_lp import generate_lp
+    content = load_content()
+    html = generate_lp(content)
+    assert "CUBOCCI STUDIO" not in html
+
+
+def test_write_lp_outputs_file(tmp_path):
+    from tools_lp import generate_lp, write_lp
+    content = load_content()
+    out_path = str(tmp_path / "index.html")
+    write_lp(content, path=out_path)
+    with open(out_path, encoding="utf-8") as f:
+        text = f.read()
+    assert "<!DOCTYPE html>" in text
+    assert content["headline"]["catch"] in text

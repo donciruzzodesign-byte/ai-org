@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>売場で30分迷っていた私が、ラベルを見ただけで自信を持って選べるようになった</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Noto+Sans+JP:wght@400;700&display=swap">
+  <style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+    background: #F5F0E8;
+    color: #6B1A2A;
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 16px;
+    line-height: 1.8;
+}
+.container {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+h1, h2, h3 {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    color: #C9A84C;
+    line-height: 1.4;
+}
+h1 { font-size: clamp(22px, 5vw, 38px); }
+h2 { font-size: clamp(20px, 4vw, 28px); margin-bottom: 16px; }
+h3 { font-size: clamp(16px, 3vw, 20px); }
+section { padding: 60px 0; }
+section:nth-child(even) { background: rgba(107,26,42,0.04); }
+.divider {
+    width: 60px; height: 2px;
+    background: #C9A84C;
+    margin: 16px 0 32px;
+}
+ul.bullets { list-style: none; padding: 0; }
+ul.bullets li {
+    padding: 10px 0 10px 28px;
+    position: relative;
+    border-bottom: 1px solid rgba(107,26,42,0.1);
+}
+ul.bullets li::before {
+    content: "◆";
+    color: #C9A84C;
+    position: absolute;
+    left: 0;
+    font-size: 12px;
+    top: 13px;
+}
+.cta-btn {
+    display: block;
+    width: 100%;
+    max-width: 400px;
+    margin: 32px auto 0;
+    padding: 20px 32px;
+    background: #C9A84C;
+    color: #6B1A2A;
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 20px;
+    font-weight: bold;
+    text-align: center;
+    text-decoration: none;
+    border-radius: 4px;
+    letter-spacing: 1px;
+    transition: opacity 0.2s;
+}
+.cta-btn:hover { opacity: 0.85; }
+.steps {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-top: 24px;
+}
+.step { display: flex; align-items: center; gap: 16px; }
+.step-num {
+    width: 36px; height: 36px;
+    background: #6B1A2A;
+    color: #F5F0E8;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    flex-shrink: 0;
+}
+.hero {
+    background: #6B1A2A;
+    color: #F5F0E8;
+    padding: 80px 0 60px;
+    text-align: center;
+}
+.hero h1 { color: #F5F0E8; }
+.hero .sub { color: #C9A84C; margin-top: 20px; font-size: clamp(14px, 3vw, 18px); }
+.hero .deco { width: 40px; height: 2px; background: #C9A84C; margin: 24px auto; }
+.gift-box {
+    border: 2px solid #C9A84C;
+    border-radius: 4px;
+    padding: 32px;
+    margin-top: 24px;
+}
+.gift-title {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: clamp(20px, 4vw, 28px);
+    color: #C9A84C;
+    font-weight: bold;
+}
+.gift-subtitle { opacity: 0.7; margin-bottom: 16px; }
+.story-part { margin-bottom: 48px; }
+.story-part h3 {
+    padding-bottom: 8px;
+    border-bottom: 1px solid #C9A84C;
+    margin-bottom: 16px;
+}
+.accordion-item { border-bottom: 1px solid rgba(107,26,42,0.2); }
+.accordion-btn {
+    width: 100%;
+    background: none;
+    border: none;
+    padding: 20px 0;
+    text-align: left;
+    font-size: 15px;
+    color: #6B1A2A;
+    font-family: 'Noto Sans JP', sans-serif;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: bold;
+}
+.accordion-icon { color: #C9A84C; font-size: 20px; transition: transform 0.2s; }
+.accordion-body { display: none; padding: 0 0 20px; line-height: 1.8; }
+.accordion-item.open .accordion-body { display: block; }
+.accordion-item.open .accordion-icon { transform: rotate(45deg); }
+.profile-name {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: clamp(20px, 4vw, 26px);
+    color: #C9A84C;
+    margin-bottom: 16px;
+}
+.postscript { background: #6B1A2A; padding: 60px 0; }
+.postscript h2 { color: #C9A84C; }
+.postscript p { color: #F5F0E8; }
+.postscript .divider { background: #C9A84C; }
+footer { text-align: center; padding: 32px 0; font-size: 12px; opacity: 0.5; }
+@media (min-width: 768px) {
+    .steps { flex-direction: row; flex-wrap: wrap; }
+    .step { flex: 1; min-width: 180px; }
+}
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="container">
+    <h1>売場で30分迷っていた私が、ラベルを見ただけで自信を持って選べるようになった</h1>
+    <div class="deco"></div>
+    <p class="sub">知識ゼロ・予算1,500円からでも、失敗しないイタリアワインの選び方</p>
+  </div>
+</div>
+
+<section>
+  <div class="container">
+    <h2>こんなお悩みありませんか？</h2>
+    <div class="divider"></div>
+    <ul class="bullets"><li>売場でラベルを見ても、どれが美味しいのかまったくわからない</li>
+<li>毎回同じワインばかり。冒険したいけど、失敗（外れ）が怖い</li>
+<li>夫に「このワイン大丈夫？」と言われると、自信をなくしてしまう</li>
+<li>宴や会食で、ワインの知識がなくて恥ずかしい思いをしたことがある</li>
+<li>ワイン＝フランスのイメージで、イタリアワインは何から学べばいいかわからない</li>
+<li>情報が多すぎて、結局どこから手をつければいいのか迷子になっている</li></ul>
+  </div>
+</section>
+
+<section>
+  <div class="container">
+    <h2>でも…こうなりたい！</h2>
+    <div class="divider"></div>
+    <ul class="bullets"><li>ラベルを見ただけで「これは美味しそう」と、確信を持って選びたい</li>
+<li>友人や夫に「ワインに詳しいね」と言われたい</li>
+<li>イタリア料理とのペアリングを、さらっと提案できる女性になりたい</li>
+<li>平日の夕食が、ちょっとリッチで特別な時間に変わってほしい</li>
+<li>旅行でイタリアに行ったとき、現地のワインを自信を持って注文したい</li>
+<li>一日の疲れを「ちょっと良いグラスワイン1杯」でリセットする習慣がほしい</li></ul>
+  </div>
+</section>
+
+<section>
+  <div class="container">
+    <h2>そんなあなたにプレゼント！</h2>
+    <div class="divider"></div>
+    <div class="gift-box">
+      <div class="gift-title">『イタリアワイン選び 最短攻略BOOK』</div>
+      <div class="gift-subtitle">＋ 料理別・シーン別 ペアリング早見表つき</div>
+      <p>知識ゼロ・予算1,500円からでも、スーパーやECで「当たり」を引けるようになる</p>
+      <ul class="bullets" style="margin-top:16px"><li>スーパー・コンビニ・ECで「失敗しない」選び方</li>
+<li>価格帯1,500〜3,500円で「当たり」を引く見極め方</li>
+<li>迷ったらコレ、の鉄板品種リスト</li></ul>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="container" style="text-align:center">
+    <h2>公式LINE追加の手順</h2>
+    <div class="divider" style="margin:16px auto 32px"></div>
+    <div class="steps"><div class="step"><div class="step-num">1</div><div>ボタンをクリック</div></div>
+<div class="step"><div class="step-num">2</div><div>アンケートに回答する</div></div>
+<div class="step"><div class="step-num">3</div><div>BOOK（PDF）をゲット！</div></div></div>
+    <a href="https://line.me/R/ti/p/YOUR_LINE_ID" class="cta-btn" target="_blank" rel="noopener">今すぐ無料で受け取る</a>
+  </div>
+</section>
+
+<section>
+  <div class="container">
+    <h2>はじめまして</h2>
+    <div class="divider"></div>
+    <div class="profile-name">Ciro／Hiro（久保田ひろのり）</div>
+    <p>はじめまして！ここまで読んでくださって、ありがとうございます。<br>私はイタリアで6年間ワインを学び、イタリアソムリエ協会（AIS）認定の資格を取得しました。帰国後は東京のイタリア料理店で経験を積み、今でもイタリア好きが講じて、「イタリア人が好むイタリアのワイン」を学び続けています。<br>特別な人だけのものに見えるイタリアワインを、「普段の食卓で、自信を持って選べるもの」に変えたい。かつての私自身が「イタリアワイン、難しそう」と一歩を踏み出せなかったからこそ、あなたと同じ目線で、わかりやすくお届けしていきます。</p>
+  </div>
+</section>
+
+<section>
+  <div class="container">
+    <h2>私のストーリー</h2>
+    <div class="divider"></div>
+    <div class="story-part"><h3>日常・現実の世界</h3><p>実は、ワインが怖かったんです。<br>ワインの仕事をしている、と言うと驚かれるのですが、私も昔は、レストランでワインリストを渡されるたびにドキッとしていました。横文字の名前ばかりで、何が違うのかわからない。「とりあえずグラスの赤で」と言って、ホッとする。ワインといえばフランスのイメージしかなくて、イタリアワインなんて、正直まったくの未知の世界でした。</p></div>
+<div class="story-part"><h3>決意</h3><p>「本場で、ちゃんと学びたい」と決意した<br>そんな私が、イタリア料理とワインの世界に惹かれていって、ある日こう思ったんです。「中途半端な知識じゃなくて、本場でちゃんと学びたい」。気づけば私はイタリアにいました。教科書の暗記ではなく、土地と、人と、食卓からワインを学ぶ──そう決めて、6年間を過ごすことになります。</p></div>
+<div class="story-part"><h3>失敗の連続</h3><p>でも、最初は「情報の多さ」に押しつぶされそうでした<br>ところが、現実は甘くありませんでした。実はイタリアは、世界でいちばん土着品種が多い国。公式に認められているものだけで350種類以上。州が変われば、ブドウも、味も、合わせる料理もまるで違う。「これ、一生かかっても理解できないんじゃないか…」そう何度も心が折れかけました。</p></div>
+<div class="story-part"><h3>出会い</h3><p>トスカーナでの「ある出会い」が、すべてを変えた<br>たまたま見つかった初めての仕事先に1982年のイタリア最優秀ソムリエがいたんです。一緒に仕事をしているうちに、ワイナリーに行ったり、テイスティング会を企画してくれたり。「この地方では、この料理を食べるから、このワインが生まれた」──そう教わった瞬間、バラバラだった点が、一本の線になりました。</p></div>
+<div class="story-part"><h3>成功の連続</h3><p>自信を持って選べるようになった<br>そこからは、面白いように世界が開けていきました。エノテカ（ワイン店）に入っても、迷わず一本を選べる。料理を見れば、合わせるワインが自然と浮かぶ。「これにしよう」と、自信を持って言える。AISの資格も取り、帰国後は東京のイタリア料理店で、たくさんのお客様にワインをご案内してきました。</p></div>
+<div class="story-part"><h3>体系化</h3><p>そして気づいた──「あなたの悩み」を解決したい<br>ワイン選びに必要なのは、難しい専門用語でも、高いお金を払うことでもありません。「州（産地）→ 土着品種 → 料理との合わせ方」この順番で、ほんの少しコツを知るだけ。知識ゼロでも、予算1,500円からでも、あなたの食卓は「おしゃれな大人時間」に変わります。</p></div>
+  </div>
+</section>
+
+<section>
+  <div class="container">
+    <h2>なんで無料なの？</h2>
+    <div class="divider"></div>
+    <p>私自身、昔はワインが「怖くて」、リストを渡されるたびに自信をなくしていました。そんな私が、イタリアで土地と料理からワインを学び、「自分で選べる」喜びを知ったとき、世界がガラッと変わりました。お店でお客様の「私、ワインわからなくて…」という申し訳なさそうな声を聞くたびに、「その壁、私が壊したい」と思ってきました。だからまずは無料で、あなたにも実感してほしいんです。</p>
+  </div>
+</section>
+
+<section>
+  <div class="container">
+    <h2>あなただからなんです！</h2>
+    <div class="divider"></div>
+    <p>イタリアで6年間、土地と食卓からワインを学んできたこと。イタリアソムリエ協会（AIS）認定の知識に裏打ちされていること。帰国後も東京のイタリア料理店で、たくさんのお客様にご案内してきた現場の経験があること。今もイタリア現地で飲まれているリアルなワインを学び続けていること。ネットや本の受け売りではなく、現地で、いま、私が見て・飲んで・感じている情報を、あなたの食卓のためにわかりやすく翻訳してお届けします。</p>
+  </div>
+</section>
+
+<section>
+  <div class="container">
+    <h2>よくあるご質問</h2>
+    <div class="divider"></div>
+    <div class="accordion"><div class="accordion-item">
+  <button class="accordion-btn">Q. なんで公式LINEなんですか？<span class="accordion-icon">+</span></button>
+  <div class="accordion-body"><p>お渡しするBOOKは容量が大きく、インスタのDMでは送れないんです。DMでやり取りする方とは区別して、お一人おひとりに寄り添ったサポートをするためにも、安心・安全に管理できる公式LINEを使用しています。</p></div>
+</div>
+<div class="accordion-item">
+  <button class="accordion-btn">Q. 仕事が忙しくて、あまり時間が取れません。<span class="accordion-icon">+</span></button>
+  <div class="accordion-body"><p>だからこそ、です！私自身、お店で働きながら膨大な情報の中から「本当に使えるコツ」だけを絞り込んできました。忙しいあなたが、最短で「選べる人」になれるようにまとめています。時間がないからこそ、私を頼ってください。</p></div>
+</div>
+<div class="accordion-item">
+  <button class="accordion-btn">Q. ワインの知識がまったくありません。それでも大丈夫ですか？<span class="accordion-icon">+</span></button>
+  <div class="accordion-body"><p>まったく問題ありません！むしろ「辛口・甘口くらいしか知らない」という方のために作りました。専門用語は最小限。スーパーで今日から使える形でお伝えします。</p></div>
+</div>
+<div class="accordion-item">
+  <button class="accordion-btn">Q. 家に何か届きますか？<span class="accordion-icon">+</span></button>
+  <div class="accordion-body"><p>届きません！公式LINEにて、PDFでお送りします。住所などの個人情報はいただかないので、ご自宅に何かが届くことはありません。安心して受け取ってください。</p></div>
+</div>
+<div class="accordion-item">
+  <button class="accordion-btn">Q. 個人情報を悪用されたりしませんか？<span class="accordion-icon">+</span></button>
+  <div class="accordion-body"><p>悪用は一切ありません、と断言させてください。私が使っている公式LINEはセキュリティが厳しく管理されていて、見えるのはアイコンとLINE名のみ。あなたは「一緒にワインを楽しみたい」と思ってくださった大切な仲間です。ご安心ください。</p></div>
+</div>
+<div class="accordion-item">
+  <button class="accordion-btn">Q. 受け取って終わりですか？<span class="accordion-icon">+</span></button>
+  <div class="accordion-body"><p>いいえ、受け取ってからがスタートです！BOOKをもとに、まずは一本「自分で選んでみる」ところまで伴走します。「読んで終わり」の雑なサポートはしません。あなたの食卓が変わっていく瞬間まで、一緒に楽しんでいきましょう。</p></div>
+</div></div>
+  </div>
+</section>
+
+<div class="postscript">
+  <div class="container">
+    <h2>追伸</h2>
+    <div class="divider"></div>
+    <p>あなたの毎日を、もっと豊かにするワインの選び方。<br>売場で30分迷って、結局「なんとなく」で買ってしまう。開けてみて「うーん…」と、また自信をなくす。本当はもっと、食事の時間を特別なものにしたいのに。「このワイン、私が選んだの」と、胸を張って言いたいのに。──そうやって、ずっと諦めてきませんでしたか？<br><br>でも、大丈夫です。ワイン選びに、難しい知識も、高いお金もいりません。「州 → 品種 → 料理」の順で、ほんの少しコツを知るだけ。知識ゼロでも、予算1,500円からでも、あなたの平日の夜は「おしゃれな大人時間」に変わります。<br><br>さあ、今度こそ一緒に、「自分で選べた」という喜びを、手に入れましょう。</p>
+  </div>
+</div>
+
+<section>
+  <div class="container" style="text-align:center">
+    <h2>さあ、一緒に始めましょう</h2>
+    <div class="divider" style="margin:16px auto 32px"></div>
+    <a href="https://line.me/R/ti/p/YOUR_LINE_ID" class="cta-btn" target="_blank" rel="noopener">今すぐ無料で受け取る</a>
+  </div>
+</section>
+
+<footer>
+  <div class="container">
+    <p>© 2026 Ciro／Hiro. All rights reserved.</p>
+  </div>
+</footer>
+
+<script>
+document.querySelectorAll('.accordion-btn').forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    this.parentElement.classList.toggle('open');
+  });
+});
+</script>
+</body>
+</html>
