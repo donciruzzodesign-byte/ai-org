@@ -1,7 +1,7 @@
 import json
 import os
 
-LP_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "lp")
+LP_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "docs")
 CONTENT_PATH = os.path.join(LP_DIR, "content.json")
 OUTPUT_PATH = os.path.join(LP_DIR, "index.html")
 
