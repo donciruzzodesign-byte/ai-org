@@ -167,6 +167,10 @@ def generate_lp(content: dict, assets_rel: str = "assets") -> str:
     colors = c["meta"]["colors"]
     line_url = c["meta"]["line_url"]
 
+    # hero.pngが存在すればCSS背景として使用
+    hero_abs = os.path.join(LP_DIR, assets_rel, "hero.png") if not os.path.isabs(assets_rel) else os.path.join(assets_rel, "hero.png")
+    hero_style = f'style="background-image: url(\'{assets_rel}/hero.png\'); background-size: cover; background-position: center;"' if os.path.exists(hero_abs) else ""
+
     worries_html = "\n".join(f"<li>{w}</li>" for w in c["worries"])
     ideals_html = "\n".join(f"<li>{i}</li>" for i in c["ideals"])
     gift_items_html = "\n".join(f"<li>{item}</li>" for item in c["gift"]["items"])
@@ -202,7 +206,7 @@ def generate_lp(content: dict, assets_rel: str = "assets") -> str:
 </head>
 <body>
 
-<div class="hero">
+<div class="hero" {hero_style}>
   <div class="container">
     <h1>{c["headline"]["catch"]}</h1>
     <div class="deco"></div>

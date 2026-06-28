@@ -151,3 +151,14 @@ def test_write_lp_outputs_file(tmp_path):
         text = f.read()
     assert "<!DOCTYPE html>" in text
     assert content["headline"]["catch"] in text
+
+
+def test_generate_lp_embeds_hero_when_exists(tmp_path):
+    from tools_lp import generate_lp
+    content = load_content()
+    assets_dir = tmp_path / "assets"
+    assets_dir.mkdir()
+    # ダミーのhero.pngを作成
+    (assets_dir / "hero.png").write_bytes(b"\x89PNG\r\n")
+    html = generate_lp(content, assets_rel=str(assets_dir))
+    assert "hero.png" in html
