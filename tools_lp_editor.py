@@ -302,8 +302,7 @@ function pxBtn(id,type='photo'){
   return `<button class="btn-px" onclick="openPx('${id}','${type}')">Pexels 🔍</button>`;
 }
 function mediaInput(label,id,path,type='photo'){
-  const m=C.media||{};
-  const val=path.split('.').reduce((o,k)=>o&&o[isNaN(k)?k:+k],m)||'';
+  const val=path.split('.').reduce((o,k)=>o&&o[isNaN(k)?k:+k],C)||'';
   return `<label>${label}</label><div class="row"><input type="text" id="${id}" data-p="${path}" value="${esc(val)}">${pxBtn(id,type)}</div>`;
 }
 function card(title,bodyHtml){
@@ -354,7 +353,6 @@ function render(){
     <label>本文</label><textarea data-p="profile.body">${esc(c.profile?.body||'')}</textarea>
   `);
 
-  const sm=m.story||[];
   const storyParts=(c.story||[]).map((p,i)=>`
     <fieldset>
       <legend>パート ${i+1}「${esc(p.title)}」</legend>
@@ -362,7 +360,7 @@ function render(){
       <label>タイトル</label><input type="text" data-p="story.${i}.title" value="${esc(p.title||'')}">
       <label>本文</label><textarea data-p="story.${i}.body">${esc(p.body||'')}</textarea>
     </fieldset>`).join('');
-  h+=card('ストーリーセクション（全6パート）',storyParts);
+  h+=card(`ストーリーセクション（全${(c.story||[]).length}パート）`,storyParts);
 
   h+=card('なんで無料なの？',`
     ${mediaInput('セクション写真 URL','img_wf','media.why_free.image')}
