@@ -156,9 +156,10 @@ def test_write_lp_outputs_file(tmp_path):
 def test_generate_lp_embeds_hero_when_exists(tmp_path):
     from tools_lp import generate_lp
     content = load_content()
+    # header_video が空のときのみ hero.svg フォールバックが使われる
+    content.setdefault("media", {})["header_video"] = ""
     assets_dir = tmp_path / "assets"
     assets_dir.mkdir()
-    # ダミーのhero.svgを作成（SVGが優先される）
     (assets_dir / "hero.svg").write_text("<svg></svg>", encoding="utf-8")
     html = generate_lp(content, assets_rel=str(assets_dir))
     assert "hero.svg" in html

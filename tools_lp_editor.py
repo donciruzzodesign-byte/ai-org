@@ -403,6 +403,19 @@ function render(){
     <textarea data-p="postscript">${esc(c.postscript||'')}</textarea>
   `);
 
+  const fs=c.meta?.font_sizes||{};
+  h+=card('フォントサイズ設定',`
+    <label>本文サイズ（例: 16px）</label>
+    <input type="text" data-p="meta.font_sizes.body" value="${esc(fs.body||'16px')}">
+    <label>見出し H1 サイズ（例: clamp(22px, 5vw, 38px) または 32px）</label>
+    <input type="text" data-p="meta.font_sizes.h1" value="${esc(fs.h1||'clamp(22px, 5vw, 38px)')}">
+    <label>見出し H2 サイズ（例: clamp(20px, 4vw, 28px) または 24px）</label>
+    <input type="text" data-p="meta.font_sizes.h2" value="${esc(fs.h2||'clamp(20px, 4vw, 28px)')}">
+    <label>見出し H3 サイズ（例: clamp(16px, 3vw, 20px) または 18px）</label>
+    <input type="text" data-p="meta.font_sizes.h3" value="${esc(fs.h3||'clamp(16px, 3vw, 20px)')}">
+    <p style="margin-top:12px;font-size:12px;color:#888">💡 保存するとLPに即反映されます</p>
+  `);
+
   document.getElementById('editor').innerHTML=h;
 }
 

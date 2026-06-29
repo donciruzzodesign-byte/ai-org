@@ -11,15 +11,20 @@ def load_content(path: str = CONTENT_PATH) -> dict:
         return json.load(f)
 
 
-def _css(colors: dict) -> str:
+def _css(colors: dict, font_sizes: dict = None) -> str:
     bg, text, accent = colors["bg"], colors["text"], colors["accent"]
+    fs = font_sizes or {}
+    sz_body = fs.get("body", "16px")
+    sz_h1   = fs.get("h1",   "clamp(22px, 5vw, 38px)")
+    sz_h2   = fs.get("h2",   "clamp(20px, 4vw, 28px)")
+    sz_h3   = fs.get("h3",   "clamp(16px, 3vw, 20px)")
     return f"""
 * {{ box-sizing: border-box; margin: 0; padding: 0; }}
 body {{
     background: {bg};
     color: {text};
     font-family: 'Noto Sans JP', sans-serif;
-    font-size: 16px;
+    font-size: {sz_body};
     line-height: 1.8;
 }}
 .container {{
@@ -32,9 +37,9 @@ h1, h2, h3 {{
     color: {accent};
     line-height: 1.4;
 }}
-h1 {{ font-size: clamp(22px, 5vw, 38px); }}
-h2 {{ font-size: clamp(20px, 4vw, 28px); margin-bottom: 16px; }}
-h3 {{ font-size: clamp(16px, 3vw, 20px); }}
+h1 {{ font-size: {sz_h1}; }}
+h2 {{ font-size: {sz_h2}; margin-bottom: 16px; }}
+h3 {{ font-size: {sz_h3}; }}
 section {{ padding: 60px 0; }}
 section:nth-child(even) {{ background: rgba(107,26,42,0.04); }}
 .divider {{
@@ -272,7 +277,7 @@ def generate_lp(content: dict, assets_rel: str = "assets") -> str:
   <title>{c["headline"]["catch"]}</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Noto+Sans+JP:wght@400;700&display=swap">
-  <style>{_css(colors)}</style>
+  <style>{_css(colors, c.get("meta", {}).get("font_sizes", {}))}</style>
 </head>
 <body>
 
