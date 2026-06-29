@@ -117,11 +117,18 @@ ul.bullets li::before {{
 .cta-btn:hover {{ opacity: 0.85; }}
 .steps {{
     display: flex;
-    flex-direction: column;
-    gap: 16px;
+    flex-direction: row;
+    gap: 8px;
     margin-top: 24px;
 }}
-.step {{ display: flex; align-items: center; gap: 16px; }}
+.step {{
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 10px;
+}}
 .step-num {{
     width: 36px; height: 36px;
     background: {text};
@@ -193,8 +200,6 @@ ul.bullets li::before {{
 .postscript .divider {{ background: {accent}; }}
 footer {{ text-align: center; padding: 32px 0; font-size: 12px; opacity: 0.5; }}
 @media (min-width: 768px) {{
-    .steps {{ flex-direction: row; flex-wrap: wrap; }}
-    .step {{ flex: 1; min-width: 180px; }}
 }}
 .hero {{ position: relative; overflow: hidden; }}
 .hero-video {{
