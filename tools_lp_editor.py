@@ -40,6 +40,8 @@ class LPEditorHandler(http.server.BaseHTTPRequestHandler):
                 self._json_response({"error": str(e)}, 500)
         elif path == "/pexels":
             self._serve_pexels(query)
+        elif path.startswith("/assets/uploads/"):
+            self._serve_static(path)
         else:
             self.send_response(404)
             self.end_headers()
@@ -49,6 +51,8 @@ class LPEditorHandler(http.server.BaseHTTPRequestHandler):
             self._handle_save()
         elif self.path == "/deploy":
             self._handle_deploy()
+        elif self.path == "/upload":
+            self._handle_upload()
         else:
             self.send_response(404)
             self.end_headers()
@@ -68,6 +72,64 @@ class LPEditorHandler(http.server.BaseHTTPRequestHandler):
         self.send_header("Content-Length", len(body))
         self.end_headers()
         self.wfile.write(body)
+
+    def _serve_static(self, url_path):
+        MIME = {
+            '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.png': 'image/png',
+            '.gif': 'image/gif', '.webp': 'image/webp',
+            '.mp4': 'video/mp4', '.mov': 'video/quicktime', '.webm': 'video/webm',
+        }
+        rel = url_path.lstrip('/')
+        file_path = os.path.join(ROOT, 'docs', rel)
+        if not os.path.isfile(file_path):
+            self.send_response(404)
+            self.end_headers()
+            return
+        ext = os.path.splitext(file_path)[1].lower()
+        mime = MIME.get(ext, 'application/octet-stream')
+        with open(file_path, 'rb') as f:
+            data = f.read()
+        self.send_response(200)
+        self.send_header('Content-Type', mime)
+        self.send_header('Content-Length', len(data))
+        self.end_headers()
+        self.wfile.write(data)
+
+    def _handle_upload(self):
+        import email as _email
+        ALLOWED = {'.jpg', '.jpeg', '.png', '.gif', '.webp', '.mp4', '.mov', '.webm'}
+        content_type = self.headers.get('Content-Type', '')
+        length = int(self.headers.get('Content-Length', 0))
+        body = self.rfile.read(length)
+        try:
+            msg = _email.message_from_bytes(
+                f'Content-Type: {content_type}\r\nMIME-Version: 1.0\r\n\r\n'.encode() + body
+            )
+            for part in msg.walk():
+                filename = part.get_filename()
+                if not filename:
+                    continue
+                filename = os.path.basename(filename).replace(' ', '_')
+                ext = os.path.splitext(filename)[1].lower()
+                if ext not in ALLOWED:
+                    self._json_response({'error': f'対応外形式: {ext}'}, 400)
+                    return
+                upload_dir = os.path.join(ROOT, 'docs', 'assets', 'uploads')
+                os.makedirs(upload_dir, exist_ok=True)
+                base, ext = os.path.splitext(filename)
+                dest = os.path.join(upload_dir, filename)
+                counter = 1
+                while os.path.exists(dest):
+                    dest = os.path.join(upload_dir, f'{base}_{counter}{ext}')
+                    counter += 1
+                with open(dest, 'wb') as f:
+                    f.write(part.get_payload(decode=True))
+                url = 'assets/uploads/' + os.path.basename(dest)
+                self._json_response({'url': url})
+                return
+            self._json_response({'error': 'ファイルが見つかりません'}, 400)
+        except Exception as e:
+            self._json_response({'error': str(e)}, 500)
 
     def _serve_pexels(self, query):
         q = query.get("q", [""])[0]
@@ -164,6 +226,8 @@ def _editor_html():
     .row{display:flex;gap:8px;align-items:center}
     .row input{flex:1}
     .btn-px{padding:8px 12px;background:#05A081;color:#fff;border:none;
+      border-radius:4px;cursor:pointer;font-size:12px;white-space:nowrap}
+    .btn-up{padding:8px 12px;background:#6B1A2A;color:#fff;border:none;
       border-radius:4px;cursor:pointer;font-size:12px;white-space:nowrap}
     .list-item{display:flex;gap:8px;margin-bottom:8px}
     .list-item input{flex:1}
@@ -314,8 +378,28 @@ function toggle(h){
   h.querySelector('.ico').textContent=b.classList.contains('open')?'▲':'▼';
 }
 
+function upBtn(id,type='photo'){
+  const accept=type==='video'?'video/*':'image/*';
+  return `<button class="btn-up" onclick="triggerUpload('${id}','${accept}')">📁 アップロード</button>`;
+}
+async function triggerUpload(inputId,accept){
+  const inp=document.createElement('input');
+  inp.type='file';inp.accept=accept;
+  inp.onchange=async()=>{
+    if(!inp.files[0])return;
+    const fd=new FormData();fd.append('file',inp.files[0]);
+    status('アップロード中...');
+    try{
+      const r=await fetch('/upload',{method:'POST',body:fd});
+      const data=await r.json();
+      if(data.url){document.getElementById(inputId).value=data.url;status('✅ アップロード完了');}
+      else status('❌ '+(data.error||'エラー'),false);
+    }catch(e){status('❌ '+e.message,false);}
+  };
+  inp.click();
+}
 function pxBtn(id,type='photo'){
-  return `<button class="btn-px" onclick="openPx('${id}','${type}')">Pexels 🔍</button>`;
+  return `<button class="btn-px" onclick="openPx('${id}','${type}')">Pexels 🔍</button>${upBtn(id,type)}`;
 }
 function mediaInput(label,id,path,type='photo'){
   const val=path.split('.').reduce((o,k)=>o&&o[isNaN(k)?k:+k],C)||'';
