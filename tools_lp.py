@@ -155,6 +155,19 @@ footer {{ text-align: center; padding: 32px 0; font-size: 12px; opacity: 0.5; }}
     .steps {{ flex-direction: row; flex-wrap: wrap; }}
     .step {{ flex: 1; min-width: 180px; }}
 }}
+.hero {{ position: relative; overflow: hidden; }}
+.hero-video {{
+    position: absolute; top: 0; left: 0;
+    width: 100%; height: 100%;
+    object-fit: cover; z-index: 0;
+}}
+.hero-content {{
+    position: relative; z-index: 1;
+    padding: 80px 20px 60px;
+    text-align: center;
+}}
+.section-image {{ width: 100%; max-height: 300px; overflow: hidden; margin-bottom: 24px; }}
+.section-image img {{ width: 100%; height: 300px; object-fit: cover; display: block; }}
 """
 
 
@@ -162,10 +175,18 @@ def _nl2br(text: str) -> str:
     return text.replace("\n", "<br>")
 
 
+def _section_image(url: str) -> str:
+    if not url:
+        return ""
+    return f'<div class="section-image"><img src="{url}" alt="" loading="lazy"></div>'
+
+
 def generate_lp(content: dict, assets_rel: str = "assets") -> str:
     c = content
     colors = c["meta"]["colors"]
     line_url = c["meta"]["line_url"]
+    media = c.get("media", {})
+    header_video = media.get("header_video", "")
 
     # hero.svgまたはhero.pngが存在すればCSS背景として使用（SVGを優先）
     def _hero_path(ext: str) -> str:
@@ -181,6 +202,30 @@ def generate_lp(content: dict, assets_rel: str = "assets") -> str:
     else:
         hero_style = ""
 
+    if header_video:
+        hero_div = (
+            f'<div class="hero" style="padding:0;min-height:400px;">\n'
+            f'  <video autoplay muted loop playsinline class="hero-video">\n'
+            f'    <source src="{header_video}" type="video/mp4">\n'
+            f'  </video>\n'
+            f'  <div class="hero-content"><div class="container">\n'
+            f'    <h1>{c["headline"]["catch"]}</h1>\n'
+            f'    <div class="deco"></div>\n'
+            f'    <p class="sub">{c["headline"]["sub"]}</p>\n'
+            f'  </div></div>\n'
+            f'</div>'
+        )
+    else:
+        hero_div = (
+            f'<div class="hero" {hero_style}>\n'
+            f'  <div class="container">\n'
+            f'    <h1>{c["headline"]["catch"]}</h1>\n'
+            f'    <div class="deco"></div>\n'
+            f'    <p class="sub">{c["headline"]["sub"]}</p>\n'
+            f'  </div>\n'
+            f'</div>'
+        )
+
     worries_html = "\n".join(f"<li>{w}</li>" for w in c["worries"])
     ideals_html = "\n".join(f"<li>{i}</li>" for i in c["ideals"])
     gift_items_html = "\n".join(f"<li>{item}</li>" for item in c["gift"]["items"])
@@ -188,9 +233,13 @@ def generate_lp(content: dict, assets_rel: str = "assets") -> str:
         f'<div class="step"><div class="step-num">{i+1}</div><div>{s}</div></div>'
         for i, s in enumerate(c["line_steps"])
     )
+    story_media = media.get("story", [])
     story_html = "\n".join(
-        f'<div class="story-part"><h3>{p["title"]}</h3><p>{_nl2br(p["body"])}</p></div>'
-        for p in c["story"]
+        f'<div class="story-part">'
+        f'{_section_image(story_media[i].get("image", "") if i < len(story_media) else "")}'
+        f'<h3>{p["title"]}</h3><p>{_nl2br(p["body"])}</p>'
+        f'</div>'
+        for i, p in enumerate(c["story"])
     )
     qa_html = "\n".join(
         f'''<div class="accordion-item">
@@ -204,6 +253,16 @@ def generate_lp(content: dict, assets_rel: str = "assets") -> str:
         f'{c["cta_text"]}</a>'
     )
 
+    img_worries    = _section_image(media.get("worries",    {}).get("image", ""))
+    img_ideals     = _section_image(media.get("ideals",     {}).get("image", ""))
+    img_gift       = _section_image(media.get("gift",       {}).get("image", ""))
+    img_cta1       = _section_image(media.get("cta1",       {}).get("image", ""))
+    img_profile    = _section_image(media.get("profile",    {}).get("image", ""))
+    img_why_free   = _section_image(media.get("why_free",   {}).get("image", ""))
+    img_why_me     = _section_image(media.get("why_me",     {}).get("image", ""))
+    img_qa         = _section_image(media.get("qa",         {}).get("image", ""))
+    img_postscript = _section_image(media.get("postscript", {}).get("image", ""))
+
     return f"""<!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -216,16 +275,11 @@ def generate_lp(content: dict, assets_rel: str = "assets") -> str:
 </head>
 <body>
 
-<div class="hero" {hero_style}>
-  <div class="container">
-    <h1>{c["headline"]["catch"]}</h1>
-    <div class="deco"></div>
-    <p class="sub">{c["headline"]["sub"]}</p>
-  </div>
-</div>
+{hero_div}
 
 <section>
   <div class="container">
+    {img_worries}
     <h2>こんなお悩みありませんか？</h2>
     <div class="divider"></div>
     <ul class="bullets">{worries_html}</ul>
@@ -234,6 +288,7 @@ def generate_lp(content: dict, assets_rel: str = "assets") -> str:
 
 <section>
   <div class="container">
+    {img_ideals}
     <h2>でも…こうなりたい！</h2>
     <div class="divider"></div>
     <ul class="bullets">{ideals_html}</ul>
@@ -242,6 +297,7 @@ def generate_lp(content: dict, assets_rel: str = "assets") -> str:
 
 <section>
   <div class="container">
+    {img_gift}
     <h2>そんなあなたにプレゼント！</h2>
     <div class="divider"></div>
     <div class="gift-box">
@@ -255,6 +311,7 @@ def generate_lp(content: dict, assets_rel: str = "assets") -> str:
 
 <section>
   <div class="container" style="text-align:center">
+    {img_cta1}
     <h2>公式LINE追加の手順</h2>
     <div class="divider" style="margin:16px auto 32px"></div>
     <div class="steps">{steps_html}</div>
@@ -264,6 +321,7 @@ def generate_lp(content: dict, assets_rel: str = "assets") -> str:
 
 <section>
   <div class="container">
+    {img_profile}
     <h2>はじめまして</h2>
     <div class="divider"></div>
     <div class="profile-name">{c["profile"]["name"]}</div>
@@ -281,6 +339,7 @@ def generate_lp(content: dict, assets_rel: str = "assets") -> str:
 
 <section>
   <div class="container">
+    {img_why_free}
     <h2>なんで無料なの？</h2>
     <div class="divider"></div>
     <p>{_nl2br(c["why_free"])}</p>
@@ -289,6 +348,7 @@ def generate_lp(content: dict, assets_rel: str = "assets") -> str:
 
 <section>
   <div class="container">
+    {img_why_me}
     <h2>あなただからなんです！</h2>
     <div class="divider"></div>
     <p>{_nl2br(c["why_me"])}</p>
@@ -297,6 +357,7 @@ def generate_lp(content: dict, assets_rel: str = "assets") -> str:
 
 <section>
   <div class="container">
+    {img_qa}
     <h2>よくあるご質問</h2>
     <div class="divider"></div>
     <div class="accordion">{qa_html}</div>
@@ -305,6 +366,7 @@ def generate_lp(content: dict, assets_rel: str = "assets") -> str:
 
 <div class="postscript">
   <div class="container">
+    {img_postscript}
     <h2>追伸</h2>
     <div class="divider"></div>
     <p>{_nl2br(c["postscript"])}</p>

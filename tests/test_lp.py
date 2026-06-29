@@ -5,7 +5,7 @@ import pytest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-CONTENT_PATH = os.path.join(os.path.dirname(__file__), "..", "lp", "content.json")
+CONTENT_PATH = os.path.join(os.path.dirname(__file__), "..", "docs", "content.json")
 
 REQUIRED_KEYS = [
     "meta", "headline", "worries", "ideals", "gift",
@@ -175,3 +175,62 @@ def test_generate_assets_creates_svg_files(tmp_path):
     assert gift_cover_path.exists(), "gift_cover.svg が生成されていません"
     assert "<svg" in hero_path.read_text(encoding="utf-8")
     assert "<svg" in gift_cover_path.read_text(encoding="utf-8")
+
+
+def test_content_json_media_structure():
+    content = load_content()
+    assert "media" in content, "content.json に 'media' ブロックがありません"
+    m = content["media"]
+    assert "header_video" in m
+    for key in ["worries", "ideals", "gift", "cta1", "profile", "why_free", "why_me", "qa", "postscript"]:
+        assert key in m, f"media に '{key}' がありません"
+        assert "image" in m[key], f"media.{key} に 'image' がありません"
+    assert "story" in m
+    assert len(m["story"]) == 6
+    for i, s in enumerate(m["story"]):
+        assert "image" in s, f"media.story[{i}] に 'image' がありません"
+
+
+def test_generate_lp_with_header_video():
+    from tools_lp import generate_lp
+    content = load_content()
+    content["media"] = content.get("media", {})
+    content["media"]["header_video"] = "https://example.com/vineyard.mp4"
+    html = generate_lp(content)
+    assert "<video" in html
+    assert "https://example.com/vineyard.mp4" in html
+    assert 'autoplay' in html
+    assert 'muted' in html
+    assert 'loop' in html
+
+
+def test_generate_lp_without_header_video():
+    from tools_lp import generate_lp
+    content = load_content()
+    content["media"] = content.get("media", {})
+    content["media"]["header_video"] = ""
+    html = generate_lp(content)
+    assert "<video" not in html
+    assert content["headline"]["catch"] in html
+
+
+def test_generate_lp_with_section_image():
+    from tools_lp import generate_lp
+    content = load_content()
+    content["media"] = content.get("media", {})
+    content["media"]["worries"] = {"image": "https://example.com/worry.jpg"}
+    html = generate_lp(content)
+    assert '<div class="section-image">' in html
+    assert "https://example.com/worry.jpg" in html
+    assert 'loading="lazy"' in html
+
+
+def test_generate_lp_without_section_image():
+    from tools_lp import generate_lp
+    content = load_content()
+    content["media"] = content.get("media", {})
+    content["media"]["worries"] = {"image": ""}
+    html = generate_lp(content)
+    # section-image div は出力されない（他セクションも空なら）
+    # 少なくとも空 URL の img タグは出力されないことを確認
+    assert 'src=""' not in html

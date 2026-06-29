@@ -7,6 +7,26 @@
       "accent": "#C9A84C"
     }
   },
+  "media": {
+    "header_video": "",
+    "worries":    { "image": "" },
+    "ideals":     { "image": "" },
+    "gift":       { "image": "" },
+    "cta1":       { "image": "" },
+    "profile":    { "image": "" },
+    "story": [
+      { "image": "" },
+      { "image": "" },
+      { "image": "" },
+      { "image": "" },
+      { "image": "" },
+      { "image": "" }
+    ],
+    "why_free":   { "image": "" },
+    "why_me":     { "image": "" },
+    "qa":         { "image": "" },
+    "postscript": { "image": "" }
+  },
   "headline": {
     "catch": "売場で30分迷っていた私が、ラベルを見ただけで自信を持って選べるようになった",
     "sub": "知識ゼロ・予算1,500円からでも、失敗しないイタリアワインの選び方"
