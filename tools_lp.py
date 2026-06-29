@@ -178,7 +178,8 @@ def _nl2br(text: str) -> str:
 def _section_image(url: str) -> str:
     if not url:
         return ""
-    return f'<div class="section-image"><img src="{url}" alt="" loading="lazy"></div>'
+    safe_url = url.replace('"', '%22')
+    return f'<div class="section-image"><img src="{safe_url}" alt="" loading="lazy"></div>'
 
 
 def generate_lp(content: dict, assets_rel: str = "assets") -> str:

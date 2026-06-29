@@ -33,8 +33,11 @@ class LPEditorHandler(http.server.BaseHTTPRequestHandler):
         if path == "/":
             self._serve_html(_editor_html())
         elif path == "/content":
-            with open(CONTENT_PATH, encoding="utf-8") as f:
-                self._serve_html(f.read(), content_type="application/json")
+            try:
+                with open(CONTENT_PATH, encoding="utf-8") as f:
+                    self._serve_html(f.read(), content_type="application/json; charset=utf-8")
+            except Exception as e:
+                self._json_response({"error": str(e)}, 500)
         elif path == "/pexels":
             self._serve_pexels(query)
         else:
@@ -73,6 +76,9 @@ class LPEditorHandler(http.server.BaseHTTPRequestHandler):
         if not api_key:
             self._json_response({"error": "PEXELS_API_KEY が未設定です"}, 400)
             return
+        if not q:
+            self._json_response({"error": "検索キーワードを入力してください"}, 400)
+            return
         try:
             if media_type == "video":
                 url = f"https://api.pexels.com/videos/search?query={urllib.parse.quote(q)}&per_page=12"
@@ -90,12 +96,19 @@ class LPEditorHandler(http.server.BaseHTTPRequestHandler):
         raw = self.rfile.read(length)
         try:
             content = json.loads(raw.decode("utf-8"))
-            with open(CONTENT_PATH, "w", encoding="utf-8") as f:
+            tmp_path = CONTENT_PATH + ".tmp"
+            with open(tmp_path, "w", encoding="utf-8") as f:
                 json.dump(content, f, ensure_ascii=False, indent=2)
             from tools_lp import write_lp
             write_lp(content)
+            os.replace(tmp_path, CONTENT_PATH)
             self._json_response({"status": "ok", "message": "保存完了"})
         except Exception as e:
+            # clean up temp file if it exists
+            try:
+                os.remove(CONTENT_PATH + ".tmp")
+            except OSError:
+                pass
             self._json_response({"status": "error", "message": str(e)}, 500)
 
     def _handle_deploy(self):
@@ -272,7 +285,7 @@ async function searchPx(){
   const data=await r.json();
   const grid=document.getElementById('modal-grid');
   grid.innerHTML='';
-  if(data.error){grid.innerHTML=`<p style="padding:16px;color:red">${data.error}</p>`;return;}
+  if(data.error){grid.innerHTML=`<p style="padding:16px;color:red">${esc(data.error)}</p>`;return;}
   const items=_px_type==='video'
     ?(data.videos||[]).map(v=>{const f=(v.video_files||[]).find(x=>x.quality==='hd')||(v.video_files||[])[0];return f?{thumb:v.image,url:f.link}:null;}).filter(Boolean)
     :(data.photos||[]).map(p=>({thumb:p.src.medium,url:p.src.large}));
@@ -313,7 +326,7 @@ function listItems(key,arr){
 }
 
 function render(){
-  const c=C, m=c.media||{};
+  const c=C;
   let h='';
 
   h+=card('ヘッダー動画・メインコピー',`
