@@ -210,7 +210,7 @@ def generate_lp(content: dict, assets_rel: str = "assets") -> str:
             f'    <source src="{header_video}" type="video/mp4">\n'
             f'  </video>\n'
             f'  <div class="hero-content"><div class="container">\n'
-            f'    <h1>{c["headline"]["catch"]}</h1>\n'
+            f'    <h1>{_nl2br(c["headline"]["catch"])}</h1>\n'
             f'    <div class="deco"></div>\n'
             f'    <p class="sub">{c["headline"]["sub"]}</p>\n'
             f'  </div></div>\n'
@@ -220,7 +220,7 @@ def generate_lp(content: dict, assets_rel: str = "assets") -> str:
         hero_div = (
             f'<div class="hero" {hero_style}>\n'
             f'  <div class="container">\n'
-            f'    <h1>{c["headline"]["catch"]}</h1>\n'
+            f'    <h1>{_nl2br(c["headline"]["catch"])}</h1>\n'
             f'    <div class="deco"></div>\n'
             f'    <p class="sub">{c["headline"]["sub"]}</p>\n'
             f'  </div>\n'
