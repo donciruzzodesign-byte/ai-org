@@ -97,6 +97,7 @@ class LPEditorHandler(http.server.BaseHTTPRequestHandler):
 
     def _handle_upload(self):
         import email as _email
+        import time
         ALLOWED = {'.jpg', '.jpeg', '.png', '.gif', '.webp', '.mp4', '.mov', '.webm'}
         content_type = self.headers.get('Content-Type', '')
         length = int(self.headers.get('Content-Length', 0))
@@ -109,22 +110,17 @@ class LPEditorHandler(http.server.BaseHTTPRequestHandler):
                 filename = part.get_filename()
                 if not filename:
                     continue
-                filename = os.path.basename(filename).replace(' ', '_')
                 ext = os.path.splitext(filename)[1].lower()
                 if ext not in ALLOWED:
                     self._json_response({'error': f'対応外形式: {ext}'}, 400)
                     return
                 upload_dir = os.path.join(ROOT, 'docs', 'assets', 'uploads')
                 os.makedirs(upload_dir, exist_ok=True)
-                base, ext = os.path.splitext(filename)
-                dest = os.path.join(upload_dir, filename)
-                counter = 1
-                while os.path.exists(dest):
-                    dest = os.path.join(upload_dir, f'{base}_{counter}{ext}')
-                    counter += 1
+                safe_name = f"upload_{int(time.time())}{ext}"
+                dest = os.path.join(upload_dir, safe_name)
                 with open(dest, 'wb') as f:
                     f.write(part.get_payload(decode=True))
-                url = 'assets/uploads/' + os.path.basename(dest)
+                url = 'assets/uploads/' + safe_name
                 self._json_response({'url': url})
                 return
             self._json_response({'error': 'ファイルが見つかりません'}, 400)
