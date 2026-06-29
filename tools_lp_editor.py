@@ -416,6 +416,7 @@ if __name__ == "__main__":
     import webbrowser
     _load_env()
     PORT = 8765
+    http.server.HTTPServer.allow_reuse_address = True
     server = http.server.HTTPServer(("localhost", PORT), LPEditorHandler)
     url = f"http://localhost:{PORT}"
     print(f"✅ LP エディタ起動: {url}")
