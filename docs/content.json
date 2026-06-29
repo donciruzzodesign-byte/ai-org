@@ -1,6 +1,7 @@
 {
   "meta": {
     "line_url": "https://line.me/R/ti/p/YOUR_LINE_ID",
+    "font_pair": "elegant",
     "colors": {
       "bg": "#F5F0E8",
       "text": "#6B1A2A",

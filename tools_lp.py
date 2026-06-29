@@ -5,25 +5,61 @@ LP_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "docs")
 CONTENT_PATH = os.path.join(LP_DIR, "content.json")
 OUTPUT_PATH = os.path.join(LP_DIR, "index.html")
 
+FONT_PAIRS = {
+    "elegant": {
+        "label": "エレガント",
+        "heading": "'Cormorant Garamond', Georgia, serif",
+        "body": "'Noto Sans JP', sans-serif",
+        "gf": "Cormorant+Garamond:wght@400;600;700&family=Noto+Sans+JP:wght@400;700",
+    },
+    "natural": {
+        "label": "ナチュラル",
+        "heading": "'Playfair Display', Georgia, serif",
+        "body": "'Noto Sans JP', sans-serif",
+        "gf": "Playfair+Display:wght@400;700&family=Noto+Sans+JP:wght@400;700",
+    },
+    "classic": {
+        "label": "クラシック",
+        "heading": "'EB Garamond', Georgia, serif",
+        "body": "'Noto Serif JP', serif",
+        "gf": "EB+Garamond:wght@400;700&family=Noto+Serif+JP:wght@400;700",
+    },
+    "modern": {
+        "label": "モダン",
+        "heading": "'Montserrat', sans-serif",
+        "body": "'Noto Sans JP', sans-serif",
+        "gf": "Montserrat:wght@400;600;700&family=Noto+Sans+JP:wght@400;700",
+    },
+    "wagashi": {
+        "label": "和モダン",
+        "heading": "'Zen Old Mincho', serif",
+        "body": "'Noto Serif JP', serif",
+        "gf": "Zen+Old+Mincho:wght@400;700&family=Noto+Serif+JP:wght@400;700",
+    },
+}
+
 
 def load_content(path: str = CONTENT_PATH) -> dict:
     with open(path, encoding="utf-8") as f:
         return json.load(f)
 
 
-def _css(colors: dict, font_sizes: dict = None) -> str:
+def _css(colors: dict, font_sizes: dict = None, font_pair: str = "elegant") -> str:
     bg, text, accent = colors["bg"], colors["text"], colors["accent"]
     fs = font_sizes or {}
     sz_body = fs.get("body", "16px")
     sz_h1   = fs.get("h1",   "clamp(22px, 5vw, 38px)")
     sz_h2   = fs.get("h2",   "clamp(20px, 4vw, 28px)")
     sz_h3   = fs.get("h3",   "clamp(16px, 3vw, 20px)")
+    fp = FONT_PAIRS.get(font_pair, FONT_PAIRS["elegant"])
+    heading_family = fp["heading"]
+    body_family = fp["body"]
     return f"""
 * {{ box-sizing: border-box; margin: 0; padding: 0; }}
 body {{
     background: {bg};
     color: {text};
-    font-family: 'Noto Sans JP', sans-serif;
+    font-family: {body_family};
     font-size: {sz_body};
     line-height: 1.8;
 }}
@@ -33,7 +69,7 @@ body {{
     padding: 0 20px;
 }}
 h1, h2, h3 {{
-    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-family: {heading_family};
     color: {accent};
     line-height: 1.4;
 }}
@@ -69,7 +105,7 @@ ul.bullets li::before {{
     padding: 20px 32px;
     background: {accent};
     color: {text};
-    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-family: {heading_family};
     font-size: 20px;
     font-weight: bold;
     text-align: center;
@@ -113,7 +149,7 @@ ul.bullets li::before {{
     margin-top: 24px;
 }}
 .gift-title {{
-    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-family: {heading_family};
     font-size: clamp(20px, 4vw, 28px);
     color: {accent};
     font-weight: bold;
@@ -134,7 +170,7 @@ ul.bullets li::before {{
     text-align: left;
     font-size: 15px;
     color: {text};
-    font-family: 'Noto Sans JP', sans-serif;
+    font-family: {body_family};
     cursor: pointer;
     display: flex;
     justify-content: space-between;
@@ -146,7 +182,7 @@ ul.bullets li::before {{
 .accordion-item.open .accordion-body {{ display: block; }}
 .accordion-item.open .accordion-icon {{ transform: rotate(45deg); }}
 .profile-name {{
-    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-family: {heading_family};
     font-size: clamp(20px, 4vw, 26px);
     color: {accent};
     margin-bottom: 16px;
@@ -189,8 +225,12 @@ def _section_image(url: str) -> str:
 
 def generate_lp(content: dict, assets_rel: str = "assets") -> str:
     c = content
-    colors = c["meta"]["colors"]
-    line_url = c["meta"]["line_url"]
+    meta = c.get("meta", {})
+    colors = meta["colors"]
+    line_url = meta["line_url"]
+    font_pair = meta.get("font_pair", "elegant")
+    fp = FONT_PAIRS.get(font_pair, FONT_PAIRS["elegant"])
+    gf_url = f"https://fonts.googleapis.com/css2?family={fp['gf']}&display=swap"
     media = c.get("media", {})
     header_video = media.get("header_video", "")
 
@@ -276,8 +316,8 @@ def generate_lp(content: dict, assets_rel: str = "assets") -> str:
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{c["headline"]["catch"]}</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Noto+Sans+JP:wght@400;700&display=swap">
-  <style>{_css(colors, c.get("meta", {}).get("font_sizes", {}))}</style>
+  <link rel="stylesheet" href="{gf_url}">
+  <style>{_css(colors, meta.get("font_sizes", {}), font_pair)}</style>
 </head>
 <body>
 

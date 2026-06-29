@@ -403,6 +403,21 @@ function render(){
     <textarea data-p="postscript">${esc(c.postscript||'')}</textarea>
   `);
 
+  const fp=c.meta?.font_pair||'elegant';
+  const fpOptions=[
+    {v:'elegant', l:'エレガント',    d:'Cormorant Garamond × Noto Sans JP'},
+    {v:'natural', l:'ナチュラル',    d:'Playfair Display × Noto Sans JP'},
+    {v:'classic', l:'クラシック',    d:'EB Garamond × Noto Serif JP'},
+    {v:'modern',  l:'モダン',        d:'Montserrat × Noto Sans JP'},
+    {v:'wagashi', l:'和モダン',      d:'Zen Old Mincho × Noto Serif JP'},
+  ];
+  const fpOpts=fpOptions.map(o=>`<option value="${o.v}"${fp===o.v?' selected':''}>${o.l} — ${o.d}</option>`).join('');
+  h+=card('フォントペア設定',`
+    <label>フォントの組み合わせ</label>
+    <select data-p="meta.font_pair">${fpOpts}</select>
+    <p style="margin-top:8px;font-size:12px;color:#888">💡 保存・デプロイするとLPのフォントが変わります</p>
+  `);
+
   const fs=c.meta?.font_sizes||{};
   h+=card('フォントサイズ設定',`
     <label>本文サイズ（例: 16px）</label>
