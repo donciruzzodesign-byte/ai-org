@@ -207,8 +207,8 @@ footer {{ text-align: center; padding: 32px 0; font-size: 12px; opacity: 0.5; }}
     padding: 80px 20px 60px;
     text-align: center;
 }}
-.section-image {{ width: 100%; max-height: 300px; overflow: hidden; margin-bottom: 24px; }}
-.section-image img {{ width: 100%; height: 300px; object-fit: cover; display: block; }}
+.section-image {{ width: 100%; margin-bottom: 24px; }}
+.section-image img {{ width: 100%; height: auto; display: block; }}
 """
 
 
