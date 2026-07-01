@@ -17,51 +17,111 @@
   "media": {
     "header_video": "https://videos.pexels.com/video-files/27459521/12148536_640_360_25fps.mp4",
     "worries": {
-      "image": ""
+      "image": "",
+      "cols": "1",
+      "max_width": "100%",
+      "image2": "",
+      "image3": ""
     },
     "ideals": {
-      "image": "https://images.pexels.com/photos/19721743/pexels-photo-19721743.jpeg?auto=compress&cs=tinysrgb&h=650&w=940"
+      "image": "https://images.pexels.com/photos/19721743/pexels-photo-19721743.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
+      "cols": "3",
+      "max_width": "33%",
+      "image2": "https://images.pexels.com/photos/15880506/pexels-photo-15880506.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
+      "image3": "https://images.pexels.com/photos/27662697/pexels-photo-27662697.jpeg?auto=compress&cs=tinysrgb&h=650&w=940"
     },
     "gift": {
-      "image": "assets/uploads/upload_1782760879.png"
+      "image": "assets/uploads/upload_1782760879.png",
+      "cols": "1",
+      "max_width": "100%",
+      "image2": "",
+      "image3": ""
     },
     "cta1": {
-      "image": ""
+      "image": "",
+      "cols": "1",
+      "max_width": "100%",
+      "image2": "",
+      "image3": ""
     },
     "profile": {
-      "image": ""
+      "image": "",
+      "cols": "1",
+      "max_width": "100%",
+      "image2": "",
+      "image3": ""
     },
     "story": [
       {
-        "image": ""
+        "image": "",
+        "cols": "1",
+        "max_width": "100%",
+        "image2": "",
+        "image3": ""
       },
       {
-        "image": ""
+        "image": "",
+        "cols": "1",
+        "max_width": "100%",
+        "image2": "",
+        "image3": ""
       },
       {
-        "image": ""
+        "image": "",
+        "cols": "1",
+        "max_width": "100%",
+        "image2": "",
+        "image3": ""
       },
       {
-        "image": ""
+        "image": "",
+        "cols": "1",
+        "max_width": "100%",
+        "image2": "",
+        "image3": ""
       },
       {
-        "image": ""
+        "image": "",
+        "cols": "1",
+        "max_width": "100%",
+        "image2": "",
+        "image3": ""
       },
       {
-        "image": ""
+        "image": "",
+        "cols": "1",
+        "max_width": "100%",
+        "image2": "",
+        "image3": ""
       }
     ],
     "why_free": {
-      "image": ""
+      "image": "",
+      "cols": "1",
+      "max_width": "100%",
+      "image2": "",
+      "image3": ""
     },
     "why_me": {
-      "image": ""
+      "image": "",
+      "cols": "1",
+      "max_width": "100%",
+      "image2": "",
+      "image3": ""
     },
     "qa": {
-      "image": ""
+      "image": "",
+      "cols": "1",
+      "max_width": "100%",
+      "image2": "",
+      "image3": ""
     },
     "postscript": {
-      "image": ""
+      "image": "",
+      "cols": "1",
+      "max_width": "100%",
+      "image2": "",
+      "image3": ""
     }
   },
   "headline": {
