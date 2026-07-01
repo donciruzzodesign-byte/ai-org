@@ -401,6 +401,27 @@ function mediaInput(label,id,path,type='photo'){
   const val=path.split('.').reduce((o,k)=>o&&o[isNaN(k)?k:+k],C)||'';
   return `<label>${label}</label><div class="row"><input type="text" id="${id}" data-p="${path}" value="${esc(val)}">${pxBtn(id,type)}</div>`;
 }
+function _imgGrid(m,prefix,basePath){
+  const cols=String(m.cols||1);
+  const maxW=m.max_width||'100%';
+  const colsOpts=['1','2','3'].map(v=>'<option value="'+v+'"'+(cols===v?' selected':'')+'>'+v+'列</option>').join('');
+  const widthOpts=['100%','75%','50%','33%'].map(v=>'<option value="'+v+'"'+(maxW===v?' selected':'')+'>'+v+'</option>').join('');
+  return '<div class="row" style="gap:16px;flex-wrap:wrap;margin-bottom:10px;">'
+    +'<div><label>カラム数</label><br><select data-p="'+basePath+'.cols" style="padding:6px;border:1px solid #ddd;border-radius:4px;">'+colsOpts+'</select></div>'
+    +'<div><label>表示サイズ（幅）</label><br><select data-p="'+basePath+'.max_width" style="padding:6px;border:1px solid #ddd;border-radius:4px;">'+widthOpts+'</select></div>'
+    +'</div>'
+    +mediaInput('写真 1',prefix+'_1',basePath+'.image')
+    +mediaInput('写真 2',prefix+'_2',basePath+'.image2')
+    +mediaInput('写真 3',prefix+'_3',basePath+'.image3');
+}
+function mediaSec(key){
+  const m=(C.media||{})[key]||{};
+  return _imgGrid(m,'img_'+key,'media.'+key);
+}
+function mediaSecStory(i){
+  const m=((C.media||{}).story||[])[i]||{};
+  return _imgGrid(m,'img_st'+i,'media.story.'+i);
+}
 function card(title,bodyHtml){
   return `<div class="card"><div class="card-header" onclick="toggle(this)">${esc(title)}<span class="ico">▼</span></div><div class="card-body">${bodyHtml}</div></div>`;
 }
@@ -420,17 +441,17 @@ function render(){
   `);
 
   h+=card('お悩みセクション',`
-    ${mediaInput('セクション写真 URL','img_worries','media.worries.image')}
+    ${mediaSec('worries')}
     <label>お悩みリスト</label>${listItems('worries',c.worries)}
   `);
 
   h+=card('こうなりたい（理想）',`
-    ${mediaInput('セクション写真 URL','img_ideals','media.ideals.image')}
+    ${mediaSec('ideals')}
     <label>理想リスト</label>${listItems('ideals',c.ideals)}
   `);
 
   h+=card('プレゼントセクション',`
-    ${mediaInput('セクション写真 URL','img_gift','media.gift.image')}
+    ${mediaSec('gift')}
     <label>タイトル</label><input type="text" data-p="gift.title" value="${esc(c.gift?.title||'')}">
     <label>サブタイトル</label><input type="text" data-p="gift.subtitle" value="${esc(c.gift?.subtitle||'')}">
     <label>説明文</label><textarea data-p="gift.description">${esc(c.gift?.description||'')}</textarea>
@@ -438,13 +459,13 @@ function render(){
   `);
 
   h+=card('LINE 登録セクション',`
-    ${mediaInput('セクション写真 URL','img_cta1','media.cta1.image')}
+    ${mediaSec('cta1')}
     <label>CTA ボタンテキスト</label><input type="text" data-p="cta_text" value="${esc(c.cta_text||'')}">
     <label>手順リスト</label>${listItems('line_steps',c.line_steps)}
   `);
 
   h+=card('プロフィールセクション',`
-    ${mediaInput('セクション写真 URL','img_profile','media.profile.image')}
+    ${mediaSec('profile')}
     <label>名前</label><input type="text" data-p="profile.name" value="${esc(c.profile?.name||'')}">
     <label>本文</label><textarea data-p="profile.body">${esc(c.profile?.body||'')}</textarea>
   `);
@@ -452,19 +473,19 @@ function render(){
   const storyParts=(c.story||[]).map((p,i)=>`
     <fieldset>
       <legend>パート ${i+1}「${esc(p.title)}」</legend>
-      ${mediaInput('写真 URL',`img_st${i}`,`media.story.${i}.image`)}
+      ${mediaSecStory(i)}
       <label>タイトル</label><input type="text" data-p="story.${i}.title" value="${esc(p.title||'')}">
       <label>本文</label><textarea data-p="story.${i}.body">${esc(p.body||'')}</textarea>
     </fieldset>`).join('');
   h+=card(`ストーリーセクション（全${(c.story||[]).length}パート）`,storyParts);
 
   h+=card('なんで無料なの？',`
-    ${mediaInput('セクション写真 URL','img_wf','media.why_free.image')}
+    ${mediaSec('why_free')}
     <textarea data-p="why_free">${esc(c.why_free||'')}</textarea>
   `);
 
   h+=card('あなただからなんです！',`
-    ${mediaInput('セクション写真 URL','img_wm','media.why_me.image')}
+    ${mediaSec('why_me')}
     <textarea data-p="why_me">${esc(c.why_me||'')}</textarea>
   `);
 
@@ -474,12 +495,12 @@ function render(){
       <label>回答</label><textarea data-qa="a">${esc(q.a||'')}</textarea>
     </div>`).join('');
   h+=card('よくあるご質問',`
-    ${mediaInput('セクション写真 URL','img_qa','media.qa.image')}
+    ${mediaSec('qa')}
     ${qaHtml}
   `);
 
   h+=card('追伸',`
-    ${mediaInput('セクション写真 URL','img_ps','media.postscript.image')}
+    ${mediaSec('postscript')}
     <textarea data-p="postscript">${esc(c.postscript||'')}</textarea>
   `);
 

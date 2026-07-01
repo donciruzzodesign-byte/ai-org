@@ -221,7 +221,7 @@ def test_generate_lp_with_section_image():
     content["media"] = content.get("media", {})
     content["media"]["worries"] = {"image": "https://example.com/worry.jpg"}
     html = generate_lp(content)
-    assert '<div class="section-image">' in html
+    assert 'class="section-image"' in html
     assert "https://example.com/worry.jpg" in html
     assert 'loading="lazy"' in html
 

@@ -221,11 +221,26 @@ def _nl2br(text: str) -> str:
     return text.replace("\n", "<br>")
 
 
-def _section_image(url: str) -> str:
-    if not url:
+def _section_images(m: dict) -> str:
+    if not m:
         return ""
-    safe_url = url.replace('"', '%22')
-    return f'<div class="section-image"><img src="{safe_url}" alt="" loading="lazy"></div>'
+    cols = min(int(m.get("cols", 1) or 1), 3)
+    max_width = m.get("max_width", "100%") or "100%"
+    urls = [m.get(k, "").replace('"', '%22') for k in ["image", "image2", "image3"]]
+    urls = [u for u in urls[:cols] if u]
+    if not urls:
+        return ""
+    if len(urls) == 1:
+        inner = f'<img src="{urls[0]}" alt="" loading="lazy" style="width:100%;height:auto;display:block;">'
+    else:
+        imgs = "".join(
+            f'<div><img src="{u}" alt="" loading="lazy" style="width:100%;height:auto;display:block;"></div>'
+            for u in urls
+        )
+        inner = f'<div style="display:grid;grid-template-columns:repeat({len(urls)},1fr);gap:8px;">{imgs}</div>'
+    mw_style = f"max-width:{max_width};" if max_width != "100%" else ""
+    style = f"{mw_style}margin:0 auto 24px;" if mw_style else "margin-bottom:24px;"
+    return f'<div class="section-image" style="{style}">{inner}</div>'
 
 
 def generate_lp(content: dict, assets_rel: str = "assets") -> str:
@@ -287,7 +302,7 @@ def generate_lp(content: dict, assets_rel: str = "assets") -> str:
     story_media = media.get("story", [])
     story_html = "\n".join(
         f'<div class="story-part">'
-        f'{_section_image(story_media[i].get("image", "") if i < len(story_media) else "")}'
+        f'{_section_images(story_media[i] if i < len(story_media) else {})}'
         f'<h3>{p["title"]}</h3><p>{_nl2br(p["body"])}</p>'
         f'</div>'
         for i, p in enumerate(c["story"])
@@ -304,15 +319,15 @@ def generate_lp(content: dict, assets_rel: str = "assets") -> str:
         f'{c["cta_text"]}</a>'
     )
 
-    img_worries    = _section_image(media.get("worries",    {}).get("image", ""))
-    img_ideals     = _section_image(media.get("ideals",     {}).get("image", ""))
-    img_gift       = _section_image(media.get("gift",       {}).get("image", ""))
-    img_cta1       = _section_image(media.get("cta1",       {}).get("image", ""))
-    img_profile    = _section_image(media.get("profile",    {}).get("image", ""))
-    img_why_free   = _section_image(media.get("why_free",   {}).get("image", ""))
-    img_why_me     = _section_image(media.get("why_me",     {}).get("image", ""))
-    img_qa         = _section_image(media.get("qa",         {}).get("image", ""))
-    img_postscript = _section_image(media.get("postscript", {}).get("image", ""))
+    img_worries    = _section_images(media.get("worries",    {}))
+    img_ideals     = _section_images(media.get("ideals",     {}))
+    img_gift       = _section_images(media.get("gift",       {}))
+    img_cta1       = _section_images(media.get("cta1",       {}))
+    img_profile    = _section_images(media.get("profile",    {}))
+    img_why_free   = _section_images(media.get("why_free",   {}))
+    img_why_me     = _section_images(media.get("why_me",     {}))
+    img_qa         = _section_images(media.get("qa",         {}))
+    img_postscript = _section_images(media.get("postscript", {}))
 
     return f"""<!DOCTYPE html>
 <html lang="ja">
