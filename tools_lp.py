@@ -212,8 +212,16 @@ footer {{ text-align: center; padding: 32px 0; font-size: 12px; opacity: 0.5; }}
     padding: 80px 20px 60px;
     text-align: center;
 }}
-.section-image {{ width: 100%; margin-bottom: 24px; }}
-.section-image img {{ width: 100%; height: auto; display: block; }}
+.section-image {{ width: 100%; margin-bottom: 24px; overflow: hidden; }}
+.section-image img {{ width: 100%; height: auto; display: block; will-change: transform;
+    animation: kenburns 10s ease-in-out infinite alternate; }}
+@keyframes kenburns {{
+  from {{ transform: translateY(var(--py,0px)) scale(1); }}
+  to   {{ transform: translateY(var(--py,0px)) scale(1.06); }}
+}}
+.fade-in {{ opacity: 0; transform: translateY(20px);
+    transition: opacity 0.8s ease, transform 0.8s ease; }}
+.fade-in.visible {{ opacity: 1; transform: translateY(0); }}
 """
 
 
@@ -459,6 +467,28 @@ document.querySelectorAll('.accordion-btn').forEach(function(btn) {{
     this.parentElement.classList.toggle('open');
   }});
 }});
+
+// フェードイン on scroll
+var fadeObs = new IntersectionObserver(function(entries) {{
+  entries.forEach(function(e) {{
+    if (e.isIntersecting) {{ e.target.classList.add('visible'); fadeObs.unobserve(e.target); }}
+  }});
+}}, {{ threshold: 0.1 }});
+document.querySelectorAll('.section-image, .story-part, h2, .gift-box, .steps, .profile-name').forEach(function(el) {{
+  el.classList.add('fade-in');
+  fadeObs.observe(el);
+}});
+
+// パララックス + Ken Burns 合成（CSS カスタムプロパティ経由）
+function applyParallax() {{
+  document.querySelectorAll('.section-image img').forEach(function(img) {{
+    var rect = img.closest('.section-image').getBoundingClientRect();
+    var offset = (window.innerHeight / 2 - rect.top - rect.height / 2) * 0.07;
+    img.style.setProperty('--py', offset + 'px');
+  }});
+}}
+window.addEventListener('scroll', applyParallax, {{ passive: true }});
+applyParallax();
 </script>
 </body>
 </html>"""
