@@ -1,5 +1,6 @@
 import json
 import os
+import re
 
 LP_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "docs")
 CONTENT_PATH = os.path.join(LP_DIR, "content.json")
@@ -222,11 +223,29 @@ footer {{ text-align: center; padding: 32px 0; font-size: 12px; opacity: 0.5; }}
 .fade-in {{ opacity: 0; transform: translateY(20px);
     transition: opacity 0.8s ease, transform 0.8s ease; }}
 .fade-in.visible {{ opacity: 1; transform: translateY(0); }}
+.pw {{ display: inline-block; }}
 """
 
 
-def _nl2br(text: str) -> str:
-    return text.replace("\n", "<br>")
+# 句読点（＋直後の閉じ括弧）で文節を区切るパターン
+_PUNCT_RE = re.compile(r"([、。！？]+[」』）]*)")
+
+
+def _punct_spans(line: str) -> str:
+    """句読点の直後だけで折り返されるよう、文節を span.pw で包む。"""
+    parts = _PUNCT_RE.split(line)
+    segs = []
+    for i in range(0, len(parts), 2):
+        punct = parts[i + 1] if i + 1 < len(parts) else ""
+        if parts[i] or punct:
+            segs.append(parts[i] + punct)
+    if len(segs) <= 1:
+        return line
+    return "".join(f'<span class="pw">{s}</span>' for s in segs)
+
+
+def _fmt(text: str) -> str:
+    return "<br>".join(_punct_spans(line) for line in text.split("\n"))
 
 
 def _section_images(m: dict) -> str:
@@ -283,9 +302,9 @@ def generate_lp(content: dict, assets_rel: str = "assets") -> str:
             f'    <source src="{header_video}" type="video/mp4">\n'
             f'  </video>\n'
             f'  <div class="hero-content"><div class="container">\n'
-            f'    <h1>{_nl2br(c["headline"]["catch"])}</h1>\n'
+            f'    <h1>{_fmt(c["headline"]["catch"])}</h1>\n'
             f'    <div class="deco"></div>\n'
-            f'    <p class="sub">{c["headline"]["sub"]}</p>\n'
+            f'    <p class="sub">{_fmt(c["headline"]["sub"])}</p>\n'
             f'  </div></div>\n'
             f'</div>'
         )
@@ -293,32 +312,32 @@ def generate_lp(content: dict, assets_rel: str = "assets") -> str:
         hero_div = (
             f'<div class="hero" {hero_style}>\n'
             f'  <div class="container">\n'
-            f'    <h1>{_nl2br(c["headline"]["catch"])}</h1>\n'
+            f'    <h1>{_fmt(c["headline"]["catch"])}</h1>\n'
             f'    <div class="deco"></div>\n'
-            f'    <p class="sub">{c["headline"]["sub"]}</p>\n'
+            f'    <p class="sub">{_fmt(c["headline"]["sub"])}</p>\n'
             f'  </div>\n'
             f'</div>'
         )
 
-    worries_html = "\n".join(f"<li>{w}</li>" for w in c["worries"])
-    ideals_html = "\n".join(f"<li>{i}</li>" for i in c["ideals"])
-    gift_items_html = "\n".join(f"<li>{item}</li>" for item in c["gift"]["items"])
+    worries_html = "\n".join(f"<li>{_fmt(w)}</li>" for w in c["worries"])
+    ideals_html = "\n".join(f"<li>{_fmt(i)}</li>" for i in c["ideals"])
+    gift_items_html = "\n".join(f"<li>{_fmt(item)}</li>" for item in c["gift"]["items"])
     steps_html = "\n".join(
-        f'<div class="step"><div class="step-num">{i+1}</div><div>{s}</div></div>'
+        f'<div class="step"><div class="step-num">{i+1}</div><div>{_fmt(s)}</div></div>'
         for i, s in enumerate(c["line_steps"])
     )
     story_media = media.get("story", [])
     story_html = "\n".join(
         f'<div class="story-part">'
         f'{_section_images(story_media[i] if i < len(story_media) else {})}'
-        f'<h3>{p["title"]}</h3><p>{_nl2br(p["body"])}</p>'
+        f'<h3>{p["title"]}</h3><p>{_fmt(p["body"])}</p>'
         f'</div>'
         for i, p in enumerate(c["story"])
     )
     qa_html = "\n".join(
         f'''<div class="accordion-item">
   <button class="accordion-btn">Q. {item["q"]}<span class="accordion-icon">+</span></button>
-  <div class="accordion-body"><p>{item["a"]}</p></div>
+  <div class="accordion-body"><p>{_fmt(item["a"])}</p></div>
 </div>'''
         for item in c["qa"]
     )
@@ -376,8 +395,8 @@ def generate_lp(content: dict, assets_rel: str = "assets") -> str:
     <div class="divider"></div>
     <div class="gift-box">
       <div class="gift-title">『{c["gift"]["title"]}』</div>
-      <div class="gift-subtitle">{c["gift"].get("subtitle", "")}</div>
-      <p>{c["gift"]["description"]}</p>
+      <div class="gift-subtitle">{_fmt(c["gift"].get("subtitle", ""))}</div>
+      <p>{_fmt(c["gift"]["description"])}</p>
       <ul class="bullets" style="margin-top:16px">{gift_items_html}</ul>
     </div>
   </div>
@@ -399,7 +418,7 @@ def generate_lp(content: dict, assets_rel: str = "assets") -> str:
     <h2>はじめまして</h2>
     <div class="divider"></div>
     <div class="profile-name">{c["profile"]["name"]}</div>
-    <p>{_nl2br(c["profile"]["body"])}</p>
+    <p>{_fmt(c["profile"]["body"])}</p>
   </div>
 </section>
 
@@ -416,7 +435,7 @@ def generate_lp(content: dict, assets_rel: str = "assets") -> str:
     {img_why_free}
     <h2>なんで無料なの？</h2>
     <div class="divider"></div>
-    <p>{_nl2br(c["why_free"])}</p>
+    <p>{_fmt(c["why_free"])}</p>
   </div>
 </section>
 
@@ -425,7 +444,7 @@ def generate_lp(content: dict, assets_rel: str = "assets") -> str:
     {img_why_me}
     <h2>あなただからなんです！</h2>
     <div class="divider"></div>
-    <p>{_nl2br(c["why_me"])}</p>
+    <p>{_fmt(c["why_me"])}</p>
   </div>
 </section>
 
@@ -443,7 +462,7 @@ def generate_lp(content: dict, assets_rel: str = "assets") -> str:
     {img_postscript}
     <h2>追伸</h2>
     <div class="divider"></div>
-    <p>{_nl2br(c["postscript"])}</p>
+    <p>{_fmt(c["postscript"])}</p>
   </div>
 </div>
 

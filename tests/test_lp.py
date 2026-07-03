@@ -96,17 +96,19 @@ def test_generate_lp_contains_all_sections():
     from tools_lp import generate_lp
     content = load_content()
     html = generate_lp(content)
-    assert content["headline"]["catch"] in html
-    assert content["headline"]["sub"] in html
-    assert content["worries"][0] in html
-    assert content["ideals"][0] in html
-    assert content["gift"]["title"] in html
-    assert content["cta_text"] in html
-    assert content["meta"]["line_url"] in html
-    assert content["profile"]["name"] in html
-    assert content["story"][0]["title"] in html
-    assert content["qa"][0]["q"] in html
-    assert content["postscript"][:20] in html
+    # 句読点折り返し用の span を除去してから原文の包含を確認
+    plain = html.replace('<span class="pw">', "").replace("</span>", "")
+    assert content["headline"]["catch"] in plain
+    assert content["headline"]["sub"] in plain
+    assert content["worries"][0] in plain
+    assert content["ideals"][0] in plain
+    assert content["gift"]["title"] in plain
+    assert content["cta_text"] in plain
+    assert content["meta"]["line_url"] in plain
+    assert content["profile"]["name"] in plain
+    assert content["story"][0]["title"] in plain
+    assert content["qa"][0]["q"] in plain
+    assert content["postscript"][:20] in plain
 
 
 def test_generate_lp_uses_correct_colors():
@@ -235,6 +237,43 @@ def test_generate_lp_without_section_image():
     # section-image div は出力されない（他セクションも空なら）
     # 少なくとも空 URL の img タグは出力されないことを確認
     assert 'src=""' not in html
+
+
+def test_fmt_wraps_segments_at_punctuation():
+    # 句読点（、。！？）の直後だけで折り返せるよう、文節を span.pw で包む
+    from tools_lp import _fmt
+    html = _fmt("私は昔、ワインが苦手でした。今は大好きです！本当ですよ")
+    assert html == (
+        '<span class="pw">私は昔、</span>'
+        '<span class="pw">ワインが苦手でした。</span>'
+        '<span class="pw">今は大好きです！</span>'
+        '<span class="pw">本当ですよ</span>'
+    )
+
+
+def test_fmt_keeps_closing_bracket_with_segment():
+    # 「。」のような閉じ括弧は直前の文節側に残す
+    from tools_lp import _fmt
+    html = _fmt("「はじめまして。」と言った、あの日")
+    assert '<span class="pw">「はじめまして。」</span>' in html
+
+
+def test_fmt_without_punctuation_returns_plain_text():
+    from tools_lp import _fmt
+    assert _fmt("ワイン") == "ワイン"
+
+
+def test_fmt_converts_newline_to_br():
+    from tools_lp import _fmt
+    assert _fmt("一行目\n二行目") == "一行目<br>二行目"
+
+
+def test_generate_lp_has_punct_wrap_style_and_spans():
+    from tools_lp import generate_lp
+    content = load_content()
+    html = generate_lp(content)
+    assert 'class="pw"' in html
+    assert ".pw" in html  # display:inline-block のスタイル定義
 
 
 def test_section_images_shows_photo_in_slot2_when_slot1_empty():
