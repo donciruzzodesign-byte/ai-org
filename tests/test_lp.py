@@ -235,3 +235,13 @@ def test_generate_lp_without_section_image():
     # section-image div は出力されない（他セクションも空なら）
     # 少なくとも空 URL の img タグは出力されないことを確認
     assert 'src=""' not in html
+
+
+def test_section_images_shows_photo_in_slot2_when_slot1_empty():
+    # エディタで「写真1」を空のまま「写真2」だけに画像を入れ、
+    # 「カラム数」を初期値の1のまま保存した場合でも、その写真は表示されるべき。
+    from tools_lp import _section_images
+    m = {"image": "", "cols": "1", "max_width": "100%",
+         "image2": "https://example.com/photo2.jpg", "image3": ""}
+    html = _section_images(m)
+    assert "https://example.com/photo2.jpg" in html

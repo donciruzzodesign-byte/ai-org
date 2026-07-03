@@ -235,7 +235,7 @@ def _section_images(m: dict) -> str:
     cols = min(int(m.get("cols", 1) or 1), 3)
     max_width = m.get("max_width", "100%") or "100%"
     urls = [m.get(k, "").replace('"', '%22') for k in ["image", "image2", "image3"]]
-    urls = [u for u in urls[:cols] if u]
+    urls = [u for u in urls if u][:cols]
     if not urls:
         return ""
     if len(urls) == 1:
