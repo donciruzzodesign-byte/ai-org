@@ -395,6 +395,52 @@ def coffee_friday_task():
         print(f"  ❌ 金曜：コーヒーSNS投稿文＋商品リスト 失敗: {e}")
 
 
+def _note_article_prompt(context: str, drink_label: str, fallback_theme: str) -> str:
+    return (
+        f"以下は今週の{drink_label}コンテンツのログ（テーマ提案・動画台本など）です。\n\n"
+        f"{context}\n\n"
+        f"上記の動画台本をもとに、動画を見なくても単体の読み物として成立する note 記事を作成してください。"
+        f"台本がない場合はテーマ情報から作成し、テーマ情報もない場合は「{fallback_theme}」で作成してください。\n\n"
+        "【読者】30〜50代女性。話し言葉の台本を、noteにふさわしい丁寧な書き言葉に整えてください。\n\n"
+        "【出力形式】以下の4セクションをこの順で、Markdownで出力してください。\n"
+        "## 投稿メモ\n"
+        "- 見出し画像: images/scene_01.png を使用\n"
+        "- 推奨公開日: 土曜（動画公開と同日）\n\n"
+        "## タイトル案\n"
+        "noteの検索・おすすめ面を意識したタイトルを3案\n\n"
+        "## 本文\n"
+        "2,000〜3,000字。## 見出しで区切り、リード → 本編 → まとめ → YouTube動画への誘導CTA の構成\n\n"
+        "## ハッシュタグ\n"
+        "note用ハッシュタグを5〜8個"
+    )
+
+
+def tuesday_note_task():
+    try:
+        context = _read_todays_log()
+        prompt = _note_article_prompt(context, "ワイン", "イタリアワインの基本：品種と産地の覚え方")
+        article = run_agent("creator", prompt, "火曜：note記事作成（ワイン）")
+        date_str = datetime.now().strftime("%Y-%m-%d")
+        output_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "output", f"{date_str}-wine")
+        path = _write_note_article(article, output_dir)
+        print(f"  📝 note記事保存: {path}")
+    except Exception as e:
+        print(f"  ❌ 火曜：note記事作成（ワイン） 失敗: {e}")
+
+
+def coffee_tuesday_note_task():
+    try:
+        context = _read_todays_log()
+        prompt = _note_article_prompt(context, "コーヒー", "イタリアコーヒーの基本：エスプレッソ文化とバールの楽しみ方")
+        article = run_agent("creator", prompt, "火曜：note記事作成（コーヒー）")
+        date_str = datetime.now().strftime("%Y-%m-%d")
+        output_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "output", f"{date_str}-coffee")
+        path = _write_note_article(article, output_dir)
+        print(f"  📝 note記事保存: {path}")
+    except Exception as e:
+        print(f"  ❌ 火曜：note記事作成（コーヒー） 失敗: {e}")
+
+
 def main():
     schedule.every().monday.at("09:00").do(monday_task)
     schedule.every().monday.at("09:30").do(regional_wines_task)
@@ -410,6 +456,8 @@ def main():
     schedule.every().tuesday.at("12:00").do(coffee_tuesday_video_task)
     schedule.every().tuesday.at("09:30").do(tuesday_express_task)
     schedule.every().tuesday.at("10:30").do(coffee_tuesday_express_task)
+    schedule.every().tuesday.at("13:00").do(tuesday_note_task)
+    schedule.every().tuesday.at("13:30").do(coffee_tuesday_note_task)
 
     print("=" * 50)
     print("AI組織 週次スケジューラー起動中")
@@ -418,6 +466,7 @@ def main():
     print("月10:00 コーヒーテーマ / 月10:30 地域別コーヒー / 火10:00 コーヒー台本 / 金10:00 コーヒーSNS")
     print("火 11:00 ワイン動画素材 / 火 12:00 コーヒー動画素材")
     print("火 09:30 ワインExpress素材 / 火 10:30 コーヒーExpress素材")
+    print("火 13:00 ワインnote記事 / 火 13:30 コーヒーnote記事")
     print("停止するには Ctrl+C")
     print("=" * 50)
 
