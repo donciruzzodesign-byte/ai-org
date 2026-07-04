@@ -50,6 +50,8 @@ ELEVENLABS_VOICE_ID=...     # ElevenLabs ボイスID
 | 火 | 10:00 | コーヒー動画台本作成 | creator |
 | 火 | 11:00 | ワイン動画素材生成（画像・B-roll・AEスクリプト） | video |
 | 火 | 12:00 | コーヒー動画素材生成 | video |
+| 火 | 13:00 | ワインnote記事原稿生成 | creator |
+| 火 | 13:30 | コーヒーnote記事原稿生成 | creator |
 | 水 | 09:00 | レビュー通知（手動確認） | — |
 | 木 | — | AE で auto_edit.jsx 実行 → 仕上げ（オーナー手動） | — |
 | 金 | 09:00 | SNS投稿文＋商品リスト | marketer |
@@ -87,6 +89,7 @@ python3 -m pytest tests/ -v
 | `timeline.json` | シーン構成データ |
 | `edit_guide.md` | After Effects 編集手順 |
 | `auto_edit.jsx` | AE自動配置スクリプト（File→Scripts→Run で実行） |
+| `note_article.md` | note記事原稿（投稿メモ・タイトル案・本文・ハッシュタグ。水曜レビュー時に手動でnoteへコピペ） |
 
 ## Claude Code でのエージェント呼び出し方
 
