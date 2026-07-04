@@ -1,5 +1,6 @@
 import os
 import sys
+from unittest.mock import patch
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
@@ -21,9 +22,6 @@ def test_write_note_article_creates_missing_dir(tmp_path):
     path = _write_note_article("本文", output_dir)
 
     assert os.path.isfile(path)
-
-
-from unittest.mock import patch
 
 
 def test_note_task_functions_are_callable():
@@ -72,9 +70,12 @@ def test_coffee_tuesday_note_task_writes_article(tmp_path):
     assert article_path.is_file()
 
 
-def test_note_tasks_catch_exceptions():
+def test_note_tasks_catch_exceptions(capsys):
     """run_agent が失敗してもタスク関数は例外を外に漏らさない。"""
     import runner
     with patch("runner.run_agent", side_effect=Exception("API error")):
         runner.tuesday_note_task()
         runner.coffee_tuesday_note_task()
+    out = capsys.readouterr().out
+    assert "火曜：note記事作成（ワイン） 失敗" in out
+    assert "火曜：note記事作成（コーヒー） 失敗" in out
