@@ -111,6 +111,15 @@ def _read_todays_log() -> str:
         return ""
 
 
+def _write_note_article(text: str, output_dir: str) -> str:
+    """note記事原稿を output_dir/note_article.md に保存し、パスを返す。"""
+    os.makedirs(output_dir, exist_ok=True)
+    path = os.path.join(output_dir, "note_article.md")
+    with open(path, "w", encoding="utf-8") as f:
+        f.write(text)
+    return path
+
+
 def monday_task():
     try:
         run_agent(
