@@ -477,6 +477,7 @@ def generate_lp(content: dict, assets_rel: str = "assets") -> str:
   <div class="container" style="text-align:center">
     <h2>さあ、一緒に始めましょう</h2>
     <div class="divider" style="margin:16px auto 32px"></div>
+    <div class="steps">{steps_html}</div>
     {cta_btn}
   </div>
 </section>

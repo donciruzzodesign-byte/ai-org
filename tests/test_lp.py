@@ -219,6 +219,16 @@ def test_hero_video_has_overlay_for_readability():
     assert "text-shadow" in html
 
 
+def test_line_steps_appear_in_final_cta_section():
+    """LINE追加手順は「公式LINE追加の手順」と最終CTAセクションの2箇所に表示される。"""
+    from tools_lp import generate_lp
+    content = load_content()
+    html = generate_lp(content)
+    assert html.count('<div class="steps">') == 2
+    final_cta = html.split("さあ、一緒に始めましょう")[1]
+    assert '<div class="steps">' in final_cta
+
+
 def test_generate_lp_without_header_video():
     from tools_lp import generate_lp
     content = load_content()
