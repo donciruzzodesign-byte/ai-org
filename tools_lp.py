@@ -208,11 +208,17 @@ footer {{ text-align: center; padding: 32px 0; font-size: 12px; opacity: 0.5; }}
     width: 100%; height: 100%;
     object-fit: cover; z-index: 0;
 }}
+.hero-video-overlay {{
+    position: absolute; top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.4); z-index: 0;
+}}
 .hero-content {{
     position: relative; z-index: 1;
     padding: 80px 20px 60px;
     text-align: center;
 }}
+.hero-content h1, .hero-content .sub {{ text-shadow: 0 1px 8px rgba(0, 0, 0, 0.5); }}
 .section-image {{ width: 100%; margin-bottom: 24px; overflow: hidden; }}
 .section-image img {{ width: 100%; height: auto; display: block; will-change: transform;
     animation: kenburns 10s ease-in-out infinite alternate; }}
@@ -301,6 +307,7 @@ def generate_lp(content: dict, assets_rel: str = "assets") -> str:
             f'  <video autoplay muted loop playsinline class="hero-video">\n'
             f'    <source src="{header_video}" type="video/mp4">\n'
             f'  </video>\n'
+            f'  <div class="hero-video-overlay"></div>\n'
             f'  <div class="hero-content"><div class="container">\n'
             f'    <h1>{_fmt(c["headline"]["catch"])}</h1>\n'
             f'    <div class="deco"></div>\n'

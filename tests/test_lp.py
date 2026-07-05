@@ -207,6 +207,18 @@ def test_generate_lp_with_header_video():
     assert 'loop' in html
 
 
+def test_hero_video_has_overlay_for_readability():
+    """動画ヘッダーには文字視認性のための暗色オーバーレイと文字影が入る。"""
+    from tools_lp import generate_lp
+    content = load_content()
+    content["media"] = content.get("media", {})
+    content["media"]["header_video"] = "https://example.com/vineyard.mp4"
+    html = generate_lp(content)
+    assert '<div class="hero-video-overlay">' in html
+    assert ".hero-video-overlay" in html
+    assert "text-shadow" in html
+
+
 def test_generate_lp_without_header_video():
     from tools_lp import generate_lp
     content = load_content()
