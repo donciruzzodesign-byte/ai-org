@@ -187,15 +187,62 @@ def _create_child_page(token: str, parent_page_id: str, title: str) -> Optional[
         return None
 
 
+def _infer_category(title: str, content: str) -> str:
+    if "コーヒー" in title:
+        return "コーヒー"
+    if "ワイン" in title:
+        return "ワイン"
+    coffee = content.count("コーヒー")
+    wine = content.count("ワイン")
+    if coffee > wine:
+        return "コーヒー"
+    if wine > coffee:
+        return "ワイン"
+    return "その他"
+
+
+def _create_database_page(token: str, database_id: str, title: str, category: str) -> Optional[str]:
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "Content-Type": "application/json",
+        "Notion-Version": "2022-06-28",
+    }
+    payload = {
+        "parent": {"database_id": database_id},
+        "properties": {
+            "title": {"title": [{"text": {"content": title}}]},
+            "カテゴリ": {"select": {"name": category}},
+        }
+    }
+    try:
+        resp = requests.post("https://api.notion.com/v1/pages", headers=headers,
+                             json=payload, timeout=15)
+        result = resp.json()
+        if resp.status_code == 200:
+            return result.get("id")
+        return None
+    except Exception:
+        return None
+
+
 def save_to_notion(title: str, content: str) -> str:
     token = os.environ.get("NOTION_API_KEY")
+    database_id = os.environ.get("NOTION_DATABASE_ID")
     page_id = os.environ.get("NOTION_PAGE_ID")
-    if not token or not page_id:
-        return "NOTION_API_KEY または NOTION_PAGE_ID が未設定のためスキップ"
+    if not token or not (database_id or page_id):
+        return "NOTION_API_KEY または NOTION_DATABASE_ID / NOTION_PAGE_ID が未設定のためスキップ"
 
-    child_id = _create_child_page(token, page_id, title)
-    if not child_id:
-        return "子ページ作成エラー: Notion APIが子ページを作成できませんでした"
+    if database_id:
+        child_id = _create_database_page(token, database_id, title,
+                                         _infer_category(title, content))
+        if not child_id:
+            return "ページ作成エラー: Notion APIがデータベースにページを作成できませんでした"
+        created_label = "データベースページ"
+    else:
+        child_id = _create_child_page(token, page_id, title)
+        if not child_id:
+            return "子ページ作成エラー: Notion APIが子ページを作成できませんでした"
+        created_label = "子ページ"
 
     headers = {
         "Authorization": f"Bearer {token}",
@@ -221,7 +268,7 @@ def save_to_notion(title: str, content: str) -> str:
             except Exception as e:
                 return f"Notionブロック追加エラー: {e}"
 
-    return "Notionに子ページを作成しました"
+    return f"Notionに{created_label}を作成しました"
 
 
 def execute_tool(name: str, inputs: dict) -> str:

@@ -120,6 +120,7 @@ from tools import save_to_notion
 def test_save_to_notion_creates_child_page_and_adds_blocks(monkeypatch):
     monkeypatch.setenv("NOTION_API_KEY", "test-token")
     monkeypatch.setenv("NOTION_PAGE_ID", "parent-page-id")
+    monkeypatch.delenv("NOTION_DATABASE_ID", raising=False)
 
     create_resp = MagicMock()
     create_resp.status_code = 200
@@ -143,6 +144,7 @@ def test_save_to_notion_creates_child_page_and_adds_blocks(monkeypatch):
 def test_save_to_notion_chunks_over_100_blocks(monkeypatch):
     monkeypatch.setenv("NOTION_API_KEY", "test-token")
     monkeypatch.setenv("NOTION_PAGE_ID", "parent-page-id")
+    monkeypatch.delenv("NOTION_DATABASE_ID", raising=False)
 
     create_resp = MagicMock()
     create_resp.status_code = 200
@@ -169,6 +171,7 @@ def test_save_to_notion_chunks_over_100_blocks(monkeypatch):
 def test_save_to_notion_returns_skip_when_env_not_set(monkeypatch):
     monkeypatch.delenv("NOTION_API_KEY", raising=False)
     monkeypatch.delenv("NOTION_PAGE_ID", raising=False)
+    monkeypatch.delenv("NOTION_DATABASE_ID", raising=False)
     result = save_to_notion("タイトル", "内容")
     assert "未設定" in result
 
@@ -176,6 +179,7 @@ def test_save_to_notion_returns_skip_when_env_not_set(monkeypatch):
 def test_save_to_notion_returns_error_when_child_page_fails(monkeypatch):
     monkeypatch.setenv("NOTION_API_KEY", "test-token")
     monkeypatch.setenv("NOTION_PAGE_ID", "parent-page-id")
+    monkeypatch.delenv("NOTION_DATABASE_ID", raising=False)
 
     create_resp = MagicMock()
     create_resp.status_code = 400
@@ -191,6 +195,7 @@ def test_save_to_notion_saves_under_parent(monkeypatch):
     """親ページ直下に子ページを作成する。"""
     monkeypatch.setenv("NOTION_API_KEY", "test-token")
     monkeypatch.setenv("NOTION_PAGE_ID", "parent-page-id")
+    monkeypatch.delenv("NOTION_DATABASE_ID", raising=False)
 
     create_resp = MagicMock()
     create_resp.status_code = 200
@@ -207,3 +212,52 @@ def test_save_to_notion_saves_under_parent(monkeypatch):
     assert "Notionに子ページを作成しました" in result
     post_payload = mock_post.call_args[1]["json"]
     assert post_payload["parent"] == {"page_id": "parent-page-id"}
+
+
+def test_save_to_notion_saves_to_database_when_database_id_set(monkeypatch):
+    """NOTION_DATABASE_ID があればデータベースにページを作成する。"""
+    monkeypatch.setenv("NOTION_API_KEY", "test-token")
+    monkeypatch.setenv("NOTION_PAGE_ID", "parent-page-id")
+    monkeypatch.setenv("NOTION_DATABASE_ID", "db-id-123")
+
+    create_resp = MagicMock()
+    create_resp.status_code = 200
+    create_resp.json.return_value = {"id": "row-id"}
+
+    patch_resp = MagicMock()
+    patch_resp.status_code = 200
+    patch_resp.json.return_value = {}
+
+    with patch("tools.requests.post", return_value=create_resp) as mock_post, \
+         patch("tools.requests.patch", return_value=patch_resp) as mock_patch:
+        result = save_to_notion("火曜：コーヒー動画台本作成 (2026-07-07)", "## 内容")
+
+    assert "Notionにデータベースページを作成しました" in result
+    post_payload = mock_post.call_args[1]["json"]
+    assert post_payload["parent"] == {"database_id": "db-id-123"}
+    assert post_payload["properties"]["カテゴリ"] == {"select": {"name": "コーヒー"}}
+    patch_url = mock_patch.call_args[0][0]
+    assert "row-id" in patch_url
+
+
+def test_save_to_notion_database_error(monkeypatch):
+    monkeypatch.setenv("NOTION_API_KEY", "test-token")
+    monkeypatch.setenv("NOTION_DATABASE_ID", "db-id-123")
+
+    create_resp = MagicMock()
+    create_resp.status_code = 400
+    create_resp.json.return_value = {"message": "bad request"}
+
+    with patch("tools.requests.post", return_value=create_resp):
+        result = save_to_notion("タイトル", "内容")
+
+    assert "ページ作成エラー" in result
+
+
+def test_infer_category():
+    from tools import _infer_category
+    assert _infer_category("月曜：コーヒーテーマ決定", "") == "コーヒー"
+    assert _infer_category("月曜：州別おすすめワイン紹介", "") == "ワイン"
+    assert _infer_category("月曜：今週テーマ決定", "バローロはワインの王様") == "ワイン"
+    assert _infer_category("日曜：反応分析", "エスプレッソとコーヒー文化") == "コーヒー"
+    assert _infer_category("レポート", "特に言及なし") == "その他"
