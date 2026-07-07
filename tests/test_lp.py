@@ -247,7 +247,8 @@ def test_generate_lp_with_section_image():
     html = generate_lp(content)
     assert 'class="section-image"' in html
     assert "https://example.com/worry.jpg" in html
-    assert 'loading="lazy"' in html
+    # iOS Safari の遅延読み込み不具合を避けるため即時読み込みにしている
+    assert 'loading="lazy"' not in html
 
 
 def test_generate_lp_without_section_image():

@@ -271,10 +271,10 @@ def _section_images(m: dict) -> str:
     if not urls:
         return ""
     if len(urls) == 1:
-        inner = f'<img src="{urls[0]}" alt="" loading="lazy" style="width:100%;height:auto;display:block;">'
+        inner = f'<img src="{urls[0]}" alt="" style="width:100%;height:auto;display:block;">'
     else:
         imgs = "".join(
-            f'<div><img src="{u}" alt="" loading="lazy" style="width:100%;height:auto;display:block;"></div>'
+            f'<div><img src="{u}" alt="" style="width:100%;height:auto;display:block;"></div>'
             for u in urls
         )
         inner = f'<div style="display:grid;grid-template-columns:repeat({len(urls)},1fr);gap:8px;">{imgs}</div>'
