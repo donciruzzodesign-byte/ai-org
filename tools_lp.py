@@ -45,11 +45,18 @@ def load_content(path: str = CONTENT_PATH) -> dict:
         return json.load(f)
 
 
-def _css(colors: dict, font_sizes: dict = None, font_pair: str = "elegant") -> str:
+def _css(colors: dict, font_sizes: dict = None, font_pair: str = "elegant",
+         h1_max_chars: int = 0) -> str:
     bg, text, accent = colors["bg"], colors["text"], colors["accent"]
     fs = font_sizes or {}
     sz_body = fs.get("body", "16px")
     sz_h1   = fs.get("h1",   "clamp(22px, 5vw, 38px)")
+    # 見出しの最長行が画面幅（左右パディング計80px）に収まるようフォントを縮小し、
+    # 行末1文字だけの折り返しを防ぐ
+    h1_fit = (
+        f"\n.hero h1 {{ font-size: min({sz_h1}, calc((100vw - 80px) / {h1_max_chars})); }}"
+        if h1_max_chars else ""
+    )
     sz_h2   = fs.get("h2",   "clamp(20px, 4vw, 28px)")
     sz_h3   = fs.get("h3",   "clamp(16px, 3vw, 20px)")
     fp = FONT_PAIRS.get(font_pair, FONT_PAIRS["elegant"])
@@ -147,7 +154,7 @@ ul.bullets li::before {{
     padding: 80px 0 60px;
     text-align: center;
 }}
-.hero h1 {{ color: {bg}; }}
+.hero h1 {{ color: {bg}; }}{h1_fit}
 .hero .sub {{ color: {accent}; margin-top: 20px; font-size: clamp(14px, 3vw, 18px); }}
 .hero .deco {{ width: 40px; height: 2px; background: {accent}; margin: 24px auto; }}
 .gift-box {{
@@ -286,6 +293,7 @@ def generate_lp(content: dict, assets_rel: str = "assets") -> str:
     gf_url = f"https://fonts.googleapis.com/css2?family={fp['gf']}&display=swap"
     media = c.get("media", {})
     header_video = media.get("header_video", "")
+    h1_max_chars = max(len(line) for line in c["headline"]["catch"].split("\n"))
 
     # hero.svgまたはhero.pngが存在すればCSS背景として使用（SVGを優先）
     def _hero_path(ext: str) -> str:
@@ -371,7 +379,7 @@ def generate_lp(content: dict, assets_rel: str = "assets") -> str:
   <title>{c["headline"]["catch"]}</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="stylesheet" href="{gf_url}">
-  <style>{_css(colors, meta.get("font_sizes", {}), font_pair)}</style>
+  <style>{_css(colors, meta.get("font_sizes", {}), font_pair, h1_max_chars)}</style>
 </head>
 <body>
 
