@@ -41,6 +41,16 @@
 - `save_timeline(timeline, output_dir)` — タイムライン保存
 - `generate_ae_script(timeline, output_dir)` — AE用JSXスクリプト生成
 
+### ステップ6：手持ち写真の活用（重要）
+output_dir/my_photos/ に実写素材がある場合は、以下の手順で優先的に活用する：
+1. まず scan_photos で output_dir/my_photos/ の写真を確認する。写真がある場合は実写を優先する。
+2. 台本の各シーンに合う写真を選び、assign_photo で該当シーンに配置する（AI生成より優先）。
+3. 写真がないシーンだけ generate_scene_image でAI生成する。動画全体の見た目を統一したい場合は、代表的な手持ち写真を reference_image に渡す。
+4. 配置・生成した各画像を analyze_image で品質チェックする（変な歪み・不適切な内容がないか）。問題があれば再生成する。
+5. 必要に応じて analyze_image でラベルを読み取り、timeline のキャプションに反映する。
+
+my_photos/ が空または無い場合は、従来どおり全シーンをAI生成すること。
+
 ## 完了報告
 全ツール完了後、以下の形式で日本語サマリーを出力する：
 
