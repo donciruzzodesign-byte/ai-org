@@ -25,13 +25,14 @@ VIDEO_TOOL_DEFINITIONS = [
     },
     {
         "name": "generate_scene_image",
-        "description": "シーン説明からgpt-image-1で画像(1536x1024)を生成して保存します。",
+        "description": "シーン説明からgpt-image-1で画像(1536x1024)を生成して保存します。reference_image指定時はその画像を参考に生成（実物商品の登場・スタイル統一・不足補完）。",
         "input_schema": {
             "type": "object",
             "properties": {
                 "scene_description": {"type": "string", "description": "シーンの説明（英語推奨）"},
                 "scene_number": {"type": "integer", "description": "シーン番号（1始まり）"},
-                "output_dir": {"type": "string", "description": "保存先ディレクトリ"}
+                "output_dir": {"type": "string", "description": "保存先ディレクトリ"},
+                "reference_image": {"type": "string", "description": "任意。参考画像パス（絶対／output_dir相対／my_photos相対）"}
             },
             "required": ["scene_description", "scene_number", "output_dir"]
         }
@@ -211,6 +212,18 @@ SCENE_IMAGE_STYLE = (
 )
 
 
+def _resolve_reference(reference_image: str, output_dir: str) -> Optional[str]:
+    if os.path.isabs(reference_image) and os.path.exists(reference_image):
+        return reference_image
+    for cand in (
+        os.path.join(output_dir, reference_image),
+        os.path.join(output_dir, "my_photos", reference_image),
+    ):
+        if os.path.exists(cand):
+            return cand
+    return None
+
+
 def generate_narration(script_text: str, output_dir: str) -> str:
     api_key = os.environ.get("ELEVENLABS_API_KEY")
     if not api_key:
@@ -243,7 +256,8 @@ def generate_narration(script_text: str, output_dir: str) -> str:
         return f"ナレーション生成エラー: {e}"
 
 
-def generate_scene_image(scene_description: str, scene_number: int, output_dir: str) -> str:
+def generate_scene_image(scene_description: str, scene_number: int, output_dir: str,
+                         reference_image: Optional[str] = None) -> str:
     api_key = os.environ.get("OPENAI_API_KEY")
     if not api_key:
         return "OPENAI_API_KEY が未設定のためスキップ"
@@ -255,14 +269,25 @@ def generate_scene_image(scene_description: str, scene_number: int, output_dir: 
     if os.path.exists(image_path):
         return f"スキップ（既存）: {image_path}"
 
-    import base64
     prompt = SCENE_IMAGE_STYLE + scene_description
-    url = "https://api.openai.com/v1/images/generations"
-    headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
-    payload = {"model": "gpt-image-1", "prompt": prompt, "size": "1536x1024", "n": 1}
+    headers = {"Authorization": f"Bearer {api_key}"}
 
     try:
-        resp = requests.post(url, headers=headers, json=payload, timeout=120)
+        if reference_image:
+            ref_path = _resolve_reference(reference_image, output_dir)
+            if not ref_path:
+                return f"参考画像が見つかりません: {reference_image}"
+            url = "https://api.openai.com/v1/images/edits"
+            with open(ref_path, "rb") as rf:
+                files = {"image": (os.path.basename(ref_path), rf, "image/png")}
+                data = {"model": "gpt-image-1", "prompt": prompt, "size": "1536x1024", "n": "1"}
+                resp = requests.post(url, headers=headers, files=files, data=data, timeout=180)
+        else:
+            url = "https://api.openai.com/v1/images/generations"
+            headers["Content-Type"] = "application/json"
+            payload = {"model": "gpt-image-1", "prompt": prompt, "size": "1536x1024", "n": 1}
+            resp = requests.post(url, headers=headers, json=payload, timeout=120)
+
         if resp.status_code != 200:
             return f"画像生成エラー (scene {scene_number}): {resp.status_code} {resp.text[:200]}"
         b64_data = resp.json()["data"][0]["b64_json"]
@@ -504,7 +529,10 @@ def execute_video_tool(name: str, inputs: dict) -> str:
     elif name == "generate_narration":
         return generate_narration(inputs["script_text"], inputs["output_dir"])
     elif name == "generate_scene_image":
-        return generate_scene_image(inputs["scene_description"], inputs["scene_number"], inputs["output_dir"])
+        return generate_scene_image(
+            inputs["scene_description"], inputs["scene_number"], inputs["output_dir"],
+            inputs.get("reference_image"),
+        )
     elif name == "fetch_broll":
         return fetch_broll(inputs["keyword"], inputs["clip_index"], inputs["output_dir"])
     elif name == "save_timeline":

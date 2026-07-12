@@ -2,10 +2,12 @@ import os
 import sys
 import json
 import pytest
+import base64
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
 from unittest.mock import patch, MagicMock
 import tempfile
+from PIL import Image
 from tools_video import generate_narration, generate_scene_image, fetch_broll, generate_ae_script
 
 
@@ -425,3 +427,43 @@ def test_assign_photo_handles_portrait_source(tmp_path):
 
     with Image.open(tmp_path / "images" / "scene_01.png") as im:
         assert im.size == (1536, 1024)
+
+
+def test_generate_scene_image_uses_edits_endpoint_with_reference(monkeypatch, tmp_path):
+    monkeypatch.setenv("OPENAI_API_KEY", "test-key")
+    photos = tmp_path / "my_photos"
+    photos.mkdir()
+    Image.new("RGB", (100, 100), (0, 0, 0)).save(photos / "ref.png")
+
+    gen_resp = MagicMock()
+    gen_resp.status_code = 200
+    gen_resp.json.return_value = {"data": [{"b64_json": base64.b64encode(b"png").decode()}]}
+
+    with patch("tools_video.requests.post", return_value=gen_resp) as mock_post:
+        result = generate_scene_image(
+            "Barolo bottle on table", 2, str(tmp_path), reference_image="ref.png"
+        )
+
+    assert "scene_02.png" in result
+    url = mock_post.call_args[0][0]
+    assert "edits" in url
+    assert "files" in mock_post.call_args[1]
+    assert (tmp_path / "images" / "scene_02.png").exists()
+
+
+def test_generate_scene_image_reference_not_found(monkeypatch, tmp_path):
+    monkeypatch.setenv("OPENAI_API_KEY", "test-key")
+    result = generate_scene_image("x", 1, str(tmp_path), reference_image="missing.png")
+    assert "見つかりません" in result
+
+
+def test_generate_scene_image_no_reference_uses_generations(monkeypatch, tmp_path):
+    monkeypatch.setenv("OPENAI_API_KEY", "test-key")
+    gen_resp = MagicMock()
+    gen_resp.status_code = 200
+    gen_resp.json.return_value = {"data": [{"b64_json": base64.b64encode(b"png").decode()}]}
+
+    with patch("tools_video.requests.post", return_value=gen_resp) as mock_post:
+        generate_scene_image("vineyard", 1, str(tmp_path))
+
+    assert "generations" in mock_post.call_args[0][0]
