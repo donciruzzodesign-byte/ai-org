@@ -97,6 +97,8 @@ python3 -m pytest tests/ -v
 
 追加ツール: `analyze_image`（画像をClaude visionで解析）, `scan_photos`（my_photos一括解析）, `assign_photo`（写真をscene_NN.pngに正規化配置）, `generate_scene_image` の `reference_image`（参考画像で生成）。
 
+📖 操作マニュアル（かんたん版）: [`docs/画像入力機能マニュアル.md`](docs/画像入力機能マニュアル.md)
+
 ## Claude Code でのエージェント呼び出し方
 
 .claude/agents/ に各エージェント定義があるため、Claude Code から直接呼び出し可能：
