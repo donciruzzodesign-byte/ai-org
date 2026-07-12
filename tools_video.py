@@ -1,6 +1,8 @@
 import os
 import json
+import base64
 import requests
+import anthropic
 from typing import Optional
 
 
@@ -60,12 +62,69 @@ VIDEO_TOOL_DEFINITIONS = [
             },
             "required": ["timeline", "output_dir"]
         }
+    },
+    {
+        "name": "analyze_image",
+        "description": "画像をClaude visionで解析し、質問に答えます。ラベル読み取り・シーン適合判定・キャプション生成・品質チェックに使えます。",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "image_path": {"type": "string", "description": "解析する画像のパス（絶対、またはoutput_dir/相対）"},
+                "question": {"type": "string", "description": "画像について尋ねたいこと（日本語可）"}
+            },
+            "required": ["image_path", "question"]
+        }
     }
 ]
 
 
 def _ensure_dir(path: str) -> None:
     os.makedirs(path, exist_ok=True)
+
+
+VISION_MODEL = "claude-sonnet-4-6"
+
+_MEDIA_TYPES = {
+    ".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg",
+    ".webp": "image/webp", ".gif": "image/gif",
+}
+
+
+def _guess_media_type(path: str) -> str:
+    return _MEDIA_TYPES.get(os.path.splitext(path)[1].lower(), "image/jpeg")
+
+
+def _load_image_b64(path: str) -> str:
+    with open(path, "rb") as f:
+        return base64.b64encode(f.read()).decode()
+
+
+def analyze_image(image_path: str, question: str) -> str:
+    api_key = os.environ.get("ANTHROPIC_API_KEY")
+    if not api_key:
+        return "ANTHROPIC_API_KEY が未設定のためスキップ"
+    if not os.path.exists(image_path):
+        return f"画像が見つかりません: {image_path}"
+    try:
+        client = anthropic.Anthropic(api_key=api_key)
+        resp = client.messages.create(
+            model=VISION_MODEL,
+            max_tokens=1024,
+            messages=[{
+                "role": "user",
+                "content": [
+                    {"type": "image", "source": {
+                        "type": "base64",
+                        "media_type": _guess_media_type(image_path),
+                        "data": _load_image_b64(image_path),
+                    }},
+                    {"type": "text", "text": question},
+                ],
+            }],
+        )
+        return resp.content[0].text
+    except Exception as e:
+        return f"画像解析エラー: {e}"
 
 
 SCENE_IMAGE_STYLE = (
@@ -372,4 +431,6 @@ def execute_video_tool(name: str, inputs: dict) -> str:
         return fetch_broll(inputs["keyword"], inputs["clip_index"], inputs["output_dir"])
     elif name == "save_timeline":
         return save_timeline(inputs["timeline"], inputs["output_dir"])
+    elif name == "analyze_image":
+        return analyze_image(inputs["image_path"], inputs["question"])
     return f"不明なツール: {name}"

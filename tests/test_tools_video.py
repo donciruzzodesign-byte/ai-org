@@ -311,3 +311,43 @@ def test_execute_video_tool_dispatches_generate_ae_script(tmp_path):
         "timeline": SAMPLE_TIMELINE, "output_dir": str(tmp_path)
     })
     assert "auto_edit.jsx" in result
+
+
+from tools_video import analyze_image
+
+
+def test_analyze_image_skips_when_no_key(monkeypatch, tmp_path):
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    img = tmp_path / "x.png"
+    img.write_bytes(b"fake")
+    result = analyze_image(str(img), "何が写っていますか")
+    assert "未設定" in result
+
+
+def test_analyze_image_returns_error_when_file_missing(monkeypatch, tmp_path):
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key")
+    result = analyze_image(str(tmp_path / "nope.png"), "説明して")
+    assert "見つかりません" in result
+
+
+def test_analyze_image_returns_vision_text(monkeypatch, tmp_path):
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key")
+    img = tmp_path / "barolo.png"
+    img.write_bytes(b"fake-png")
+
+    text_block = MagicMock()
+    text_block.text = "バローロの瓶が写っています"
+    resp = MagicMock()
+    resp.content = [text_block]
+    mock_client = MagicMock()
+    mock_client.messages.create.return_value = resp
+
+    with patch("tools_video.anthropic.Anthropic", return_value=mock_client):
+        result = analyze_image(str(img), "何が写っていますか")
+
+    assert result == "バローロの瓶が写っています"
+    sent = mock_client.messages.create.call_args[1]
+    content = sent["messages"][0]["content"]
+    assert content[0]["type"] == "image"
+    assert content[0]["source"]["media_type"] == "image/png"
+    assert content[1]["text"] == "何が写っていますか"
