@@ -279,7 +279,7 @@ def generate_scene_image(scene_description: str, scene_number: int, output_dir: 
                 return f"参考画像が見つかりません: {reference_image}"
             url = "https://api.openai.com/v1/images/edits"
             with open(ref_path, "rb") as rf:
-                files = {"image": (os.path.basename(ref_path), rf, "image/png")}
+                files = {"image": (os.path.basename(ref_path), rf, _guess_media_type(ref_path))}
                 data = {"model": "gpt-image-1", "prompt": prompt, "size": "1536x1024", "n": "1"}
                 resp = requests.post(url, headers=headers, files=files, data=data, timeout=180)
         else:
