@@ -92,6 +92,11 @@ python3 -m pytest tests/ -v
 | `auto_edit.jsx` | AE自動配置スクリプト（File→Scripts→Run で実行） |
 | `note_article.md` | note記事原稿（投稿メモ・タイトル案・本文・ハッシュタグ。水曜レビュー時に手動でnoteへコピペ） |
 
+### 手持ち写真の利用（任意）
+`output/YYYY-MM-DD-{wine|coffee}/my_photos/` に写真を置くと、動画エージェントが実写を優先してシーンに配置する（`scan_photos` で解析 → `assign_photo` で配置）。写真がないシーンのみ AI 生成。`my_photos/` が空・無い場合は従来どおり全シーン AI 生成。
+
+追加ツール: `analyze_image`（画像をClaude visionで解析）, `scan_photos`（my_photos一括解析）, `assign_photo`（写真をscene_NN.pngに正規化配置）, `generate_scene_image` の `reference_image`（参考画像で生成）。
+
 ## Claude Code でのエージェント呼び出し方
 
 .claude/agents/ に各エージェント定義があるため、Claude Code から直接呼び出し可能：

@@ -2,10 +2,12 @@ import os
 import sys
 import json
 import pytest
+import base64
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
 from unittest.mock import patch, MagicMock
 import tempfile
+from PIL import Image
 from tools_video import generate_narration, generate_scene_image, fetch_broll, generate_ae_script
 
 
@@ -311,3 +313,192 @@ def test_execute_video_tool_dispatches_generate_ae_script(tmp_path):
         "timeline": SAMPLE_TIMELINE, "output_dir": str(tmp_path)
     })
     assert "auto_edit.jsx" in result
+
+
+def test_execute_video_tool_dispatches_analyze_image(monkeypatch, tmp_path):
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    img = tmp_path / "x.png"
+    img.write_bytes(b"a")
+    result = execute_video_tool("analyze_image", {"image_path": str(img), "question": "何"})
+    assert "未設定" in result
+
+
+def test_execute_video_tool_dispatches_scan_photos(tmp_path):
+    result = execute_video_tool("scan_photos", {"output_dir": str(tmp_path)})
+    assert result == "[]"
+
+
+def test_execute_video_tool_dispatches_assign_photo(tmp_path):
+    result = execute_video_tool("assign_photo", {"photo": "nope.jpg", "scene_number": 1, "output_dir": str(tmp_path)})
+    assert "見つかりません" in result
+
+
+from tools_video import analyze_image, scan_photos
+
+
+def test_scan_photos_returns_empty_when_no_folder(tmp_path):
+    result = scan_photos(str(tmp_path))
+    assert result == "[]"
+
+
+def test_scan_photos_analyzes_each_photo(tmp_path):
+    photos = tmp_path / "my_photos"
+    photos.mkdir()
+    (photos / "barolo.jpg").write_bytes(b"a")
+    (photos / "vineyard.png").write_bytes(b"b")
+
+    with patch("tools_video.analyze_image", return_value="解析結果") as mock_analyze:
+        result = scan_photos(str(tmp_path))
+
+    data = json.loads(result)
+    assert len(data) == 2
+    files = {d["file"] for d in data}
+    assert files == {"barolo.jpg", "vineyard.png"}
+    assert all(d["analysis"] == "解析結果" for d in data)
+    assert mock_analyze.call_count == 2
+
+
+def test_scan_photos_ignores_non_images(tmp_path):
+    photos = tmp_path / "my_photos"
+    photos.mkdir()
+    (photos / "note.txt").write_text("x")
+    (photos / "wine.jpg").write_bytes(b"a")
+
+    with patch("tools_video.analyze_image", return_value="ok"):
+        result = scan_photos(str(tmp_path))
+
+    data = json.loads(result)
+    assert len(data) == 1
+    assert data[0]["file"] == "wine.jpg"
+
+
+def test_analyze_image_skips_when_no_key(monkeypatch, tmp_path):
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    img = tmp_path / "x.png"
+    img.write_bytes(b"fake")
+    result = analyze_image(str(img), "何が写っていますか")
+    assert "未設定" in result
+
+
+def test_analyze_image_returns_error_when_file_missing(monkeypatch, tmp_path):
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key")
+    result = analyze_image(str(tmp_path / "nope.png"), "説明して")
+    assert "見つかりません" in result
+
+
+def test_analyze_image_returns_vision_text(monkeypatch, tmp_path):
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key")
+    img = tmp_path / "barolo.png"
+    img.write_bytes(b"fake-png")
+
+    text_block = MagicMock()
+    text_block.text = "バローロの瓶が写っています"
+    resp = MagicMock()
+    resp.content = [text_block]
+    mock_client = MagicMock()
+    mock_client.messages.create.return_value = resp
+
+    with patch("tools_video.anthropic.Anthropic", return_value=mock_client):
+        result = analyze_image(str(img), "何が写っていますか")
+
+    assert result == "バローロの瓶が写っています"
+    sent = mock_client.messages.create.call_args[1]
+    content = sent["messages"][0]["content"]
+    assert content[0]["type"] == "image"
+    assert content[0]["source"]["media_type"] == "image/png"
+    assert content[1]["text"] == "何が写っていますか"
+
+
+from tools_video import assign_photo
+from PIL import Image
+
+
+def _make_photo(path, size=(4000, 2000)):
+    Image.new("RGB", size, (120, 40, 40)).save(path)
+
+
+def test_assign_photo_missing_source(tmp_path):
+    result = assign_photo("nope.jpg", 1, str(tmp_path))
+    assert "見つかりません" in result
+
+
+def test_assign_photo_creates_normalized_png(tmp_path):
+    photos = tmp_path / "my_photos"
+    photos.mkdir()
+    _make_photo(photos / "barolo.jpg", size=(4000, 2000))
+
+    result = assign_photo("barolo.jpg", 3, str(tmp_path))
+
+    assert "scene_03.png" in result
+    out = tmp_path / "images" / "scene_03.png"
+    assert out.exists()
+    with Image.open(out) as im:
+        assert im.size == (1536, 1024)
+
+
+def test_assign_photo_handles_portrait_source(tmp_path):
+    photos = tmp_path / "my_photos"
+    photos.mkdir()
+    _make_photo(photos / "tall.jpg", size=(1000, 3000))
+
+    assign_photo("tall.jpg", 1, str(tmp_path))
+
+    with Image.open(tmp_path / "images" / "scene_01.png") as im:
+        assert im.size == (1536, 1024)
+
+
+def test_generate_scene_image_uses_edits_endpoint_with_reference(monkeypatch, tmp_path):
+    monkeypatch.setenv("OPENAI_API_KEY", "test-key")
+    photos = tmp_path / "my_photos"
+    photos.mkdir()
+    Image.new("RGB", (100, 100), (0, 0, 0)).save(photos / "ref.png")
+
+    gen_resp = MagicMock()
+    gen_resp.status_code = 200
+    gen_resp.json.return_value = {"data": [{"b64_json": base64.b64encode(b"png").decode()}]}
+
+    with patch("tools_video.requests.post", return_value=gen_resp) as mock_post:
+        result = generate_scene_image(
+            "Barolo bottle on table", 2, str(tmp_path), reference_image="ref.png"
+        )
+
+    assert "scene_02.png" in result
+    url = mock_post.call_args[0][0]
+    assert "edits" in url
+    assert "files" in mock_post.call_args[1]
+    assert (tmp_path / "images" / "scene_02.png").exists()
+
+
+def test_generate_scene_image_reference_not_found(monkeypatch, tmp_path):
+    monkeypatch.setenv("OPENAI_API_KEY", "test-key")
+    result = generate_scene_image("x", 1, str(tmp_path), reference_image="missing.png")
+    assert "見つかりません" in result
+
+
+def test_generate_scene_image_no_reference_uses_generations(monkeypatch, tmp_path):
+    monkeypatch.setenv("OPENAI_API_KEY", "test-key")
+    gen_resp = MagicMock()
+    gen_resp.status_code = 200
+    gen_resp.json.return_value = {"data": [{"b64_json": base64.b64encode(b"png").decode()}]}
+
+    with patch("tools_video.requests.post", return_value=gen_resp) as mock_post:
+        generate_scene_image("vineyard", 1, str(tmp_path))
+
+    assert "generations" in mock_post.call_args[0][0]
+
+
+def test_generate_scene_image_reference_mime_from_extension(monkeypatch, tmp_path):
+    monkeypatch.setenv("OPENAI_API_KEY", "test-key")
+    photos = tmp_path / "my_photos"
+    photos.mkdir()
+    Image.new("RGB", (100, 100), (0, 0, 0)).save(photos / "ref.jpg")
+
+    gen_resp = MagicMock()
+    gen_resp.status_code = 200
+    gen_resp.json.return_value = {"data": [{"b64_json": base64.b64encode(b"png").decode()}]}
+
+    with patch("tools_video.requests.post", return_value=gen_resp) as mock_post:
+        generate_scene_image("x", 4, str(tmp_path), reference_image="ref.jpg")
+
+    image_part = mock_post.call_args[1]["files"]["image"]
+    assert image_part[2] == "image/jpeg"

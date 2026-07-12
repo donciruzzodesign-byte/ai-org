@@ -1,7 +1,10 @@
 import os
 import json
+import base64
 import requests
+import anthropic
 from typing import Optional
+from PIL import Image
 
 
 VIDEO_TOOL_DEFINITIONS = [
@@ -22,13 +25,14 @@ VIDEO_TOOL_DEFINITIONS = [
     },
     {
         "name": "generate_scene_image",
-        "description": "シーン説明からgpt-image-1で画像(1536x1024)を生成して保存します。",
+        "description": "シーン説明からgpt-image-1で画像(1536x1024)を生成して保存します。reference_image指定時はその画像を参考に生成（実物商品の登場・スタイル統一・不足補完）。",
         "input_schema": {
             "type": "object",
             "properties": {
                 "scene_description": {"type": "string", "description": "シーンの説明（英語推奨）"},
                 "scene_number": {"type": "integer", "description": "シーン番号（1始まり）"},
-                "output_dir": {"type": "string", "description": "保存先ディレクトリ"}
+                "output_dir": {"type": "string", "description": "保存先ディレクトリ"},
+                "reference_image": {"type": "string", "description": "任意。参考画像パス（絶対／output_dir相対／my_photos相対）"}
             },
             "required": ["scene_description", "scene_number", "output_dir"]
         }
@@ -60,6 +64,42 @@ VIDEO_TOOL_DEFINITIONS = [
             },
             "required": ["timeline", "output_dir"]
         }
+    },
+    {
+        "name": "analyze_image",
+        "description": "画像をClaude visionで解析し、質問に答えます。ラベル読み取り・シーン適合判定・キャプション生成・品質チェックに使えます。",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "image_path": {"type": "string", "description": "解析する画像のパス（絶対、またはoutput_dir/相対）"},
+                "question": {"type": "string", "description": "画像について尋ねたいこと（日本語可）"}
+            },
+            "required": ["image_path", "question"]
+        }
+    },
+    {
+        "name": "scan_photos",
+        "description": "output_dir/my_photos/ 内のオーナー手持ち写真を一括で解析し、各写真の内容・ラベル・推奨シーンをJSONで返します。シーン割当の判断に使います。",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "output_dir": {"type": "string", "description": "出力先ディレクトリ（my_photos の親）"}
+            },
+            "required": ["output_dir"]
+        }
+    }
+    ,{
+        "name": "assign_photo",
+        "description": "my_photos内の写真を1536x1024に正規化し、指定シーンの画像(images/scene_NN.png)として配置します。AI生成の代わりに実写を使う場合に呼びます。",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "photo": {"type": "string", "description": "my_photos内のファイル名"},
+                "scene_number": {"type": "integer", "description": "配置先シーン番号（1始まり）"},
+                "output_dir": {"type": "string", "description": "出力先ディレクトリ"}
+            },
+            "required": ["photo", "scene_number", "output_dir"]
+        }
     }
 ]
 
@@ -68,10 +108,123 @@ def _ensure_dir(path: str) -> None:
     os.makedirs(path, exist_ok=True)
 
 
+VISION_MODEL = "claude-sonnet-4-6"
+
+_MEDIA_TYPES = {
+    ".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg",
+    ".webp": "image/webp", ".gif": "image/gif",
+}
+
+
+def _guess_media_type(path: str) -> str:
+    return _MEDIA_TYPES.get(os.path.splitext(path)[1].lower(), "image/jpeg")
+
+
+def _load_image_b64(path: str) -> str:
+    with open(path, "rb") as f:
+        return base64.b64encode(f.read()).decode()
+
+
+def analyze_image(image_path: str, question: str) -> str:
+    api_key = os.environ.get("ANTHROPIC_API_KEY")
+    if not api_key:
+        return "ANTHROPIC_API_KEY が未設定のためスキップ"
+    if not os.path.exists(image_path):
+        return f"画像が見つかりません: {image_path}"
+    try:
+        client = anthropic.Anthropic(api_key=api_key)
+        resp = client.messages.create(
+            model=VISION_MODEL,
+            max_tokens=1024,
+            messages=[{
+                "role": "user",
+                "content": [
+                    {"type": "image", "source": {
+                        "type": "base64",
+                        "media_type": _guess_media_type(image_path),
+                        "data": _load_image_b64(image_path),
+                    }},
+                    {"type": "text", "text": question},
+                ],
+            }],
+        )
+        return resp.content[0].text
+    except Exception as e:
+        return f"画像解析エラー: {e}"
+
+
+_PHOTO_EXTS = (".png", ".jpg", ".jpeg", ".webp", ".gif")
+
+_SCAN_QUESTION = (
+    "この画像について、(1)何が写っているか (2)ラベルやパッケージに読める文字があればその内容 "
+    "(3)10分動画のどんなシーンに向くか、を簡潔にまとめてください。"
+)
+
+
+def scan_photos(output_dir: str) -> str:
+    photos_dir = os.path.join(output_dir, "my_photos")
+    if not os.path.isdir(photos_dir):
+        return "[]"
+    try:
+        results = []
+        for name in sorted(os.listdir(photos_dir)):
+            if not name.lower().endswith(_PHOTO_EXTS):
+                continue
+            path = os.path.join(photos_dir, name)
+            results.append({"file": name, "analysis": analyze_image(path, _SCAN_QUESTION)})
+        return json.dumps(results, ensure_ascii=False)
+    except Exception as e:
+        return f"写真スキャンエラー: {e}"
+
+
+def _crop_resize(img: "Image.Image", target_w: int, target_h: int) -> "Image.Image":
+    src_w, src_h = img.size
+    target_ratio = target_w / target_h
+    src_ratio = src_w / src_h
+    if src_ratio > target_ratio:
+        new_w = int(src_h * target_ratio)
+        left = (src_w - new_w) // 2
+        img = img.crop((left, 0, left + new_w, src_h))
+    else:
+        new_h = int(src_w / target_ratio)
+        top = (src_h - new_h) // 2
+        img = img.crop((0, top, src_w, top + new_h))
+    return img.resize((target_w, target_h), Image.LANCZOS)
+
+
+def assign_photo(photo: str, scene_number: int, output_dir: str) -> str:
+    src = os.path.join(output_dir, "my_photos", photo)
+    if not os.path.exists(src):
+        return f"写真が見つかりません: {src}"
+    images_dir = os.path.join(output_dir, "images")
+    _ensure_dir(images_dir)
+    dst = os.path.join(images_dir, f"scene_{scene_number:02d}.png")
+    try:
+        with Image.open(src) as im:
+            im = im.convert("RGB")
+            im = _crop_resize(im, 1536, 1024)
+            im.save(dst, "PNG")
+        return f"写真を配置: {dst} (元: {photo})"
+    except Exception as e:
+        return f"写真配置エラー: {e}"
+
+
 SCENE_IMAGE_STYLE = (
     "High quality food and travel photography, Italian wine, "
     "warm natural golden light, cinematic, 8k resolution, "
 )
+
+
+def _resolve_reference(reference_image: str, output_dir: str) -> Optional[str]:
+    if os.path.isabs(reference_image) and os.path.exists(reference_image):
+        return reference_image
+    for cand in (
+        os.path.join(output_dir, reference_image),
+        os.path.join(output_dir, "my_photos", reference_image),
+    ):
+        if os.path.exists(cand):
+            return cand
+    return None
 
 
 def generate_narration(script_text: str, output_dir: str) -> str:
@@ -106,7 +259,8 @@ def generate_narration(script_text: str, output_dir: str) -> str:
         return f"ナレーション生成エラー: {e}"
 
 
-def generate_scene_image(scene_description: str, scene_number: int, output_dir: str) -> str:
+def generate_scene_image(scene_description: str, scene_number: int, output_dir: str,
+                         reference_image: Optional[str] = None) -> str:
     api_key = os.environ.get("OPENAI_API_KEY")
     if not api_key:
         return "OPENAI_API_KEY が未設定のためスキップ"
@@ -118,14 +272,25 @@ def generate_scene_image(scene_description: str, scene_number: int, output_dir: 
     if os.path.exists(image_path):
         return f"スキップ（既存）: {image_path}"
 
-    import base64
     prompt = SCENE_IMAGE_STYLE + scene_description
-    url = "https://api.openai.com/v1/images/generations"
-    headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
-    payload = {"model": "gpt-image-1", "prompt": prompt, "size": "1536x1024", "n": 1}
+    headers = {"Authorization": f"Bearer {api_key}"}
 
     try:
-        resp = requests.post(url, headers=headers, json=payload, timeout=120)
+        if reference_image:
+            ref_path = _resolve_reference(reference_image, output_dir)
+            if not ref_path:
+                return f"参考画像が見つかりません: {reference_image}"
+            url = "https://api.openai.com/v1/images/edits"
+            with open(ref_path, "rb") as rf:
+                files = {"image": (os.path.basename(ref_path), rf, _guess_media_type(ref_path))}
+                data = {"model": "gpt-image-1", "prompt": prompt, "size": "1536x1024", "n": "1"}
+                resp = requests.post(url, headers=headers, files=files, data=data, timeout=180)
+        else:
+            url = "https://api.openai.com/v1/images/generations"
+            headers["Content-Type"] = "application/json"
+            payload = {"model": "gpt-image-1", "prompt": prompt, "size": "1536x1024", "n": 1}
+            resp = requests.post(url, headers=headers, json=payload, timeout=120)
+
         if resp.status_code != 200:
             return f"画像生成エラー (scene {scene_number}): {resp.status_code} {resp.text[:200]}"
         b64_data = resp.json()["data"][0]["b64_json"]
@@ -367,9 +532,18 @@ def execute_video_tool(name: str, inputs: dict) -> str:
     elif name == "generate_narration":
         return generate_narration(inputs["script_text"], inputs["output_dir"])
     elif name == "generate_scene_image":
-        return generate_scene_image(inputs["scene_description"], inputs["scene_number"], inputs["output_dir"])
+        return generate_scene_image(
+            inputs["scene_description"], inputs["scene_number"], inputs["output_dir"],
+            inputs.get("reference_image"),
+        )
     elif name == "fetch_broll":
         return fetch_broll(inputs["keyword"], inputs["clip_index"], inputs["output_dir"])
     elif name == "save_timeline":
         return save_timeline(inputs["timeline"], inputs["output_dir"])
+    elif name == "analyze_image":
+        return analyze_image(inputs["image_path"], inputs["question"])
+    elif name == "scan_photos":
+        return scan_photos(inputs["output_dir"])
+    elif name == "assign_photo":
+        return assign_photo(inputs["photo"], inputs["scene_number"], inputs["output_dir"])
     return f"不明なツール: {name}"
