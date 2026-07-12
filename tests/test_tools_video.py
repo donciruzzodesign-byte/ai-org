@@ -315,6 +315,24 @@ def test_execute_video_tool_dispatches_generate_ae_script(tmp_path):
     assert "auto_edit.jsx" in result
 
 
+def test_execute_video_tool_dispatches_analyze_image(monkeypatch, tmp_path):
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    img = tmp_path / "x.png"
+    img.write_bytes(b"a")
+    result = execute_video_tool("analyze_image", {"image_path": str(img), "question": "何"})
+    assert "未設定" in result
+
+
+def test_execute_video_tool_dispatches_scan_photos(tmp_path):
+    result = execute_video_tool("scan_photos", {"output_dir": str(tmp_path)})
+    assert result == "[]"
+
+
+def test_execute_video_tool_dispatches_assign_photo(tmp_path):
+    result = execute_video_tool("assign_photo", {"photo": "nope.jpg", "scene_number": 1, "output_dir": str(tmp_path)})
+    assert "見つかりません" in result
+
+
 from tools_video import analyze_image, scan_photos
 
 

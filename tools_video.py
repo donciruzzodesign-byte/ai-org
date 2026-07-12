@@ -165,13 +165,16 @@ def scan_photos(output_dir: str) -> str:
     photos_dir = os.path.join(output_dir, "my_photos")
     if not os.path.isdir(photos_dir):
         return "[]"
-    results = []
-    for name in sorted(os.listdir(photos_dir)):
-        if not name.lower().endswith(_PHOTO_EXTS):
-            continue
-        path = os.path.join(photos_dir, name)
-        results.append({"file": name, "analysis": analyze_image(path, _SCAN_QUESTION)})
-    return json.dumps(results, ensure_ascii=False)
+    try:
+        results = []
+        for name in sorted(os.listdir(photos_dir)):
+            if not name.lower().endswith(_PHOTO_EXTS):
+                continue
+            path = os.path.join(photos_dir, name)
+            results.append({"file": name, "analysis": analyze_image(path, _SCAN_QUESTION)})
+        return json.dumps(results, ensure_ascii=False)
+    except Exception as e:
+        return f"写真スキャンエラー: {e}"
 
 
 def _crop_resize(img: "Image.Image", target_w: int, target_h: int) -> "Image.Image":
