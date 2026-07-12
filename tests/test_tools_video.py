@@ -313,7 +313,43 @@ def test_execute_video_tool_dispatches_generate_ae_script(tmp_path):
     assert "auto_edit.jsx" in result
 
 
-from tools_video import analyze_image
+from tools_video import analyze_image, scan_photos
+
+
+def test_scan_photos_returns_empty_when_no_folder(tmp_path):
+    result = scan_photos(str(tmp_path))
+    assert result == "[]"
+
+
+def test_scan_photos_analyzes_each_photo(tmp_path):
+    photos = tmp_path / "my_photos"
+    photos.mkdir()
+    (photos / "barolo.jpg").write_bytes(b"a")
+    (photos / "vineyard.png").write_bytes(b"b")
+
+    with patch("tools_video.analyze_image", return_value="解析結果") as mock_analyze:
+        result = scan_photos(str(tmp_path))
+
+    data = json.loads(result)
+    assert len(data) == 2
+    files = {d["file"] for d in data}
+    assert files == {"barolo.jpg", "vineyard.png"}
+    assert all(d["analysis"] == "解析結果" for d in data)
+    assert mock_analyze.call_count == 2
+
+
+def test_scan_photos_ignores_non_images(tmp_path):
+    photos = tmp_path / "my_photos"
+    photos.mkdir()
+    (photos / "note.txt").write_text("x")
+    (photos / "wine.jpg").write_bytes(b"a")
+
+    with patch("tools_video.analyze_image", return_value="ok"):
+        result = scan_photos(str(tmp_path))
+
+    data = json.loads(result)
+    assert len(data) == 1
+    assert data[0]["file"] == "wine.jpg"
 
 
 def test_analyze_image_skips_when_no_key(monkeypatch, tmp_path):

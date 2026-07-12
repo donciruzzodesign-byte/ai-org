@@ -74,6 +74,17 @@ VIDEO_TOOL_DEFINITIONS = [
             },
             "required": ["image_path", "question"]
         }
+    },
+    {
+        "name": "scan_photos",
+        "description": "output_dir/my_photos/ 内のオーナー手持ち写真を一括で解析し、各写真の内容・ラベル・推奨シーンをJSONで返します。シーン割当の判断に使います。",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "output_dir": {"type": "string", "description": "出力先ディレクトリ（my_photos の親）"}
+            },
+            "required": ["output_dir"]
+        }
     }
 ]
 
@@ -125,6 +136,27 @@ def analyze_image(image_path: str, question: str) -> str:
         return resp.content[0].text
     except Exception as e:
         return f"画像解析エラー: {e}"
+
+
+_PHOTO_EXTS = (".png", ".jpg", ".jpeg", ".webp", ".gif")
+
+_SCAN_QUESTION = (
+    "この画像について、(1)何が写っているか (2)ラベルやパッケージに読める文字があればその内容 "
+    "(3)10分動画のどんなシーンに向くか、を簡潔にまとめてください。"
+)
+
+
+def scan_photos(output_dir: str) -> str:
+    photos_dir = os.path.join(output_dir, "my_photos")
+    if not os.path.isdir(photos_dir):
+        return "[]"
+    results = []
+    for name in sorted(os.listdir(photos_dir)):
+        if not name.lower().endswith(_PHOTO_EXTS):
+            continue
+        path = os.path.join(photos_dir, name)
+        results.append({"file": name, "analysis": analyze_image(path, _SCAN_QUESTION)})
+    return json.dumps(results, ensure_ascii=False)
 
 
 SCENE_IMAGE_STYLE = (
@@ -433,4 +465,6 @@ def execute_video_tool(name: str, inputs: dict) -> str:
         return save_timeline(inputs["timeline"], inputs["output_dir"])
     elif name == "analyze_image":
         return analyze_image(inputs["image_path"], inputs["question"])
+    elif name == "scan_photos":
+        return scan_photos(inputs["output_dir"])
     return f"不明なツール: {name}"
