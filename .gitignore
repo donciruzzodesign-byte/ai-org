@@ -1,5 +1,16 @@
-logs/
+# 秘密情報
 .env
+.env.save
+.env.*.bak
+
+# ログ・キャッシュ
+logs/
 __pycache__/
 *.pyc
-desktop/node_modules/
+.pytest_cache/
+
+# 動画素材（生成物・容量大）
+output/
+
+# macOS
+.DS_Store
