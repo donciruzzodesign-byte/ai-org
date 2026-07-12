@@ -4,6 +4,7 @@ import base64
 import requests
 import anthropic
 from typing import Optional
+from PIL import Image
 
 
 VIDEO_TOOL_DEFINITIONS = [
@@ -86,6 +87,19 @@ VIDEO_TOOL_DEFINITIONS = [
             "required": ["output_dir"]
         }
     }
+    ,{
+        "name": "assign_photo",
+        "description": "my_photos内の写真を1536x1024に正規化し、指定シーンの画像(images/scene_NN.png)として配置します。AI生成の代わりに実写を使う場合に呼びます。",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "photo": {"type": "string", "description": "my_photos内のファイル名"},
+                "scene_number": {"type": "integer", "description": "配置先シーン番号（1始まり）"},
+                "output_dir": {"type": "string", "description": "出力先ディレクトリ"}
+            },
+            "required": ["photo", "scene_number", "output_dir"]
+        }
+    }
 ]
 
 
@@ -157,6 +171,38 @@ def scan_photos(output_dir: str) -> str:
         path = os.path.join(photos_dir, name)
         results.append({"file": name, "analysis": analyze_image(path, _SCAN_QUESTION)})
     return json.dumps(results, ensure_ascii=False)
+
+
+def _crop_resize(img: "Image.Image", target_w: int, target_h: int) -> "Image.Image":
+    src_w, src_h = img.size
+    target_ratio = target_w / target_h
+    src_ratio = src_w / src_h
+    if src_ratio > target_ratio:
+        new_w = int(src_h * target_ratio)
+        left = (src_w - new_w) // 2
+        img = img.crop((left, 0, left + new_w, src_h))
+    else:
+        new_h = int(src_w / target_ratio)
+        top = (src_h - new_h) // 2
+        img = img.crop((0, top, src_w, top + new_h))
+    return img.resize((target_w, target_h), Image.LANCZOS)
+
+
+def assign_photo(photo: str, scene_number: int, output_dir: str) -> str:
+    src = os.path.join(output_dir, "my_photos", photo)
+    if not os.path.exists(src):
+        return f"写真が見つかりません: {src}"
+    images_dir = os.path.join(output_dir, "images")
+    _ensure_dir(images_dir)
+    dst = os.path.join(images_dir, f"scene_{scene_number:02d}.png")
+    try:
+        with Image.open(src) as im:
+            im = im.convert("RGB")
+            im = _crop_resize(im, 1536, 1024)
+            im.save(dst, "PNG")
+        return f"写真を配置: {dst} (元: {photo})"
+    except Exception as e:
+        return f"写真配置エラー: {e}"
 
 
 SCENE_IMAGE_STYLE = (
@@ -467,4 +513,6 @@ def execute_video_tool(name: str, inputs: dict) -> str:
         return analyze_image(inputs["image_path"], inputs["question"])
     elif name == "scan_photos":
         return scan_photos(inputs["output_dir"])
+    elif name == "assign_photo":
+        return assign_photo(inputs["photo"], inputs["scene_number"], inputs["output_dir"])
     return f"不明なツール: {name}"

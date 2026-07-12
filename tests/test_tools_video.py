@@ -387,3 +387,41 @@ def test_analyze_image_returns_vision_text(monkeypatch, tmp_path):
     assert content[0]["type"] == "image"
     assert content[0]["source"]["media_type"] == "image/png"
     assert content[1]["text"] == "何が写っていますか"
+
+
+from tools_video import assign_photo
+from PIL import Image
+
+
+def _make_photo(path, size=(4000, 2000)):
+    Image.new("RGB", size, (120, 40, 40)).save(path)
+
+
+def test_assign_photo_missing_source(tmp_path):
+    result = assign_photo("nope.jpg", 1, str(tmp_path))
+    assert "見つかりません" in result
+
+
+def test_assign_photo_creates_normalized_png(tmp_path):
+    photos = tmp_path / "my_photos"
+    photos.mkdir()
+    _make_photo(photos / "barolo.jpg", size=(4000, 2000))
+
+    result = assign_photo("barolo.jpg", 3, str(tmp_path))
+
+    assert "scene_03.png" in result
+    out = tmp_path / "images" / "scene_03.png"
+    assert out.exists()
+    with Image.open(out) as im:
+        assert im.size == (1536, 1024)
+
+
+def test_assign_photo_handles_portrait_source(tmp_path):
+    photos = tmp_path / "my_photos"
+    photos.mkdir()
+    _make_photo(photos / "tall.jpg", size=(1000, 3000))
+
+    assign_photo("tall.jpg", 1, str(tmp_path))
+
+    with Image.open(tmp_path / "images" / "scene_01.png") as im:
+        assert im.size == (1536, 1024)
