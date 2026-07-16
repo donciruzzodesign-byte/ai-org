@@ -220,7 +220,8 @@ def _detect_completion_status(content: str) -> str:
     return "途中"
 
 
-def _create_database_page(token: str, database_id: str, title: str, category: str) -> Optional[str]:
+def _create_database_page(token: str, database_id: str, title: str, category: str,
+                          status: str = "要確認") -> Optional[str]:
     headers = {
         "Authorization": f"Bearer {token}",
         "Content-Type": "application/json",
@@ -231,6 +232,7 @@ def _create_database_page(token: str, database_id: str, title: str, category: st
         "properties": {
             "title": {"title": [{"text": {"content": title}}]},
             "カテゴリ": {"select": {"name": category}},
+            "ステータス": {"select": {"name": status}},
         }
     }
     try:
@@ -244,7 +246,33 @@ def _create_database_page(token: str, database_id: str, title: str, category: st
         return None
 
 
-def save_to_notion(title: str, content: str) -> str:
+def _add_blocks_to_page(token: str, page_id: str, content: str) -> Optional[str]:
+    """本文をブロック化して100件ずつ page_id に追記。成功=None、失敗=エラー文字列。"""
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "Content-Type": "application/json",
+        "Notion-Version": "2022-06-28",
+    }
+    blocks = _parse_content_to_blocks(content)
+    chunk_size = 100
+    for i in range(0, len(blocks), chunk_size):
+        chunk = blocks[i:i + chunk_size]
+        try:
+            resp = requests.patch(
+                f"https://api.notion.com/v1/blocks/{page_id}/children",
+                headers=headers,
+                json={"children": chunk},
+                timeout=15,
+            )
+            if resp.status_code != 200:
+                result = resp.json()
+                return f"Notionブロック追加エラー: {result.get('message', resp.text)}"
+        except Exception as e:
+            return f"Notionブロック追加エラー: {e}"
+    return None
+
+
+def save_to_notion(title: str, content: str, status: str = "要確認") -> str:
     token = os.environ.get("NOTION_API_KEY")
     database_id = os.environ.get("NOTION_DATABASE_ID")
     page_id = os.environ.get("NOTION_PAGE_ID")
@@ -253,7 +281,7 @@ def save_to_notion(title: str, content: str) -> str:
 
     if database_id:
         child_id = _create_database_page(token, database_id, title,
-                                         _infer_category(title, content))
+                                         _infer_category(title, content), status)
         if not child_id:
             return "ページ作成エラー: Notion APIがデータベースにページを作成できませんでした"
         created_label = "データベースページ"
@@ -263,30 +291,9 @@ def save_to_notion(title: str, content: str) -> str:
             return "子ページ作成エラー: Notion APIが子ページを作成できませんでした"
         created_label = "子ページ"
 
-    headers = {
-        "Authorization": f"Bearer {token}",
-        "Content-Type": "application/json",
-        "Notion-Version": "2022-06-28",
-    }
-    blocks = _parse_content_to_blocks(content)
-
-    chunk_size = 100
-    if blocks:
-        for i in range(0, len(blocks), chunk_size):
-            chunk = blocks[i:i + chunk_size]
-            try:
-                resp = requests.patch(
-                    f"https://api.notion.com/v1/blocks/{child_id}/children",
-                    headers=headers,
-                    json={"children": chunk},
-                    timeout=15,
-                )
-                if resp.status_code != 200:
-                    result = resp.json()
-                    return f"Notionブロック追加エラー: {result.get('message', resp.text)}"
-            except Exception as e:
-                return f"Notionブロック追加エラー: {e}"
-
+    err = _add_blocks_to_page(token, child_id, content)
+    if err:
+        return err
     return f"Notionに{created_label}を作成しました"
 
 

@@ -291,3 +291,43 @@ def test_detect_status_closing_bracket_ok():
 
 def test_detect_status_empty():
     assert _detect_completion_status("") == "途中"
+
+
+def test_save_to_notion_sets_status_on_database_page(monkeypatch):
+    monkeypatch.setenv("NOTION_API_KEY", "test-token")
+    monkeypatch.setenv("NOTION_DATABASE_ID", "db-id-123")
+    monkeypatch.delenv("NOTION_PAGE_ID", raising=False)
+
+    create_resp = MagicMock()
+    create_resp.status_code = 200
+    create_resp.json.return_value = {"id": "row-id"}
+    patch_resp = MagicMock()
+    patch_resp.status_code = 200
+    patch_resp.json.return_value = {}
+
+    with patch("tools.requests.post", return_value=create_resp) as mock_post, \
+         patch("tools.requests.patch", return_value=patch_resp):
+        save_to_notion("火曜：ワイン動画台本 (2026-07-16)", "## 内容\n本文", status="途中")
+
+    props = mock_post.call_args[1]["json"]["properties"]
+    assert props["ステータス"] == {"select": {"name": "途中"}}
+
+
+def test_save_to_notion_default_status_is_yokakunin(monkeypatch):
+    monkeypatch.setenv("NOTION_API_KEY", "test-token")
+    monkeypatch.setenv("NOTION_DATABASE_ID", "db-id-123")
+    monkeypatch.delenv("NOTION_PAGE_ID", raising=False)
+
+    create_resp = MagicMock()
+    create_resp.status_code = 200
+    create_resp.json.return_value = {"id": "row-id"}
+    patch_resp = MagicMock()
+    patch_resp.status_code = 200
+    patch_resp.json.return_value = {}
+
+    with patch("tools.requests.post", return_value=create_resp) as mock_post, \
+         patch("tools.requests.patch", return_value=patch_resp):
+        save_to_notion("タイトル", "## 内容\n本文")
+
+    props = mock_post.call_args[1]["json"]["properties"]
+    assert props["ステータス"] == {"select": {"name": "要確認"}}
