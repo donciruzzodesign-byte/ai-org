@@ -3,6 +3,7 @@ import re
 import requests
 from bs4 import BeautifulSoup
 from typing import Optional
+from urllib.parse import quote
 
 TOOL_DEFINITIONS = [
     {
@@ -378,7 +379,7 @@ def notion_find_wip(category: str = "") -> str:
         pid = page.get("id", "")
         props = page.get("properties", {})
         title_arr = props.get("title", {}).get("title", [])
-        title = title_arr[0].get("plain_text", "") if title_arr else "(無題)"
+        title = "".join(t.get("plain_text", "") for t in title_arr) if title_arr else "(無題)"
         cat = props.get("カテゴリ", {}).get("select") or {}
         lines.append(f"- {pid} | {cat.get('name', '')} | {title}")
     return "途中の制作物:\n" + "\n".join(lines)
@@ -402,7 +403,7 @@ def notion_read_page(page_id: str) -> str:
         while True:
             url = f"https://api.notion.com/v1/blocks/{page_id}/children?page_size=100"
             if cursor:
-                url += f"&start_cursor={cursor}"
+                url += f"&start_cursor={quote(cursor)}"
             resp = requests.get(url, headers=_notion_headers(token), timeout=15)
             if resp.status_code != 200:
                 return f"Notion読み取りエラー: {resp.json().get('message', resp.text)}"

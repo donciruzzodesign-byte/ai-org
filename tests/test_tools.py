@@ -376,6 +376,25 @@ def test_notion_find_wip_none(monkeypatch):
     assert "ありません" in out
 
 
+def test_notion_find_wip_joins_multi_run_title(monkeypatch):
+    monkeypatch.setenv("NOTION_API_KEY", "test-token")
+    monkeypatch.setenv("NOTION_DATABASE_ID", "db-id-123")
+    resp = MagicMock()
+    resp.status_code = 200
+    resp.json.return_value = {
+        "results": [
+            {"id": "p1",
+             "properties": {
+                 "title": {"title": [{"plain_text": "火曜："}, {"plain_text": "ワイン台本"}]},
+                 "カテゴリ": {"select": {"name": "ワイン"}},
+             }},
+        ]
+    }
+    with patch("tools.requests.post", return_value=resp):
+        out = notion_find_wip("ワイン")
+    assert "火曜：ワイン台本" in out
+
+
 def test_notion_read_page_joins_text(monkeypatch):
     monkeypatch.setenv("NOTION_API_KEY", "test-token")
     resp = MagicMock()
