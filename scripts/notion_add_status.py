@@ -17,6 +17,11 @@ def classify_existing_page(page_id: str) -> str:
     return _detect_completion_status(content)
 
 
+def _extract_status(page: dict) -> str:
+    sel = page.get("properties", {}).get("ステータス", {}).get("select") or {}
+    return sel.get("name", "")
+
+
 def _ensure_status_property(token: str, database_id: str) -> None:
     body = {
         "properties": {
@@ -31,26 +36,39 @@ def _ensure_status_property(token: str, database_id: str) -> None:
             }
         }
     }
-    resp = requests.patch(
-        f"https://api.notion.com/v1/databases/{database_id}",
-        headers=_notion_headers(token), json=body, timeout=15,
-    )
-    print(f"プロパティ追加: {resp.status_code}")
+    try:
+        resp = requests.patch(
+            f"https://api.notion.com/v1/databases/{database_id}",
+            headers=_notion_headers(token), json=body, timeout=15,
+        )
+        if resp.status_code != 200:
+            print(f"プロパティ追加エラー: {resp.status_code} {resp.text}")
+        else:
+            print(f"プロパティ追加: {resp.status_code}")
+    except Exception as e:
+        print(f"プロパティ追加エラー: {e}")
 
 
-def _iter_page_ids(token: str, database_id: str):
+def _iter_pages(token: str, database_id: str):
     cursor = None
     while True:
         body = {}
         if cursor:
             body["start_cursor"] = cursor
-        resp = requests.post(
-            f"https://api.notion.com/v1/databases/{database_id}/query",
-            headers=_notion_headers(token), json=body, timeout=15,
-        )
+        try:
+            resp = requests.post(
+                f"https://api.notion.com/v1/databases/{database_id}/query",
+                headers=_notion_headers(token), json=body, timeout=15,
+            )
+        except Exception as e:
+            print(f"Notion検索エラー: {e}")
+            return
+        if resp.status_code != 200:
+            print(f"Notion検索エラー: {resp.status_code} {resp.text}")
+            return
         data = resp.json()
         for page in data.get("results", []):
-            yield page["id"]
+            yield page
         if data.get("has_more"):
             cursor = data.get("next_cursor")
         else:
@@ -64,7 +82,12 @@ def main() -> None:
         print("NOTION_API_KEY / NOTION_DATABASE_ID が未設定です。")
         return
     _ensure_status_property(token, database_id)
-    for page_id in _iter_page_ids(token, database_id):
+    for page in _iter_pages(token, database_id):
+        page_id = page["id"]
+        status = _extract_status(page)
+        if status:
+            print(f"{page_id} -> スキップ（既存: {status}）")
+            continue
         status = classify_existing_page(page_id)
         print(f"{page_id} -> {status}: {notion_update_status(page_id, status)}")
 
