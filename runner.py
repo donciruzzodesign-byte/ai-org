@@ -5,6 +5,7 @@ from datetime import datetime
 import anthropic
 from tools import (
     TOOL_DEFINITIONS, execute_tool, save_to_notion, notion_find_wip,
+    notion_read_page, notion_append_to_page, _infer_category,
 )
 from tools_video import VIDEO_TOOL_DEFINITIONS, execute_video_tool
 from tools_express import generate_weekly_assets, parse_creator_metadata
@@ -58,10 +59,37 @@ def save_log(content: str, label: str):
         f.write("\n")
 
 
+def _first_wip_page_id(find_output: str) -> str:
+    """notion_find_wip の出力先頭行から page_id を取り出す。該当なしは空文字。"""
+    for line in find_output.splitlines():
+        line = line.strip()
+        if line.startswith("- "):
+            parts = line[2:].split("|")
+            if parts:
+                return parts[0].strip()
+    return ""
+
+
 def run_agent(agent_name: str, prompt: str, label: str, max_continuations: int = 3) -> str:
     system = load_agent(agent_name)
-    messages = [{"role": "user", "content": prompt}]
 
+    # 途中の制作物があれば読み込み、続きから書かせる（ワイン/コーヒーのみ対象）
+    resume_page_id = ""
+    category = _infer_category(label, prompt)
+    if category in ("ワイン", "コーヒー"):
+        find_out = notion_find_wip(category)
+        resume_page_id = _first_wip_page_id(find_out)
+        if resume_page_id:
+            existing = notion_read_page(resume_page_id)
+            if existing and not existing.endswith("スキップ") and "エラー" not in existing[:12]:
+                prompt = (
+                    prompt
+                    + "\n\n【前回の途中原稿】以下は前回、途中まで作成した内容です。"
+                    + "繰り返さず、この続きから書いて全体を完成させてください:\n\n"
+                    + existing
+                )
+
+    messages = [{"role": "user", "content": prompt}]
     accumulated = ""
     continuations = 0
     truncated = False
@@ -114,7 +142,11 @@ def run_agent(agent_name: str, prompt: str, label: str, max_continuations: int =
     now = datetime.now()
     status = "途中" if truncated else "要確認"
     print(f"\n{'⚠️ 途中保存' if truncated else '✅'} {label} 完了（{status}）")
-    notion_result = save_to_notion(f"{label} ({now.strftime('%Y-%m-%d')})", final_text, status=status)
+
+    if resume_page_id:
+        notion_result = notion_append_to_page(resume_page_id, final_text, status=status)
+    else:
+        notion_result = save_to_notion(f"{label} ({now.strftime('%Y-%m-%d')})", final_text, status=status)
     print(f"   📝 Notion: {notion_result}")
     return final_text
 

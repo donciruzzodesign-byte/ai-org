@@ -158,3 +158,36 @@ def test_run_agent_falls_back_to_tochu_when_still_truncated(monkeypatch):
          patch.object(runner, "notion_find_wip", return_value="途中の制作物はありません"):
         runner.run_agent("creator", "台本を書いて", "火曜：動画台本作成", max_continuations=2)
     assert mock_save.call_args.kwargs.get("status") == "途中"
+
+
+def test_first_wip_page_id_parses_first_line():
+    import runner
+    out = "途中の制作物:\n- pageABC | ワイン | 火曜：ワイン台本\n- pageXYZ | ワイン | 別件"
+    assert runner._first_wip_page_id(out) == "pageABC"
+
+
+def test_first_wip_page_id_none():
+    import runner
+    assert runner._first_wip_page_id("途中の制作物はありません") == ""
+
+
+def test_run_agent_resumes_existing_wip_page(monkeypatch):
+    import runner
+    resp = _text_response("続きを書いて完成させました。以上です。", "end_turn")
+    find_out = "途中の制作物:\n- pageABC | ワイン | 火曜：ワイン台本"
+    with patch.object(runner.client.messages, "create", return_value=resp) as mock_create, \
+         patch.object(runner, "notion_find_wip", return_value=find_out), \
+         patch.object(runner, "notion_read_page", return_value="前回の途中原稿本文") as mock_read, \
+         patch.object(runner, "notion_append_to_page", return_value="更新しました") as mock_append, \
+         patch.object(runner, "save_to_notion", return_value="ok") as mock_save, \
+         patch.object(runner, "save_log"):
+        runner.run_agent("creator", "ワインの台本を書いて", "火曜：ワイン動画台本作成")
+
+    # 既存原稿を読み、プロンプトに注入して生成、既存ページへ追記、新規保存はしない
+    mock_read.assert_called_once_with("pageABC")
+    sent_messages = mock_create.call_args.kwargs["messages"]
+    assert "前回の途中原稿本文" in sent_messages[0]["content"]
+    mock_append.assert_called_once()
+    assert mock_append.call_args[0][0] == "pageABC"
+    assert mock_append.call_args.kwargs.get("status") == "要確認"
+    mock_save.assert_not_called()
