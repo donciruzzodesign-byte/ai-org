@@ -1,9 +1,18 @@
 import os
 import sys
+import re
 import pytest
 from unittest.mock import patch
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+
+
+def test_app_saves_with_yokakunin_status():
+    # app.py が save_to_notion を status="要確認" 付きで呼ぶことをソース上で保証する
+    with open(os.path.join(os.path.dirname(__file__), '..', 'app.py'), encoding='utf-8') as f:
+        src = f.read()
+    assert re.search(r'save_to_notion\([^)]*status\s*=\s*"要確認"', src, re.S)
+    assert "max_tokens=32000" in src
 
 
 def test_load_agent_reads_correct_file(tmp_path):

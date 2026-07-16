@@ -82,7 +82,7 @@ def chat(agent_id: str, label: str) -> bool:
         while True:
             response = client.messages.create(
                 model=MODEL,
-                max_tokens=16000,
+                max_tokens=32000,
                 system=system_prompt,
                 tools=TOOL_DEFINITIONS,
                 messages=history,
@@ -113,7 +113,7 @@ def chat(agent_id: str, label: str) -> bool:
                 print(f"\n{label}: {final_text}")
                 from datetime import datetime
                 title = f"{label} - {datetime.now().strftime('%Y-%m-%d %H:%M')}"
-                notion_result = save_to_notion(title, final_text)
+                notion_result = save_to_notion(title, final_text, status="要確認")
                 print(f"\n📝 Notion: {notion_result}")
                 break
 
