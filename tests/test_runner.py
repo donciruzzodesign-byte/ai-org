@@ -160,21 +160,28 @@ def test_run_agent_falls_back_to_tochu_when_still_truncated(monkeypatch):
     assert mock_save.call_args.kwargs.get("status") == "途中"
 
 
-def test_first_wip_page_id_parses_first_line():
+def test_wip_page_id_for_label_matches_title():
     import runner
-    out = "途中の制作物:\n- pageABC | ワイン | 火曜：ワイン台本\n- pageXYZ | ワイン | 別件"
-    assert runner._first_wip_page_id(out) == "pageABC"
+    out = "途中の制作物:\n- pageABC | ワイン | 火曜：ワイン動画台本作成 (2026-07-10)\n- pageXYZ | ワイン | 月曜：今週テーマ決定 (2026-07-10)"
+    assert runner._wip_page_id_for_label(out, "火曜：ワイン動画台本作成") == "pageABC"
 
 
-def test_first_wip_page_id_none():
+def test_wip_page_id_for_label_no_match_different_task():
     import runner
-    assert runner._first_wip_page_id("途中の制作物はありません") == ""
+    # 同カテゴリだが別タスク(テーマ決定)のページは拾わない
+    out = "途中の制作物:\n- pageXYZ | ワイン | 月曜：今週テーマ決定 (2026-07-10)"
+    assert runner._wip_page_id_for_label(out, "火曜：ワイン動画台本作成") == ""
+
+
+def test_wip_page_id_for_label_none():
+    import runner
+    assert runner._wip_page_id_for_label("途中の制作物はありません", "火曜：ワイン動画台本作成") == ""
 
 
 def test_run_agent_resumes_existing_wip_page(monkeypatch):
     import runner
     resp = _text_response("続きを書いて完成させました。以上です。", "end_turn")
-    find_out = "途中の制作物:\n- pageABC | ワイン | 火曜：ワイン台本"
+    find_out = "途中の制作物:\n- pageABC | ワイン | 火曜：ワイン動画台本作成 (2026-07-10)"
     with patch.object(runner.client.messages, "create", return_value=resp) as mock_create, \
          patch.object(runner, "notion_find_wip", return_value=find_out), \
          patch.object(runner, "notion_read_page", return_value="前回の途中原稿本文") as mock_read, \
@@ -196,7 +203,7 @@ def test_run_agent_resumes_existing_wip_page(monkeypatch):
 def test_run_agent_read_error_falls_back_to_new_page(monkeypatch):
     import runner
     resp = _text_response("新規に書き起こした完成原稿です。以上。", "end_turn")
-    find_out = "途中の制作物:\n- pageABC | ワイン | 火曜：ワイン台本"
+    find_out = "途中の制作物:\n- pageABC | ワイン | 火曜：ワイン動画台本作成 (2026-07-10)"
     with patch.object(runner.client.messages, "create", return_value=resp) as mock_create, \
          patch.object(runner, "notion_find_wip", return_value=find_out), \
          patch.object(runner, "notion_read_page", return_value="Notion読み取りエラー: 404 not found"), \

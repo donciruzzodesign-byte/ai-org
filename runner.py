@@ -59,14 +59,18 @@ def save_log(content: str, label: str):
         f.write("\n")
 
 
-def _first_wip_page_id(find_output: str) -> str:
-    """notion_find_wip の出力先頭行から page_id を取り出す。該当なしは空文字。"""
+def _wip_page_id_for_label(find_output: str, label: str) -> str:
+    """途中一覧から、タイトルが同じタスク(label)で始まるページのIDを返す。無ければ空文字。"""
     for line in find_output.splitlines():
         line = line.strip()
-        if line.startswith("- "):
-            parts = line[2:].split("|")
-            if parts:
-                return parts[0].strip()
+        if not line.startswith("- "):
+            continue
+        parts = line[2:].split("|")
+        if len(parts) >= 3:
+            pid = parts[0].strip()
+            title = parts[2].strip()
+            if title.startswith(label):
+                return pid
     return ""
 
 
@@ -78,7 +82,7 @@ def run_agent(agent_name: str, prompt: str, label: str, max_continuations: int =
     category = _infer_category(label, prompt)
     if category in ("ワイン", "コーヒー"):
         find_out = notion_find_wip(category)
-        candidate_id = _first_wip_page_id(find_out)
+        candidate_id = _wip_page_id_for_label(find_out, label)
         if candidate_id:
             existing = notion_read_page(candidate_id)
             if existing and not existing.endswith("スキップ") and not existing.startswith("Notion読み取りエラー"):
