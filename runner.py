@@ -3,7 +3,10 @@ import schedule
 import time
 from datetime import datetime
 import anthropic
-from tools import TOOL_DEFINITIONS, execute_tool, save_to_notion
+from tools import (
+    TOOL_DEFINITIONS, execute_tool, save_to_notion, notion_find_wip,
+    notion_read_page, notion_append_to_page, _infer_category,
+)
 from tools_video import VIDEO_TOOL_DEFINITIONS, execute_video_tool
 from tools_express import generate_weekly_assets, parse_creator_metadata
 
@@ -56,16 +59,51 @@ def save_log(content: str, label: str):
         f.write("\n")
 
 
-def run_agent(agent_name: str, prompt: str, label: str) -> str:
-    system = load_agent(agent_name)
-    messages = [{"role": "user", "content": prompt}]
+def _wip_page_id_for_label(find_output: str, label: str) -> str:
+    """途中一覧から、タイトルが同じタスク(label)で始まるページのIDを返す。無ければ空文字。"""
+    for line in find_output.splitlines():
+        line = line.strip()
+        if not line.startswith("- "):
+            continue
+        parts = line[2:].split("|")
+        if len(parts) >= 3:
+            pid = parts[0].strip()
+            title = parts[2].strip()
+            if title.startswith(label):
+                return pid
+    return ""
 
-    # ツール使用ループ
+
+def run_agent(agent_name: str, prompt: str, label: str, max_continuations: int = 3) -> str:
+    system = load_agent(agent_name)
+
+    # 途中の制作物があれば読み込み、続きから書かせる（ワイン/コーヒーのみ対象）
+    resume_page_id = ""
+    category = _infer_category(label, prompt)
+    if category in ("ワイン", "コーヒー"):
+        find_out = notion_find_wip(category)
+        candidate_id = _wip_page_id_for_label(find_out, label)
+        if candidate_id:
+            existing = notion_read_page(candidate_id)
+            if existing and not existing.endswith("スキップ") and not existing.startswith("Notion読み取りエラー"):
+                resume_page_id = candidate_id
+                prompt = (
+                    prompt
+                    + "\n\n【前回の途中原稿】以下は前回、途中まで作成した内容です。"
+                    + "繰り返さず、この続きから書いて全体を完成させてください:\n\n"
+                    + existing
+                )
+
+    messages = [{"role": "user", "content": prompt}]
+    accumulated = ""
+    continuations = 0
+    truncated = False
+
     while True:
         response = _with_retry(
             lambda: client.messages.create(
                 model=MODEL,
-                max_tokens=16000,
+                max_tokens=32000,
                 system=system,
                 tools=TOOL_DEFINITIONS,
                 messages=messages,
@@ -78,24 +116,44 @@ def run_agent(agent_name: str, prompt: str, label: str) -> str:
             tool_results = []
             for block in response.content:
                 if block.type == "tool_use":
-                    print(f"  🔍 {label} ツール実行: {block.name}({list(block.input.values())[0][:40]}...)")
+                    print(f"  🔍 {label} ツール実行: {block.name}({str(list(block.input.values())[0])[:40] if block.input else ''}...)")
                     result = execute_tool(block.name, block.input)
                     tool_results.append({
                         "type": "tool_result",
                         "tool_use_id": block.id,
-                        "content": result
+                        "content": result,
                     })
             messages.append({"role": "user", "content": tool_results})
-        else:
-            final_text = next(
-                (b.text for b in response.content if hasattr(b, "text")), ""
-            )
-            save_log(final_text, label)
-            now = datetime.now()
-            print(f"\n✅ {label} 完了")
-            notion_result = save_to_notion(f"{label} ({now.strftime('%Y-%m-%d')})", final_text)
-            print(f"   📝 Notion: {notion_result}")
-            return final_text
+            continue
+
+        segment = "".join(b.text for b in response.content if hasattr(b, "text"))
+        accumulated += segment
+
+        if response.stop_reason == "max_tokens" and continuations < max_continuations:
+            messages.append({"role": "assistant", "content": response.content})
+            messages.append({
+                "role": "user",
+                "content": "文字数上限で途中で切れました。前の文章の続きから、繰り返さずに最後まで書き続けてください。",
+            })
+            continuations += 1
+            continue
+
+        if response.stop_reason == "max_tokens":
+            truncated = True
+        break
+
+    final_text = accumulated
+    save_log(final_text, label)
+    now = datetime.now()
+    status = "途中" if truncated else "要確認"
+    print(f"\n{'⚠️ 途中保存' if truncated else '✅'} {label} 完了（{status}）")
+
+    if resume_page_id:
+        notion_result = notion_append_to_page(resume_page_id, final_text, status=status)
+    else:
+        notion_result = save_to_notion(f"{label} ({now.strftime('%Y-%m-%d')})", final_text, status=status)
+    print(f"   📝 Notion: {notion_result}")
+    return final_text
 
 
 def _read_todays_log() -> str:

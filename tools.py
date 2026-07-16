@@ -3,6 +3,7 @@ import re
 import requests
 from bs4 import BeautifulSoup
 from typing import Optional
+from urllib.parse import quote
 
 TOOL_DEFINITIONS = [
     {
@@ -58,6 +59,50 @@ TOOL_DEFINITIONS = [
                 }
             },
             "required": ["url"]
+        }
+    },
+    {
+        "name": "notion_find_wip",
+        "description": (
+            "Notionの『コンテンツ生成物』DBから、まだ完成していない（ステータス=途中）制作物を検索します。"
+            "続きを作る前に呼び、途中の下書きがないか確認してください。"
+            "category に『ワイン』『コーヒー』を指定するとそのカテゴリだけに絞れます。"
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "category": {
+                    "type": "string",
+                    "description": "絞り込むカテゴリ（ワイン / コーヒー）。省略時は全カテゴリ。",
+                }
+            },
+            "required": []
+        }
+    },
+    {
+        "name": "notion_read_page",
+        "description": "Notionページの本文テキストを読み取ります。notion_find_wip で得たページIDを渡し、途中の内容を把握して続きを書くのに使います。",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "page_id": {"type": "string", "description": "読み取るNotionページのID"}
+            },
+            "required": ["page_id"]
+        }
+    },
+    {
+        "name": "notion_update_status",
+        "description": (
+            "Notionページのステータスを更新します。値は『途中』『要確認』『完成』のいずれか。"
+            "途中の制作物を完成させたら『要確認』に更新してください（最終確認はオーナーが行います）。"
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "page_id": {"type": "string", "description": "更新するNotionページのID"},
+                "status": {"type": "string", "description": "途中 / 要確認 / 完成 のいずれか"}
+            },
+            "required": ["page_id", "status"]
         }
     }
 ]
@@ -201,7 +246,27 @@ def _infer_category(title: str, content: str) -> str:
     return "その他"
 
 
-def _create_database_page(token: str, database_id: str, title: str, category: str) -> Optional[str]:
+def _detect_completion_status(content: str) -> str:
+    """本文が途中切れらしいかを判定する純粋関数。
+
+    途中切れ（"途中"）とみなす条件:
+      - 空、または実質80文字未満（短すぎる）
+      - 末尾が文の終端記号（句点・感嘆符・閉じ括弧・引用符・ハッシュタグ）で終わらない
+    それ以外は "要確認"。
+    """
+    text = (content or "").strip()
+    if len(text) < 80:
+        return "途中"
+    # 末尾の空白・改行を除いた最後の文字
+    last = text[-1]
+    terminal = set("。．.!！?？」』）)】〕》>#0123456789")
+    if last in terminal:
+        return "要確認"
+    return "途中"
+
+
+def _create_database_page(token: str, database_id: str, title: str, category: str,
+                          status: str = "要確認") -> Optional[str]:
     headers = {
         "Authorization": f"Bearer {token}",
         "Content-Type": "application/json",
@@ -212,6 +277,7 @@ def _create_database_page(token: str, database_id: str, title: str, category: st
         "properties": {
             "title": {"title": [{"text": {"content": title}}]},
             "カテゴリ": {"select": {"name": category}},
+            "ステータス": {"select": {"name": status}},
         }
     }
     try:
@@ -225,7 +291,33 @@ def _create_database_page(token: str, database_id: str, title: str, category: st
         return None
 
 
-def save_to_notion(title: str, content: str) -> str:
+def _add_blocks_to_page(token: str, page_id: str, content: str) -> Optional[str]:
+    """本文をブロック化して100件ずつ page_id に追記。成功=None、失敗=エラー文字列。"""
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "Content-Type": "application/json",
+        "Notion-Version": "2022-06-28",
+    }
+    blocks = _parse_content_to_blocks(content)
+    chunk_size = 100
+    for i in range(0, len(blocks), chunk_size):
+        chunk = blocks[i:i + chunk_size]
+        try:
+            resp = requests.patch(
+                f"https://api.notion.com/v1/blocks/{page_id}/children",
+                headers=headers,
+                json={"children": chunk},
+                timeout=15,
+            )
+            if resp.status_code != 200:
+                result = resp.json()
+                return f"Notionブロック追加エラー: {result.get('message', resp.text)}"
+        except Exception as e:
+            return f"Notionブロック追加エラー: {e}"
+    return None
+
+
+def save_to_notion(title: str, content: str, status: str = "要確認") -> str:
     token = os.environ.get("NOTION_API_KEY")
     database_id = os.environ.get("NOTION_DATABASE_ID")
     page_id = os.environ.get("NOTION_PAGE_ID")
@@ -234,7 +326,7 @@ def save_to_notion(title: str, content: str) -> str:
 
     if database_id:
         child_id = _create_database_page(token, database_id, title,
-                                         _infer_category(title, content))
+                                         _infer_category(title, content), status)
         if not child_id:
             return "ページ作成エラー: Notion APIがデータベースにページを作成できませんでした"
         created_label = "データベースページ"
@@ -244,31 +336,116 @@ def save_to_notion(title: str, content: str) -> str:
             return "子ページ作成エラー: Notion APIが子ページを作成できませんでした"
         created_label = "子ページ"
 
-    headers = {
+    err = _add_blocks_to_page(token, child_id, content)
+    if err:
+        return err
+    return f"Notionに{created_label}を作成しました"
+
+
+def _notion_headers(token: str) -> dict:
+    return {
         "Authorization": f"Bearer {token}",
         "Content-Type": "application/json",
         "Notion-Version": "2022-06-28",
     }
-    blocks = _parse_content_to_blocks(content)
 
-    chunk_size = 100
-    if blocks:
-        for i in range(0, len(blocks), chunk_size):
-            chunk = blocks[i:i + chunk_size]
-            try:
-                resp = requests.patch(
-                    f"https://api.notion.com/v1/blocks/{child_id}/children",
-                    headers=headers,
-                    json={"children": chunk},
-                    timeout=15,
-                )
-                if resp.status_code != 200:
-                    result = resp.json()
-                    return f"Notionブロック追加エラー: {result.get('message', resp.text)}"
-            except Exception as e:
-                return f"Notionブロック追加エラー: {e}"
 
-    return f"Notionに{created_label}を作成しました"
+def notion_find_wip(category: str = "") -> str:
+    """ステータス=途中 のDBページを検索して一覧テキストを返す。"""
+    token = os.environ.get("NOTION_API_KEY")
+    database_id = os.environ.get("NOTION_DATABASE_ID")
+    if not token or not database_id:
+        return "NOTION_API_KEY / NOTION_DATABASE_ID が未設定のためスキップ"
+
+    filters = [{"property": "ステータス", "select": {"equals": "途中"}}]
+    if category:
+        filters.append({"property": "カテゴリ", "select": {"equals": category}})
+    body = {"filter": {"and": filters}}
+    try:
+        resp = requests.post(
+            f"https://api.notion.com/v1/databases/{database_id}/query",
+            headers=_notion_headers(token), json=body, timeout=15,
+        )
+        if resp.status_code != 200:
+            return f"Notion検索エラー: {resp.json().get('message', resp.text)}"
+        results = resp.json().get("results", [])
+    except Exception as e:
+        return f"Notion検索エラー: {e}"
+
+    if not results:
+        return "途中の制作物はありません"
+    lines = []
+    for page in results:
+        pid = page.get("id", "")
+        props = page.get("properties", {})
+        title_arr = props.get("title", {}).get("title", [])
+        title = "".join(t.get("plain_text", "") for t in title_arr) if title_arr else "(無題)"
+        cat = props.get("カテゴリ", {}).get("select") or {}
+        lines.append(f"- {pid} | {cat.get('name', '')} | {title}")
+    return "途中の制作物:\n" + "\n".join(lines)
+
+
+def _extract_block_text(block: dict) -> str:
+    btype = block.get("type", "")
+    payload = block.get(btype, {})
+    rich = payload.get("rich_text", []) if isinstance(payload, dict) else []
+    return "".join(r.get("plain_text", "") for r in rich)
+
+
+def notion_read_page(page_id: str) -> str:
+    """ページの子ブロックのテキストを結合して返す（ページネーション対応）。"""
+    token = os.environ.get("NOTION_API_KEY")
+    if not token:
+        return "NOTION_API_KEY が未設定のためスキップ"
+    texts = []
+    cursor = None
+    try:
+        while True:
+            url = f"https://api.notion.com/v1/blocks/{page_id}/children?page_size=100"
+            if cursor:
+                url += f"&start_cursor={quote(cursor)}"
+            resp = requests.get(url, headers=_notion_headers(token), timeout=15)
+            if resp.status_code != 200:
+                return f"Notion読み取りエラー: {resp.json().get('message', resp.text)}"
+            data = resp.json()
+            for block in data.get("results", []):
+                texts.append(_extract_block_text(block))
+            if data.get("has_more"):
+                cursor = data.get("next_cursor")
+            else:
+                break
+    except Exception as e:
+        return f"Notion読み取りエラー: {e}"
+    return "\n".join(t for t in texts if t)
+
+
+def notion_update_status(page_id: str, status: str) -> str:
+    """ページの ステータス セレクトを更新する。"""
+    token = os.environ.get("NOTION_API_KEY")
+    if not token:
+        return "NOTION_API_KEY が未設定のためスキップ"
+    body = {"properties": {"ステータス": {"select": {"name": status}}}}
+    try:
+        resp = requests.patch(
+            f"https://api.notion.com/v1/pages/{page_id}",
+            headers=_notion_headers(token), json=body, timeout=15,
+        )
+        if resp.status_code != 200:
+            return f"ステータス更新エラー: {resp.json().get('message', resp.text)}"
+    except Exception as e:
+        return f"ステータス更新エラー: {e}"
+    return f"ステータスを{status}に更新しました"
+
+
+def notion_append_to_page(page_id: str, content: str, status: str = "要確認") -> str:
+    """既存ページに本文を追記し、ステータスを更新する（runner内部利用）。"""
+    token = os.environ.get("NOTION_API_KEY")
+    if not token:
+        return "NOTION_API_KEY が未設定のためスキップ"
+    err = _add_blocks_to_page(token, page_id, content)
+    if err:
+        return err
+    return notion_update_status(page_id, status)
 
 
 def execute_tool(name: str, inputs: dict) -> str:
@@ -278,4 +455,10 @@ def execute_tool(name: str, inputs: dict) -> str:
         return search_papers(inputs["query"])
     elif name == "fetch_page":
         return fetch_page(inputs["url"])
+    elif name == "notion_find_wip":
+        return notion_find_wip(inputs.get("category", ""))
+    elif name == "notion_read_page":
+        return notion_read_page(inputs["page_id"])
+    elif name == "notion_update_status":
+        return notion_update_status(inputs["page_id"], inputs["status"])
     return f"不明なツール: {name}"

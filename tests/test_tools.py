@@ -261,3 +261,188 @@ def test_infer_category():
     assert _infer_category("月曜：今週テーマ決定", "バローロはワインの王様") == "ワイン"
     assert _infer_category("日曜：反応分析", "エスプレッソとコーヒー文化") == "コーヒー"
     assert _infer_category("レポート", "特に言及なし") == "その他"
+
+
+from tools import _detect_completion_status
+
+
+def test_detect_status_complete_sentence():
+    # 句点で締めくくられた十分な長さ → 要確認
+    text = "バローロはピエモンテを代表する赤ワインです。" * 5
+    assert _detect_completion_status(text) == "要確認"
+
+
+def test_detect_status_truncated_midsentence():
+    # 文の途中でブツ切れ（句読点・記号で終わらない） → 途中
+    text = "バローロの熟成についてこれから詳しく説明していきます。まず樽熟成の期間について触れると" * 2 + "最低でも三年間は"
+    assert _detect_completion_status(text) == "途中"
+
+
+def test_detect_status_too_short():
+    # 極端に短い → 途中
+    assert _detect_completion_status("テーマ決定。") == "途中"
+
+
+def test_detect_status_closing_bracket_ok():
+    # 閉じ括弧で終わる十分な長さ → 要確認
+    text = "詳しいペアリングの提案はこちらの一覧を参照してください。おすすめは白ワインとの組み合わせです" * 2 + "（詳細は本文を参照）"
+    assert _detect_completion_status(text) == "要確認"
+
+
+def test_detect_status_empty():
+    assert _detect_completion_status("") == "途中"
+
+
+def test_save_to_notion_sets_status_on_database_page(monkeypatch):
+    monkeypatch.setenv("NOTION_API_KEY", "test-token")
+    monkeypatch.setenv("NOTION_DATABASE_ID", "db-id-123")
+    monkeypatch.delenv("NOTION_PAGE_ID", raising=False)
+
+    create_resp = MagicMock()
+    create_resp.status_code = 200
+    create_resp.json.return_value = {"id": "row-id"}
+    patch_resp = MagicMock()
+    patch_resp.status_code = 200
+    patch_resp.json.return_value = {}
+
+    with patch("tools.requests.post", return_value=create_resp) as mock_post, \
+         patch("tools.requests.patch", return_value=patch_resp):
+        save_to_notion("火曜：ワイン動画台本 (2026-07-16)", "## 内容\n本文", status="途中")
+
+    props = mock_post.call_args[1]["json"]["properties"]
+    assert props["ステータス"] == {"select": {"name": "途中"}}
+
+
+def test_save_to_notion_default_status_is_yokakunin(monkeypatch):
+    monkeypatch.setenv("NOTION_API_KEY", "test-token")
+    monkeypatch.setenv("NOTION_DATABASE_ID", "db-id-123")
+    monkeypatch.delenv("NOTION_PAGE_ID", raising=False)
+
+    create_resp = MagicMock()
+    create_resp.status_code = 200
+    create_resp.json.return_value = {"id": "row-id"}
+    patch_resp = MagicMock()
+    patch_resp.status_code = 200
+    patch_resp.json.return_value = {}
+
+    with patch("tools.requests.post", return_value=create_resp) as mock_post, \
+         patch("tools.requests.patch", return_value=patch_resp):
+        save_to_notion("タイトル", "## 内容\n本文")
+
+    props = mock_post.call_args[1]["json"]["properties"]
+    assert props["ステータス"] == {"select": {"name": "要確認"}}
+
+
+from tools import (
+    notion_find_wip, notion_read_page, notion_update_status,
+    notion_append_to_page, execute_tool, TOOL_DEFINITIONS,
+)
+
+
+def test_notion_find_wip_filters_status_and_category(monkeypatch):
+    monkeypatch.setenv("NOTION_API_KEY", "test-token")
+    monkeypatch.setenv("NOTION_DATABASE_ID", "db-id-123")
+
+    resp = MagicMock()
+    resp.status_code = 200
+    resp.json.return_value = {
+        "results": [
+            {"id": "p1",
+             "properties": {
+                 "title": {"title": [{"plain_text": "火曜：ワイン台本"}]},
+                 "カテゴリ": {"select": {"name": "ワイン"}},
+             }},
+        ]
+    }
+    with patch("tools.requests.post", return_value=resp) as mock_post:
+        out = notion_find_wip("ワイン")
+
+    body = mock_post.call_args[1]["json"]
+    # ステータス=途中 と カテゴリ=ワイン の and フィルタ
+    assert body["filter"]["and"][0]["select"]["equals"] == "途中"
+    assert body["filter"]["and"][1]["select"]["equals"] == "ワイン"
+    assert "p1" in out
+    assert "火曜：ワイン台本" in out
+
+
+def test_notion_find_wip_none(monkeypatch):
+    monkeypatch.setenv("NOTION_API_KEY", "test-token")
+    monkeypatch.setenv("NOTION_DATABASE_ID", "db-id-123")
+    resp = MagicMock()
+    resp.status_code = 200
+    resp.json.return_value = {"results": []}
+    with patch("tools.requests.post", return_value=resp):
+        out = notion_find_wip("ワイン")
+    assert "ありません" in out
+
+
+def test_notion_find_wip_joins_multi_run_title(monkeypatch):
+    monkeypatch.setenv("NOTION_API_KEY", "test-token")
+    monkeypatch.setenv("NOTION_DATABASE_ID", "db-id-123")
+    resp = MagicMock()
+    resp.status_code = 200
+    resp.json.return_value = {
+        "results": [
+            {"id": "p1",
+             "properties": {
+                 "title": {"title": [{"plain_text": "火曜："}, {"plain_text": "ワイン台本"}]},
+                 "カテゴリ": {"select": {"name": "ワイン"}},
+             }},
+        ]
+    }
+    with patch("tools.requests.post", return_value=resp):
+        out = notion_find_wip("ワイン")
+    assert "火曜：ワイン台本" in out
+
+
+def test_notion_read_page_joins_text(monkeypatch):
+    monkeypatch.setenv("NOTION_API_KEY", "test-token")
+    resp = MagicMock()
+    resp.status_code = 200
+    resp.json.return_value = {
+        "has_more": False,
+        "results": [
+            {"type": "heading_2", "heading_2": {"rich_text": [{"plain_text": "オープニング"}]}},
+            {"type": "paragraph", "paragraph": {"rich_text": [{"plain_text": "こんにちは"}]}},
+        ],
+    }
+    with patch("tools.requests.get", return_value=resp):
+        out = notion_read_page("page-1")
+    assert "オープニング" in out
+    assert "こんにちは" in out
+
+
+def test_notion_update_status_patches(monkeypatch):
+    monkeypatch.setenv("NOTION_API_KEY", "test-token")
+    resp = MagicMock()
+    resp.status_code = 200
+    resp.json.return_value = {}
+    with patch("tools.requests.patch", return_value=resp) as mock_patch:
+        out = notion_update_status("page-1", "完成")
+    url = mock_patch.call_args[0][0]
+    body = mock_patch.call_args[1]["json"]
+    assert "page-1" in url
+    assert body["properties"]["ステータス"] == {"select": {"name": "完成"}}
+    assert "完成" in out
+
+
+def test_notion_tools_registered():
+    names = {t["name"] for t in TOOL_DEFINITIONS}
+    assert {"notion_find_wip", "notion_read_page", "notion_update_status"} <= names
+
+
+def test_execute_tool_dispatches_notion_read(monkeypatch):
+    monkeypatch.setenv("NOTION_API_KEY", "test-token")
+    resp = MagicMock()
+    resp.status_code = 200
+    resp.json.return_value = {"has_more": False, "results": []}
+    with patch("tools.requests.get", return_value=resp):
+        out = execute_tool("notion_read_page", {"page_id": "p1"})
+    assert isinstance(out, str)
+
+
+def test_notion_find_wip_skips_without_env(monkeypatch):
+    monkeypatch.delenv("NOTION_API_KEY", raising=False)
+    monkeypatch.delenv("NOTION_DATABASE_ID", raising=False)
+    out = notion_find_wip("ワイン")
+    assert "未設定" in out
