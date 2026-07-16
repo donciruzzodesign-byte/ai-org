@@ -12,6 +12,18 @@ import requests
 from tools import _detect_completion_status, notion_read_page, notion_update_status, _notion_headers
 
 
+def _load_env() -> None:
+    """リポジトリ直下の .env を環境変数へ読み込む（runner.py と同方式）。"""
+    env_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".env")
+    if os.path.exists(env_path):
+        with open(env_path, encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if line and not line.startswith("#") and "=" in line:
+                    key, _, value = line.partition("=")
+                    os.environ.setdefault(key.strip(), value.strip().strip('"').strip("'"))
+
+
 def classify_existing_page(page_id: str) -> str:
     content = notion_read_page(page_id)
     return _detect_completion_status(content)
@@ -76,6 +88,7 @@ def _iter_pages(token: str, database_id: str):
 
 
 def main() -> None:
+    _load_env()
     token = os.environ.get("NOTION_API_KEY")
     database_id = os.environ.get("NOTION_DATABASE_ID")
     if not token or not database_id:

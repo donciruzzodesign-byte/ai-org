@@ -349,7 +349,8 @@ def test_notion_find_wip_filters_status_and_category(monkeypatch):
         "results": [
             {"id": "p1",
              "properties": {
-                 "title": {"title": [{"plain_text": "火曜：ワイン台本"}]},
+                 # Notionのクエリ応答はタイトル列を実際の列名（例『名前』）でキー付けし type=title を持つ
+                 "名前": {"type": "title", "title": [{"plain_text": "火曜：ワイン台本"}]},
                  "カテゴリ": {"select": {"name": "ワイン"}},
              }},
         ]
@@ -385,7 +386,8 @@ def test_notion_find_wip_joins_multi_run_title(monkeypatch):
         "results": [
             {"id": "p1",
              "properties": {
-                 "title": {"title": [{"plain_text": "火曜："}, {"plain_text": "ワイン台本"}]},
+                 "名前": {"type": "title",
+                         "title": [{"plain_text": "火曜："}, {"plain_text": "ワイン台本"}]},
                  "カテゴリ": {"select": {"name": "ワイン"}},
              }},
         ]
@@ -393,6 +395,19 @@ def test_notion_find_wip_joins_multi_run_title(monkeypatch):
     with patch("tools.requests.post", return_value=resp):
         out = notion_find_wip("ワイン")
     assert "火曜：ワイン台本" in out
+
+
+def test_extract_title_finds_title_by_type_not_key():
+    from tools import _extract_title
+    # タイトル列名は任意（『名前』など）。固定キー'title'ではなく type=title で判別する
+    props = {
+        "名前": {"type": "title", "title": [{"plain_text": "月曜："}, {"plain_text": "テーマ決定"}]},
+        "カテゴリ": {"select": {"name": "ワイン"}},
+        "ステータス": {"type": "select", "select": {"name": "途中"}},
+    }
+    assert _extract_title(props) == "月曜：テーマ決定"
+    # タイトル列が無ければ空文字
+    assert _extract_title({"カテゴリ": {"select": {"name": "ワイン"}}}) == ""
 
 
 def test_notion_read_page_joins_text(monkeypatch):

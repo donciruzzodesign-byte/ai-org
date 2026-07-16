@@ -350,6 +350,18 @@ def _notion_headers(token: str) -> dict:
     }
 
 
+def _extract_title(props: dict) -> str:
+    """DBページのプロパティから、名前に依存せず type=title の列のテキストを取り出す。
+
+    Notionのクエリ応答ではタイトル列は実際のプロパティ名（例『名前』）でキー付けされ、
+    固定キー 'title' では取得できないため、type で判別する。
+    """
+    for val in props.values():
+        if isinstance(val, dict) and val.get("type") == "title":
+            return "".join(t.get("plain_text", "") for t in val.get("title", []))
+    return ""
+
+
 def notion_find_wip(category: str = "") -> str:
     """ステータス=途中 のDBページを検索して一覧テキストを返す。"""
     token = os.environ.get("NOTION_API_KEY")
@@ -378,8 +390,7 @@ def notion_find_wip(category: str = "") -> str:
     for page in results:
         pid = page.get("id", "")
         props = page.get("properties", {})
-        title_arr = props.get("title", {}).get("title", [])
-        title = "".join(t.get("plain_text", "") for t in title_arr) if title_arr else "(無題)"
+        title = _extract_title(props) or "(無題)"
         cat = props.get("カテゴリ", {}).get("select") or {}
         lines.append(f"- {pid} | {cat.get('name', '')} | {title}")
     return "途中の制作物:\n" + "\n".join(lines)
