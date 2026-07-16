@@ -274,7 +274,7 @@ def test_detect_status_complete_sentence():
 
 def test_detect_status_truncated_midsentence():
     # 文の途中でブツ切れ（句読点・記号で終わらない） → 途中
-    text = "バローロの熟成について説明します。まず樽熟成の期間は最低でも"
+    text = "バローロの熟成についてこれから詳しく説明していきます。まず樽熟成の期間について触れると" * 2 + "最低でも三年間は"
     assert _detect_completion_status(text) == "途中"
 
 
@@ -285,7 +285,7 @@ def test_detect_status_too_short():
 
 def test_detect_status_closing_bracket_ok():
     # 閉じ括弧で終わる十分な長さ → 要確認
-    text = "おすすめのペアリングはこちらです（チーズと合わせてください）" + "。詳細は本文参照。" * 6
+    text = "詳しいペアリングの提案はこちらの一覧を参照してください。おすすめは白ワインとの組み合わせです" * 2 + "（詳細は本文を参照）"
     assert _detect_completion_status(text) == "要確認"
 
 
