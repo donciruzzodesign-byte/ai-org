@@ -70,7 +70,7 @@ def test_run_agent_saves_to_notion():
          patch("runner.save_log"):
         run_agent("sommelier", "テスト", "テストラベル")
 
-    mock_notion.assert_called_once_with(f"テストラベル ({today})", "テスト出力")
+    mock_notion.assert_called_once_with(f"テストラベル ({today})", "テスト出力", status="要確認")
 
 
 def test_run_video_agent_calls_video_tools(tmp_path):
@@ -110,3 +110,51 @@ def test_tuesday_video_task_catches_exception(monkeypatch):
 def test_coffee_tuesday_video_task_catches_exception(monkeypatch):
     with patch("runner.run_video_agent", side_effect=Exception("API error")):
         coffee_tuesday_video_task()
+
+
+def _text_response(text, stop_reason):
+    block = MagicMock()
+    block.type = "text"
+    block.text = text
+    resp = MagicMock()
+    resp.stop_reason = stop_reason
+    resp.content = [block]
+    return resp
+
+
+def test_run_agent_saves_yokakunin_on_normal_finish(monkeypatch):
+    import runner
+    resp = _text_response("完成した台本です。ここまでで終わり。", "end_turn")
+    with patch.object(runner.client.messages, "create", return_value=resp), \
+         patch.object(runner, "save_to_notion", return_value="ok") as mock_save, \
+         patch.object(runner, "save_log"), \
+         patch.object(runner, "notion_find_wip", return_value="途中の制作物はありません"):
+        runner.run_agent("creator", "台本を書いて", "火曜：動画台本作成")
+    # status キーワード引数が 要確認
+    assert mock_save.call_args.kwargs.get("status") == "要確認"
+
+
+def test_run_agent_auto_continues_on_max_tokens(monkeypatch):
+    import runner
+    first = _text_response("前半の途中まで", "max_tokens")
+    second = _text_response("後半の続き。完了。", "end_turn")
+    with patch.object(runner.client.messages, "create", side_effect=[first, second]) as mock_create, \
+         patch.object(runner, "save_to_notion", return_value="ok") as mock_save, \
+         patch.object(runner, "save_log"), \
+         patch.object(runner, "notion_find_wip", return_value="途中の制作物はありません"):
+        result = runner.run_agent("creator", "台本を書いて", "火曜：動画台本作成")
+    # 2回呼ばれ、全文が結合され、要確認で保存
+    assert mock_create.call_count == 2
+    assert "前半の途中まで" in result and "後半の続き" in result
+    assert mock_save.call_args.kwargs.get("status") == "要確認"
+
+
+def test_run_agent_falls_back_to_tochu_when_still_truncated(monkeypatch):
+    import runner
+    trunc = _text_response("延々と切れ続ける", "max_tokens")
+    with patch.object(runner.client.messages, "create", return_value=trunc), \
+         patch.object(runner, "save_to_notion", return_value="ok") as mock_save, \
+         patch.object(runner, "save_log"), \
+         patch.object(runner, "notion_find_wip", return_value="途中の制作物はありません"):
+        runner.run_agent("creator", "台本を書いて", "火曜：動画台本作成", max_continuations=2)
+    assert mock_save.call_args.kwargs.get("status") == "途中"

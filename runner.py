@@ -3,7 +3,9 @@ import schedule
 import time
 from datetime import datetime
 import anthropic
-from tools import TOOL_DEFINITIONS, execute_tool, save_to_notion
+from tools import (
+    TOOL_DEFINITIONS, execute_tool, save_to_notion, notion_find_wip,
+)
 from tools_video import VIDEO_TOOL_DEFINITIONS, execute_video_tool
 from tools_express import generate_weekly_assets, parse_creator_metadata
 
@@ -56,16 +58,19 @@ def save_log(content: str, label: str):
         f.write("\n")
 
 
-def run_agent(agent_name: str, prompt: str, label: str) -> str:
+def run_agent(agent_name: str, prompt: str, label: str, max_continuations: int = 3) -> str:
     system = load_agent(agent_name)
     messages = [{"role": "user", "content": prompt}]
 
-    # ツール使用ループ
+    accumulated = ""
+    continuations = 0
+    truncated = False
+
     while True:
         response = _with_retry(
             lambda: client.messages.create(
                 model=MODEL,
-                max_tokens=16000,
+                max_tokens=32000,
                 system=system,
                 tools=TOOL_DEFINITIONS,
                 messages=messages,
@@ -78,24 +83,40 @@ def run_agent(agent_name: str, prompt: str, label: str) -> str:
             tool_results = []
             for block in response.content:
                 if block.type == "tool_use":
-                    print(f"  🔍 {label} ツール実行: {block.name}({list(block.input.values())[0][:40]}...)")
+                    print(f"  🔍 {label} ツール実行: {block.name}({str(list(block.input.values())[0])[:40] if block.input else ''}...)")
                     result = execute_tool(block.name, block.input)
                     tool_results.append({
                         "type": "tool_result",
                         "tool_use_id": block.id,
-                        "content": result
+                        "content": result,
                     })
             messages.append({"role": "user", "content": tool_results})
-        else:
-            final_text = next(
-                (b.text for b in response.content if hasattr(b, "text")), ""
-            )
-            save_log(final_text, label)
-            now = datetime.now()
-            print(f"\n✅ {label} 完了")
-            notion_result = save_to_notion(f"{label} ({now.strftime('%Y-%m-%d')})", final_text)
-            print(f"   📝 Notion: {notion_result}")
-            return final_text
+            continue
+
+        segment = "".join(b.text for b in response.content if hasattr(b, "text"))
+        accumulated += segment
+
+        if response.stop_reason == "max_tokens" and continuations < max_continuations:
+            messages.append({"role": "assistant", "content": response.content})
+            messages.append({
+                "role": "user",
+                "content": "文字数上限で途中で切れました。前の文章の続きから、繰り返さずに最後まで書き続けてください。",
+            })
+            continuations += 1
+            continue
+
+        if response.stop_reason == "max_tokens":
+            truncated = True
+        break
+
+    final_text = accumulated
+    save_log(final_text, label)
+    now = datetime.now()
+    status = "途中" if truncated else "要確認"
+    print(f"\n{'⚠️ 途中保存' if truncated else '✅'} {label} 完了（{status}）")
+    notion_result = save_to_notion(f"{label} ({now.strftime('%Y-%m-%d')})", final_text, status=status)
+    print(f"   📝 Notion: {notion_result}")
+    return final_text
 
 
 def _read_todays_log() -> str:
