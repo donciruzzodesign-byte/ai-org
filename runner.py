@@ -78,10 +78,11 @@ def run_agent(agent_name: str, prompt: str, label: str, max_continuations: int =
     category = _infer_category(label, prompt)
     if category in ("ワイン", "コーヒー"):
         find_out = notion_find_wip(category)
-        resume_page_id = _first_wip_page_id(find_out)
-        if resume_page_id:
-            existing = notion_read_page(resume_page_id)
-            if existing and not existing.endswith("スキップ") and "エラー" not in existing[:12]:
+        candidate_id = _first_wip_page_id(find_out)
+        if candidate_id:
+            existing = notion_read_page(candidate_id)
+            if existing and not existing.endswith("スキップ") and not existing.startswith("Notion読み取りエラー"):
+                resume_page_id = candidate_id
                 prompt = (
                     prompt
                     + "\n\n【前回の途中原稿】以下は前回、途中まで作成した内容です。"

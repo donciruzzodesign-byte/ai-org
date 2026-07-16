@@ -191,3 +191,20 @@ def test_run_agent_resumes_existing_wip_page(monkeypatch):
     assert mock_append.call_args[0][0] == "pageABC"
     assert mock_append.call_args.kwargs.get("status") == "要確認"
     mock_save.assert_not_called()
+
+
+def test_run_agent_read_error_falls_back_to_new_page(monkeypatch):
+    import runner
+    resp = _text_response("新規に書き起こした完成原稿です。以上。", "end_turn")
+    find_out = "途中の制作物:\n- pageABC | ワイン | 火曜：ワイン台本"
+    with patch.object(runner.client.messages, "create", return_value=resp) as mock_create, \
+         patch.object(runner, "notion_find_wip", return_value=find_out), \
+         patch.object(runner, "notion_read_page", return_value="Notion読み取りエラー: 404 not found"), \
+         patch.object(runner, "notion_append_to_page", return_value="x") as mock_append, \
+         patch.object(runner, "save_to_notion", return_value="ok") as mock_save, \
+         patch.object(runner, "save_log"):
+        runner.run_agent("creator", "ワインの台本を書いて", "火曜：ワイン動画台本作成")
+    sent = mock_create.call_args.kwargs["messages"][0]["content"]
+    assert "Notion読み取りエラー" not in sent          # error text NOT injected
+    mock_append.assert_not_called()                     # did not append to unreadable page
+    mock_save.assert_called_once()                      # fell back to new page
