@@ -201,6 +201,25 @@ def _infer_category(title: str, content: str) -> str:
     return "その他"
 
 
+def _detect_completion_status(content: str) -> str:
+    """本文が途中切れらしいかを判定する純粋関数。
+
+    途中切れ（"途中"）とみなす条件:
+      - 空、または実質80文字未満（短すぎる）
+      - 末尾が文の終端記号（句点・感嘆符・閉じ括弧・引用符・ハッシュタグ）で終わらない
+    それ以外は "要確認"。
+    """
+    text = (content or "").strip()
+    if len(text) < 80:
+        return "途中"
+    # 末尾の空白・改行を除いた最後の文字
+    last = text[-1]
+    terminal = set("。．.!！?？」』）)】〕》>#0123456789")
+    if last in terminal:
+        return "要確認"
+    return "途中"
+
+
 def _create_database_page(token: str, database_id: str, title: str, category: str) -> Optional[str]:
     headers = {
         "Authorization": f"Bearer {token}",

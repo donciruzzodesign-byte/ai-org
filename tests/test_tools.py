@@ -261,3 +261,33 @@ def test_infer_category():
     assert _infer_category("月曜：今週テーマ決定", "バローロはワインの王様") == "ワイン"
     assert _infer_category("日曜：反応分析", "エスプレッソとコーヒー文化") == "コーヒー"
     assert _infer_category("レポート", "特に言及なし") == "その他"
+
+
+from tools import _detect_completion_status
+
+
+def test_detect_status_complete_sentence():
+    # 句点で締めくくられた十分な長さ → 要確認
+    text = "バローロはピエモンテを代表する赤ワインです。" * 5
+    assert _detect_completion_status(text) == "要確認"
+
+
+def test_detect_status_truncated_midsentence():
+    # 文の途中でブツ切れ（句読点・記号で終わらない） → 途中
+    text = "バローロの熟成について説明します。まず樽熟成の期間は最低でも"
+    assert _detect_completion_status(text) == "途中"
+
+
+def test_detect_status_too_short():
+    # 極端に短い → 途中
+    assert _detect_completion_status("テーマ決定。") == "途中"
+
+
+def test_detect_status_closing_bracket_ok():
+    # 閉じ括弧で終わる十分な長さ → 要確認
+    text = "おすすめのペアリングはこちらです（チーズと合わせてください）" + "。詳細は本文参照。" * 6
+    assert _detect_completion_status(text) == "要確認"
+
+
+def test_detect_status_empty():
+    assert _detect_completion_status("") == "途中"
