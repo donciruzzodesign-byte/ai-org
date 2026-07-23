@@ -14,3 +14,6 @@ output/
 
 # macOS
 .DS_Store
+
+# git worktrees（作業用一時ディレクトリ）
+.worktrees/
