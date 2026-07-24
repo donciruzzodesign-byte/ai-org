@@ -17,3 +17,6 @@ output/
 
 # git worktrees（作業用一時ディレクトリ）
 .worktrees/
+
+# superpowers 作業用スクラッチ（進捗レジャー等）
+.superpowers/
