@@ -1,6 +1,26 @@
 from datetime import datetime, timedelta, timezone
+import time
+import requests
 
 _JST = timezone(timedelta(hours=9))
+
+GRAPH_API_BASE = "https://graph.facebook.com/v21.0"
+
+_TOKEN_EXPIRED_CODES = {190}
+_RATE_LIMIT_CODES = {4, 17, 32, 613}
+_RATE_LIMIT_RETRY_DELAYS = [5, 15, 30]
+
+
+class TokenExpiredError(Exception):
+    pass
+
+
+class RateLimitError(Exception):
+    pass
+
+
+class GraphAPIError(Exception):
+    pass
 
 
 def to_jst_date_str(timestamp: str) -> str:
@@ -58,3 +78,59 @@ def find_row_by_value(all_values: list, col_idx: int, target_value: str, start_r
         if len(row) > col_idx and row[col_idx].strip() == target_value.strip():
             return i
     return None
+
+
+def _raise_for_graph_error(resp) -> None:
+    if resp.status_code == 200:
+        return
+    error = resp.json().get("error", {})
+    code = error.get("code")
+    message = error.get("message", resp.text)
+    if code in _TOKEN_EXPIRED_CODES:
+        raise TokenExpiredError(message)
+    if code in _RATE_LIMIT_CODES:
+        raise RateLimitError(message)
+    raise GraphAPIError(f"code={code}: {message}")
+
+
+def _get_with_retry(url: str, params: dict):
+    """Graph APIにGETし、レート制限エラー(RateLimitError)の場合だけ
+    バックオフしながら数回リトライする。トークン期限切れ・その他エラーは
+    即座に呼び出し元へ伝播させる（リトライしない）。
+    """
+    last_error = None
+    for delay in _RATE_LIMIT_RETRY_DELAYS:
+        try:
+            resp = requests.get(url, params=params, timeout=15)
+            _raise_for_graph_error(resp)
+            return resp
+        except RateLimitError as e:
+            last_error = e
+            time.sleep(delay)
+    resp = requests.get(url, params=params, timeout=15)
+    _raise_for_graph_error(resp)
+    return resp
+
+
+def fetch_recent_media(ig_user_id: str, access_token: str, since_date: str) -> list:
+    """指定日以降にIGアカウントへ投稿されたメディア一覧を取得する。
+    since_date は 'YYYY-MM-DD' 形式。
+    """
+    resp = _get_with_retry(
+        f"{GRAPH_API_BASE}/{ig_user_id}/media",
+        params={
+            "fields": "id,permalink,timestamp,caption,media_product_type",
+            "since": since_date,
+            "access_token": access_token,
+        },
+    )
+    items = []
+    for item in resp.json().get("data", []):
+        items.append({
+            "id": item["id"],
+            "permalink": item["permalink"],
+            "timestamp": item["timestamp"],
+            "caption": item.get("caption", ""),
+            "media_product_type": item["media_product_type"],
+        })
+    return items

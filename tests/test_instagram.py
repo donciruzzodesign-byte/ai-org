@@ -1,4 +1,6 @@
-from tools_instagram import to_jst_date_str, compute_rates, group_media_by_date, find_row_by_value
+from unittest.mock import patch, MagicMock
+import requests
+from tools_instagram import to_jst_date_str, compute_rates, group_media_by_date, find_row_by_value, fetch_recent_media, TokenExpiredError, RateLimitError, GraphAPIError
 
 
 def test_to_jst_date_str_converts_utc_to_jst_date():
@@ -74,3 +76,86 @@ def test_find_row_by_value_ignores_short_rows():
     ]
     idx = find_row_by_value(all_values, col_idx=1, target_value="https://www.instagram.com/p/BBB/", start_row_idx=1)
     assert idx == 2
+
+
+def _mock_response(status_code, json_data):
+    resp = MagicMock()
+    resp.status_code = status_code
+    resp.json.return_value = json_data
+    return resp
+
+
+@patch("tools_instagram.requests.get")
+def test_fetch_recent_media_returns_parsed_list(mock_get):
+    mock_get.return_value = _mock_response(200, {
+        "data": [
+            {
+                "id": "123",
+                "permalink": "https://www.instagram.com/p/AAA/",
+                "timestamp": "2026-07-20T10:15:30+0000",
+                "caption": "テスト投稿",
+                "media_product_type": "REELS",
+            }
+        ]
+    })
+    result = fetch_recent_media("IG_USER_ID", "TOKEN", "2026-07-01")
+    assert result == [{
+        "id": "123",
+        "permalink": "https://www.instagram.com/p/AAA/",
+        "timestamp": "2026-07-20T10:15:30+0000",
+        "caption": "テスト投稿",
+        "media_product_type": "REELS",
+    }]
+
+
+@patch("tools_instagram.requests.get")
+def test_fetch_recent_media_missing_caption_defaults_to_empty_string(mock_get):
+    mock_get.return_value = _mock_response(200, {
+        "data": [{
+            "id": "123",
+            "permalink": "https://www.instagram.com/p/AAA/",
+            "timestamp": "2026-07-20T10:15:30+0000",
+            "media_product_type": "IMAGE",
+        }]
+    })
+    result = fetch_recent_media("IG_USER_ID", "TOKEN", "2026-07-01")
+    assert result[0]["caption"] == ""
+
+
+@patch("tools_instagram.requests.get")
+def test_fetch_recent_media_raises_token_expired_error(mock_get):
+    mock_get.return_value = _mock_response(400, {
+        "error": {"message": "Error validating access token", "type": "OAuthException", "code": 190}
+    })
+    try:
+        fetch_recent_media("IG_USER_ID", "TOKEN", "2026-07-01")
+        assert False, "TokenExpiredError が発生するべき"
+    except TokenExpiredError:
+        pass
+
+
+@patch("tools_instagram.time.sleep")
+@patch("tools_instagram.requests.get")
+def test_fetch_recent_media_retries_then_raises_rate_limit_error(mock_get, mock_sleep):
+    mock_get.return_value = _mock_response(400, {
+        "error": {"message": "Application request limit reached", "type": "OAuthException", "code": 4}
+    })
+    try:
+        fetch_recent_media("IG_USER_ID", "TOKEN", "2026-07-01")
+        assert False, "RateLimitError が発生するべき"
+    except RateLimitError:
+        pass
+    assert mock_get.call_count == 4  # 初回 + リトライ3回
+    assert mock_sleep.call_count == 3
+
+
+@patch("tools_instagram.requests.get")
+def test_fetch_recent_media_raises_generic_graph_api_error(mock_get):
+    mock_get.return_value = _mock_response(400, {
+        "error": {"message": "Unknown error", "type": "APIError", "code": 999}
+    })
+    try:
+        fetch_recent_media("IG_USER_ID", "TOKEN", "2026-07-01")
+        assert False, "GraphAPIError が発生するべき"
+    except GraphAPIError:
+        pass
