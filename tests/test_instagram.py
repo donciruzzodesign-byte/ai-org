@@ -408,3 +408,48 @@ def test_sync_instagram_insights_skips_media_on_insights_failure(mock_fetch_medi
     )
     assert len(tab1_ws.appended_rows) == 1  # 失敗した1件目はスキップされ、2件目だけ反映
     assert "スキップ" in summary
+
+
+@patch("tools_instagram._open_worksheets")
+@patch("tools_instagram.fetch_media_insights")
+@patch("tools_instagram.fetch_recent_media")
+def test_sync_instagram_insights_tab2_keeps_earliest_post_of_the_day(mock_fetch_media, mock_fetch_insights, mock_open_ws):
+    # Graph APIは通常「新しい投稿が先」の順で返す。同日に2件あるとき、
+    # タブ2には早い方（timestampが小さい方）の投稿のInsightsだけが入るべき。
+    mock_fetch_media.return_value = [
+        {"id": "2", "permalink": "https://www.instagram.com/p/LATER/",
+         "timestamp": "2026-07-20T09:00:00+0000", "caption": "", "media_product_type": "IMAGE"},
+        {"id": "1", "permalink": "https://www.instagram.com/p/EARLIER/",
+         "timestamp": "2026-07-20T00:00:00+0000", "caption": "", "media_product_type": "IMAGE"},
+    ]
+    insights_by_id = {
+        "2": {"reach": 999, "reach_follower": 900, "reach_nonfollower": 99, "likes": 90, "comments": 9,
+              "saved": 9, "follows": 9, "profile_activity": 9, "link_taps": 9, "views": None, "avg_watch_time": None},
+        "1": {"reach": 10, "reach_follower": 8, "reach_nonfollower": 2, "likes": 1, "comments": 0,
+              "saved": 0, "follows": 0, "profile_activity": 1, "link_taps": 0, "views": None, "avg_watch_time": None},
+    }
+    def insights_side_effect(media_id, media_product_type, access_token):
+        return insights_by_id[media_id]
+    mock_fetch_insights.side_effect = insights_side_effect
+
+    tab1_ws = FakeWorksheet([
+        [], [],
+        ["日付", "投稿ＵＲＬ", "全体リーチ", "フォロワー％", "フォロワー", "フォロワー外", "いいね", "保存"],
+    ])
+    tab2_ws = FakeWorksheet([
+        [], [],
+        ["日付", "①リーチ", "フォロワー", "フォロワー外", "⑨いいね", "⑩保存"],
+    ])
+    mock_open_ws.return_value = (tab1_ws, tab2_ws)
+
+    summary = sync_instagram_insights(
+        ig_user_id="IG_ID", access_token="TOKEN", sheet_id="SHEET_ID",
+        service_account_json_path="/path/to/key.json", since_date="2026-07-01",
+    )
+
+    assert len(tab1_ws.appended_rows) == 2  # タブ1は両方とも反映される
+    assert len(tab2_ws.appended_rows) == 1  # タブ2は同日1件のみ
+    tab2_header = tab2_ws.get_all_values()[2]
+    reach_col = tab2_header.index("①リーチ")
+    assert tab2_ws.appended_rows[0][reach_col] == 10  # 早い方(id=1)のInsightsが入っている
+    assert "手動確認" in summary

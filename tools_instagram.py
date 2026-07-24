@@ -305,6 +305,10 @@ def sync_instagram_insights(
     except (RateLimitError, GraphAPIError) as e:
         return f"投稿一覧の取得に失敗しました: {e}"
 
+    # group_media_by_date と同じ「早い投稿が先」の順序を保証するため、
+    # タブ2の重複排除ループに入る前にタイムスタンプ昇順へ並べ替える。
+    media_items = sorted(media_items, key=lambda m: m["timestamp"])
+
     tab1_entries = []
     tab2_source = {}
     skipped = []
