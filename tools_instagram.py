@@ -194,3 +194,37 @@ def fetch_media_insights(media_id: str, media_product_type: str, access_token: s
         result["avg_watch_time"] = video_totals.get("ig_reels_avg_watch_time", 0)
 
     return result
+
+
+def sync_to_sheet(worksheet, header_row_idx: int, id_col_name: str, entries: list) -> list:
+    """entriesの各項目をworksheetに反映する。
+    header列名は最初に出現した位置（leftmost）を使う。タブ2のように同名列が
+    複数回出現するシートでも、当日ブロック（左側）が常に自動入力対象になる想定。
+    """
+    all_values = worksheet.get_all_values()
+    header = all_values[header_row_idx]
+    id_col_idx = header.index(id_col_name)
+    logs = []
+
+    for entry in entries:
+        row_idx = find_row_by_value(
+            all_values, id_col_idx, entry["match_value"], start_row_idx=header_row_idx + 1
+        )
+        if row_idx is not None:
+            sheet_row_number = row_idx + 1  # gspreadは1-indexed
+            for col_name, value in entry["updates"].items():
+                if col_name not in header:
+                    continue
+                col_number = header.index(col_name) + 1
+                worksheet.update_cell(sheet_row_number, col_number, value)
+            logs.append(f"更新: {entry['match_value']}")
+        else:
+            new_row = [""] * len(header)
+            for col_name, value in {**entry["new_row_defaults"], **entry["updates"]}.items():
+                if col_name not in header:
+                    continue
+                new_row[header.index(col_name)] = value
+            worksheet.append_row(new_row, value_input_option="USER_ENTERED")
+            logs.append(f"新規追加: {entry['match_value']}")
+
+    return logs

@@ -1,6 +1,6 @@
 from unittest.mock import patch, MagicMock
 import requests
-from tools_instagram import to_jst_date_str, compute_rates, group_media_by_date, find_row_by_value, fetch_recent_media, fetch_media_insights, TokenExpiredError, RateLimitError, GraphAPIError
+from tools_instagram import to_jst_date_str, compute_rates, group_media_by_date, find_row_by_value, fetch_recent_media, fetch_media_insights, sync_to_sheet, TokenExpiredError, RateLimitError, GraphAPIError
 
 
 def test_to_jst_date_str_converts_utc_to_jst_date():
@@ -256,3 +256,71 @@ def test_fetch_media_insights_raises_token_expired_error(mock_get):
         assert False, "TokenExpiredError が発生するべき"
     except TokenExpiredError:
         pass
+
+
+class FakeWorksheet:
+    def __init__(self, all_values):
+        self._all_values = all_values
+        self.updated_cells = []
+        self.appended_rows = []
+
+    def get_all_values(self):
+        return self._all_values
+
+    def update_cell(self, row, col, value):
+        self.updated_cells.append((row, col, value))
+
+    def append_row(self, values, value_input_option="USER_ENTERED"):
+        self.appended_rows.append(values)
+
+
+def test_sync_to_sheet_updates_existing_row():
+    all_values = [
+        ["", "", ""],
+        ["", "", ""],
+        ["日付", "投稿URL", "いいね"],
+        ["7/20", "https://www.instagram.com/p/AAA/", ""],
+    ]
+    ws = FakeWorksheet(all_values)
+    entries = [{
+        "match_value": "https://www.instagram.com/p/AAA/",
+        "updates": {"いいね": 12},
+        "new_row_defaults": {"日付": "7/20", "投稿URL": "https://www.instagram.com/p/AAA/"},
+    }]
+    logs = sync_to_sheet(ws, header_row_idx=2, id_col_name="投稿URL", entries=entries)
+    # header_row_idx=2 は0-indexed。実シート行番号は header_row_idx+1(1-indexed) から数えて
+    # 一致した行(0-indexedで3) => 1-indexed row 4, いいね列は0-indexedで2 => 1-indexed col 3
+    assert ws.updated_cells == [(4, 3, 12)]
+    assert ws.appended_rows == []
+    assert len(logs) == 1
+
+
+def test_sync_to_sheet_appends_new_row_when_not_found():
+    all_values = [
+        ["日付", "投稿URL", "いいね"],
+    ]
+    ws = FakeWorksheet(all_values)
+    entries = [{
+        "match_value": "https://www.instagram.com/p/NEW/",
+        "updates": {"いいね": 3},
+        "new_row_defaults": {"日付": "7/22", "投稿URL": "https://www.instagram.com/p/NEW/"},
+    }]
+    logs = sync_to_sheet(ws, header_row_idx=0, id_col_name="投稿URL", entries=entries)
+    assert ws.updated_cells == []
+    assert ws.appended_rows == [["7/22", "https://www.instagram.com/p/NEW/", 3]]
+    assert len(logs) == 1
+
+
+def test_sync_to_sheet_skips_unknown_column_names():
+    all_values = [
+        ["日付", "投稿URL"],
+        ["7/20", "https://www.instagram.com/p/AAA/"],
+    ]
+    ws = FakeWorksheet(all_values)
+    entries = [{
+        "match_value": "https://www.instagram.com/p/AAA/",
+        "updates": {"存在しない列": 99},
+        "new_row_defaults": {},
+    }]
+    sync_to_sheet(ws, header_row_idx=0, id_col_name="投稿URL", entries=entries)
+    assert ws.updated_cells == []
