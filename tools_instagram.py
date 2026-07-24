@@ -46,3 +46,15 @@ def group_media_by_date(media_items: list) -> dict:
         return (month, day)
 
     return {k: grouped[k] for k in sorted(grouped.keys(), key=date_key)}
+
+
+def find_row_by_value(all_values: list, col_idx: int, target_value: str, start_row_idx: int):
+    """all_values（get_all_valuesの生データ）からcol_idx列がtarget_valueと一致する
+    最初の行の0-indexedの絶対行番号を返す。start_row_idxより前は探索しない。
+    見つからなければNoneを返す。
+    """
+    for i in range(start_row_idx, len(all_values)):
+        row = all_values[i]
+        if len(row) > col_idx and row[col_idx].strip() == target_value.strip():
+            return i
+    return None

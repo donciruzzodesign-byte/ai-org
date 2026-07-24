@@ -1,4 +1,4 @@
-from tools_instagram import to_jst_date_str, compute_rates, group_media_by_date
+from tools_instagram import to_jst_date_str, compute_rates, group_media_by_date, find_row_by_value
 
 
 def test_to_jst_date_str_converts_utc_to_jst_date():
@@ -43,3 +43,34 @@ def test_group_media_by_date_groups_and_sorts_by_timestamp():
     assert list(grouped.keys()) == ["7/20", "7/21"]
     assert [m["id"] for m in grouped["7/20"]] == ["1", "2"]
     assert [m["id"] for m in grouped["7/21"]] == ["3"]
+
+
+def test_find_row_by_value_finds_matching_row():
+    all_values = [
+        ["日付", "投稿URL", "いいね"],
+        ["", "", ""],
+        ["日付", "投稿URL", "いいね"],
+        ["7/20", "https://www.instagram.com/p/AAA/", "2"],
+        ["7/21", "https://www.instagram.com/p/BBB/", "0"],
+    ]
+    idx = find_row_by_value(all_values, col_idx=1, target_value="https://www.instagram.com/p/BBB/", start_row_idx=3)
+    assert idx == 4
+
+
+def test_find_row_by_value_returns_none_when_not_found():
+    all_values = [
+        ["日付", "投稿URL"],
+        ["7/20", "https://www.instagram.com/p/AAA/"],
+    ]
+    idx = find_row_by_value(all_values, col_idx=1, target_value="https://www.instagram.com/p/ZZZ/", start_row_idx=1)
+    assert idx is None
+
+
+def test_find_row_by_value_ignores_short_rows():
+    all_values = [
+        ["日付", "投稿URL"],
+        ["7/20"],  # 投稿URL列が欠けている行
+        ["7/21", "https://www.instagram.com/p/BBB/"],
+    ]
+    idx = find_row_by_value(all_values, col_idx=1, target_value="https://www.instagram.com/p/BBB/", start_row_idx=1)
+    assert idx == 2
