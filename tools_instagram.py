@@ -134,3 +134,63 @@ def fetch_recent_media(ig_user_id: str, access_token: str, since_date: str) -> l
             "media_product_type": item["media_product_type"],
         })
     return items
+
+
+def _graph_insights_get(media_id: str, metric: str, access_token: str, breakdown: str = None) -> dict:
+    params = {"metric": metric, "access_token": access_token, "metric_type": "total_value"}
+    if breakdown:
+        params["breakdown"] = breakdown
+    resp = _get_with_retry(f"{GRAPH_API_BASE}/{media_id}/insights", params)
+    return resp.json()
+
+
+def _parse_totals(payload: dict) -> dict:
+    """breakdownなしの単純な合計値レスポンスを {メトリクス名: 値} に変換する。"""
+    return {item["name"]: item["total_value"]["value"] for item in payload.get("data", [])}
+
+
+def _parse_breakdown(payload: dict) -> dict:
+    """breakdown付きレスポンスを {"total": 合計値, "breakdown": {次元名: 値}} に変換する。"""
+    entry = payload["data"][0]
+    total = entry["total_value"]["value"]
+    breakdown = {}
+    for result in entry["total_value"]["breakdowns"][0]["results"]:
+        dim = result["dimension_values"][0]
+        breakdown[dim] = result["value"]
+    return {"total": total, "breakdown": breakdown}
+
+
+def fetch_media_insights(media_id: str, media_product_type: str, access_token: str) -> dict:
+    """1投稿分のInsightsを取得し、シートの自動入力列に対応する形へ正規化する。"""
+    reach_payload = _graph_insights_get(media_id, "reach", access_token, breakdown="follow_type")
+    reach_data = _parse_breakdown(reach_payload)
+
+    profile_payload = _graph_insights_get(media_id, "profile_activity", access_token, breakdown="action_type")
+    profile_data = _parse_breakdown(profile_payload)
+
+    totals_payload = _graph_insights_get(
+        media_id, "likes,comments,saved,follows,profile_visits", access_token
+    )
+    totals = _parse_totals(totals_payload)
+
+    result = {
+        "reach": reach_data["total"],
+        "reach_follower": reach_data["breakdown"].get("FOLLOWER", 0),
+        "reach_nonfollower": reach_data["breakdown"].get("NON_FOLLOWER", 0),
+        "likes": totals.get("likes", 0),
+        "comments": totals.get("comments", 0),
+        "saved": totals.get("saved", 0),
+        "follows": totals.get("follows", 0),
+        "profile_activity": profile_data["total"],
+        "link_taps": profile_data["breakdown"].get("BIO_LINK_CLICKED", 0),
+        "views": None,
+        "avg_watch_time": None,
+    }
+
+    if media_product_type == "REELS":
+        video_payload = _graph_insights_get(media_id, "views,ig_reels_avg_watch_time", access_token)
+        video_totals = _parse_totals(video_payload)
+        result["views"] = video_totals.get("views", 0)
+        result["avg_watch_time"] = video_totals.get("ig_reels_avg_watch_time", 0)
+
+    return result

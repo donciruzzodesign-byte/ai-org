@@ -1,6 +1,6 @@
 from unittest.mock import patch, MagicMock
 import requests
-from tools_instagram import to_jst_date_str, compute_rates, group_media_by_date, find_row_by_value, fetch_recent_media, TokenExpiredError, RateLimitError, GraphAPIError
+from tools_instagram import to_jst_date_str, compute_rates, group_media_by_date, find_row_by_value, fetch_recent_media, fetch_media_insights, TokenExpiredError, RateLimitError, GraphAPIError
 
 
 def test_to_jst_date_str_converts_utc_to_jst_date():
@@ -158,4 +158,101 @@ def test_fetch_recent_media_raises_generic_graph_api_error(mock_get):
         fetch_recent_media("IG_USER_ID", "TOKEN", "2026-07-01")
         assert False, "GraphAPIError が発生するべき"
     except GraphAPIError:
+        pass
+
+
+def _breakdown_response(total_value, dimension_key, breakdown_results):
+    return {
+        "data": [{
+            "name": "reach",
+            "total_value": {
+                "value": total_value,
+                "breakdowns": [{
+                    "results": [
+                        {"dimension_values": [dim], "value": val}
+                        for dim, val in breakdown_results.items()
+                    ]
+                }]
+            }
+        }]
+    }
+
+
+@patch("tools_instagram.requests.get")
+def test_fetch_media_insights_image_post(mock_get):
+    def side_effect(url, params, timeout):
+        metric = params.get("metric", "")
+        if metric == "reach":
+            return _mock_response(200, _breakdown_response(100, "follow_type", {"FOLLOWER": 80, "NON_FOLLOWER": 20}))
+        if metric == "profile_activity":
+            return _mock_response(200, _breakdown_response(10, "action_type", {"BIO_LINK_CLICKED": 3, "OTHER": 7}))
+        if metric == "likes,comments,saved,follows,profile_visits":
+            return _mock_response(200, {
+                "data": [
+                    {"name": "likes", "total_value": {"value": 15}},
+                    {"name": "comments", "total_value": {"value": 2}},
+                    {"name": "saved", "total_value": {"value": 5}},
+                    {"name": "follows", "total_value": {"value": 1}},
+                    {"name": "profile_visits", "total_value": {"value": 8}},
+                ]
+            })
+        raise AssertionError(f"想定外のmetricリクエスト: {metric}")
+
+    mock_get.side_effect = side_effect
+    result = fetch_media_insights("MEDIA_ID", "IMAGE", "TOKEN")
+    assert result["reach"] == 100
+    assert result["reach_follower"] == 80
+    assert result["reach_nonfollower"] == 20
+    assert result["likes"] == 15
+    assert result["comments"] == 2
+    assert result["saved"] == 5
+    assert result["follows"] == 1
+    assert result["profile_activity"] == 10
+    assert result["link_taps"] == 3
+    assert result["views"] is None
+    assert result["avg_watch_time"] is None
+
+
+@patch("tools_instagram.requests.get")
+def test_fetch_media_insights_reels_post_includes_video_metrics(mock_get):
+    def side_effect(url, params, timeout):
+        metric = params.get("metric", "")
+        if metric == "reach":
+            return _mock_response(200, _breakdown_response(50, "follow_type", {"FOLLOWER": 40, "NON_FOLLOWER": 10}))
+        if metric == "profile_activity":
+            return _mock_response(200, _breakdown_response(2, "action_type", {"BIO_LINK_CLICKED": 1, "OTHER": 1}))
+        if metric == "likes,comments,saved,follows,profile_visits":
+            return _mock_response(200, {
+                "data": [
+                    {"name": "likes", "total_value": {"value": 5}},
+                    {"name": "comments", "total_value": {"value": 0}},
+                    {"name": "saved", "total_value": {"value": 1}},
+                    {"name": "follows", "total_value": {"value": 0}},
+                    {"name": "profile_visits", "total_value": {"value": 3}},
+                ]
+            })
+        if metric == "views,ig_reels_avg_watch_time":
+            return _mock_response(200, {
+                "data": [
+                    {"name": "views", "total_value": {"value": 155}},
+                    {"name": "ig_reels_avg_watch_time", "total_value": {"value": 3.2}},
+                ]
+            })
+        raise AssertionError(f"想定外のmetricリクエスト: {metric}")
+
+    mock_get.side_effect = side_effect
+    result = fetch_media_insights("MEDIA_ID", "REELS", "TOKEN")
+    assert result["views"] == 155
+    assert result["avg_watch_time"] == 3.2
+
+
+@patch("tools_instagram.requests.get")
+def test_fetch_media_insights_raises_token_expired_error(mock_get):
+    mock_get.return_value = _mock_response(400, {
+        "error": {"message": "Error validating access token", "type": "OAuthException", "code": 190}
+    })
+    try:
+        fetch_media_insights("MEDIA_ID", "IMAGE", "TOKEN")
+        assert False, "TokenExpiredError が発生するべき"
+    except TokenExpiredError:
         pass
