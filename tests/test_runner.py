@@ -247,3 +247,13 @@ def test_instagram_insights_task_swallows_exceptions(mock_sync):
     with patch.dict(os.environ, _FAKE_IG_ENV):
         instagram_insights_task()  # 例外が外に漏れないことを確認
     mock_sync.assert_called_once()
+
+
+@patch("runner.sync_instagram_insights")
+def test_instagram_insights_task_skips_when_env_vars_missing(mock_sync):
+    ig_env_keys = ["META_ACCESS_TOKEN", "META_IG_USER_ID", "GOOGLE_SERVICE_ACCOUNT_JSON", "INSTAGRAM_SHEET_ID"]
+    with patch.dict(os.environ, {}, clear=False):
+        for key in ig_env_keys:
+            os.environ.pop(key, None)
+        instagram_insights_task()  # 環境変数未設定でも例外を投げずスキップすること
+    mock_sync.assert_not_called()
