@@ -1,7 +1,7 @@
 import os
 import schedule
 import time
-from datetime import datetime
+from datetime import datetime, timedelta
 import anthropic
 from tools import (
     TOOL_DEFINITIONS, execute_tool, save_to_notion, notion_find_wip,
@@ -9,6 +9,7 @@ from tools import (
 )
 from tools_video import VIDEO_TOOL_DEFINITIONS, execute_video_tool
 from tools_express import generate_weekly_assets, parse_creator_metadata
+from tools_instagram import sync_instagram_insights
 
 _RETRY_DELAYS = [15, 30, 60]
 
@@ -200,6 +201,22 @@ def tuesday_task():
         run_agent("creator", prompt, "火曜：動画台本作成")
     except Exception as e:
         print(f"  ❌ 火曜：動画台本作成 失敗: {e}")
+
+
+def instagram_insights_task():
+    try:
+        access_token = os.environ.get("META_ACCESS_TOKEN")
+        ig_user_id = os.environ.get("META_IG_USER_ID")
+        service_account_json_path = os.environ.get("GOOGLE_SERVICE_ACCOUNT_JSON")
+        sheet_id = os.environ.get("INSTAGRAM_SHEET_ID")
+        if not all([access_token, ig_user_id, service_account_json_path, sheet_id]):
+            print("  ⏭️ Instagram Insights同期: 環境変数未設定のためスキップ")
+            return
+        since_date = (datetime.now() - timedelta(days=7)).strftime("%Y-%m-%d")
+        summary = sync_instagram_insights(ig_user_id, access_token, sheet_id, service_account_json_path, since_date)
+        print(f"  📊 Instagram Insights同期: {summary}")
+    except Exception as e:
+        print(f"  ❌ Instagram Insights同期 失敗: {e}")
 
 
 def wednesday_task():
@@ -503,6 +520,7 @@ def main():
     schedule.every().monday.at("09:00").do(monday_task)
     schedule.every().monday.at("09:30").do(regional_wines_task)
     schedule.every().tuesday.at("09:00").do(tuesday_task)
+    schedule.every().wednesday.at("08:45").do(instagram_insights_task)
     schedule.every().wednesday.at("09:00").do(wednesday_task)
     schedule.every().friday.at("09:00").do(friday_task)
     schedule.every().sunday.at("20:00").do(sunday_task)
@@ -520,7 +538,7 @@ def main():
     print("=" * 50)
     print("AI組織 週次スケジューラー起動中")
     print("月09:00 テーマ決定 / 月09:30 州別ワイン紹介 / 火09:00 台本")
-    print("水09:00 レビュー通知 / 金09:00 SNS投稿文 / 日20:00 反応分析")
+    print("水08:45 Instagram Insights同期 / 水09:00 レビュー通知 / 金09:00 SNS投稿文 / 日20:00 反応分析")
     print("月10:00 コーヒーテーマ / 月10:30 地域別コーヒー / 火10:00 コーヒー台本 / 金10:00 コーヒーSNS")
     print("火 11:00 ワイン動画素材 / 火 12:00 コーヒー動画素材")
     print("火 09:30 ワインExpress素材 / 火 10:30 コーヒーExpress素材")

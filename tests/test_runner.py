@@ -215,3 +215,35 @@ def test_run_agent_read_error_falls_back_to_new_page(monkeypatch):
     assert "Notion読み取りエラー" not in sent          # error text NOT injected
     mock_append.assert_not_called()                     # did not append to unreadable page
     mock_save.assert_called_once()                      # fell back to new page
+
+
+from unittest.mock import patch
+from runner import instagram_insights_task
+
+# NOTE: instagram_insights_task() skips calling sync_instagram_insights when
+# any of these env vars is unset (see runner.py). Neither this worktree nor
+# the main repo's .env defines them, so both tests below patch os.environ to
+# ensure the function actually reaches the sync call being tested, rather
+# than silently short-circuiting on the "not configured" branch.
+_FAKE_IG_ENV = {
+    "META_ACCESS_TOKEN": "fake-token",
+    "META_IG_USER_ID": "fake-ig-user-id",
+    "GOOGLE_SERVICE_ACCOUNT_JSON": "fake-service-account.json",
+    "INSTAGRAM_SHEET_ID": "fake-sheet-id",
+}
+
+
+@patch("runner.sync_instagram_insights")
+def test_instagram_insights_task_calls_sync_and_does_not_raise(mock_sync):
+    mock_sync.return_value = "タブ1: 1件処理、タブ2: 1件処理"
+    with patch.dict(os.environ, _FAKE_IG_ENV):
+        instagram_insights_task()  # 例外を投げなければOK
+    mock_sync.assert_called_once()
+
+
+@patch("runner.sync_instagram_insights")
+def test_instagram_insights_task_swallows_exceptions(mock_sync):
+    mock_sync.side_effect = Exception("boom")
+    with patch.dict(os.environ, _FAKE_IG_ENV):
+        instagram_insights_task()  # 例外が外に漏れないことを確認
+    mock_sync.assert_called_once()
