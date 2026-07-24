@@ -324,3 +324,87 @@ def test_sync_to_sheet_skips_unknown_column_names():
     }]
     sync_to_sheet(ws, header_row_idx=0, id_col_name="投稿URL", entries=entries)
     assert ws.updated_cells == []
+
+
+from tools_instagram import sync_instagram_insights
+
+
+@patch("tools_instagram._open_worksheets")
+@patch("tools_instagram.fetch_media_insights")
+@patch("tools_instagram.fetch_recent_media")
+def test_sync_instagram_insights_happy_path(mock_fetch_media, mock_fetch_insights, mock_open_ws):
+    mock_fetch_media.return_value = [{
+        "id": "1", "permalink": "https://www.instagram.com/p/AAA/",
+        "timestamp": "2026-07-20T10:00:00+0000", "caption": "テスト", "media_product_type": "REELS",
+    }]
+    mock_fetch_insights.return_value = {
+        "reach": 100, "reach_follower": 80, "reach_nonfollower": 20,
+        "likes": 10, "comments": 1, "saved": 5, "follows": 2,
+        "profile_activity": 8, "link_taps": 3, "views": 150, "avg_watch_time": 3.5,
+    }
+    # HEADER_ROW_IDX=2: 実シート同様、1〜2行目は結合されたグループ見出し行のダミー、
+    # 3行目（0-indexedで2）が実際の列見出し行。
+    tab1_ws = FakeWorksheet([
+        [], [],
+        ["日付", "投稿ＵＲＬ", "全体リーチ", "フォロワー％", "フォロワー", "フォロワー外", "いいね", "保存"],
+    ])
+    tab2_ws = FakeWorksheet([
+        [], [],
+        ["日付", "①リーチ", "フォロワー", "フォロワー外", "⑨いいね", "⑩保存"],
+    ])
+    mock_open_ws.return_value = (tab1_ws, tab2_ws)
+
+    summary = sync_instagram_insights(
+        ig_user_id="IG_ID", access_token="TOKEN", sheet_id="SHEET_ID",
+        service_account_json_path="/path/to/key.json", since_date="2026-07-01",
+    )
+    assert "1件" in summary
+    assert len(tab1_ws.appended_rows) == 1
+    assert len(tab2_ws.appended_rows) == 1
+
+
+@patch("tools_instagram._open_worksheets")
+@patch("tools_instagram.fetch_media_insights")
+@patch("tools_instagram.fetch_recent_media")
+def test_sync_instagram_insights_aborts_on_token_expired(mock_fetch_media, mock_fetch_insights, mock_open_ws):
+    mock_fetch_media.side_effect = TokenExpiredError("expired")
+    summary = sync_instagram_insights(
+        ig_user_id="IG_ID", access_token="TOKEN", sheet_id="SHEET_ID",
+        service_account_json_path="/path/to/key.json", since_date="2026-07-01",
+    )
+    assert "トークン期限切れ" in summary
+    mock_open_ws.assert_not_called()
+
+
+@patch("tools_instagram._open_worksheets")
+@patch("tools_instagram.fetch_media_insights")
+@patch("tools_instagram.fetch_recent_media")
+def test_sync_instagram_insights_skips_media_on_insights_failure(mock_fetch_media, mock_fetch_insights, mock_open_ws):
+    mock_fetch_media.return_value = [
+        {"id": "1", "permalink": "https://www.instagram.com/p/AAA/",
+         "timestamp": "2026-07-20T10:00:00+0000", "caption": "", "media_product_type": "IMAGE"},
+        {"id": "2", "permalink": "https://www.instagram.com/p/BBB/",
+         "timestamp": "2026-07-21T10:00:00+0000", "caption": "", "media_product_type": "IMAGE"},
+    ]
+    mock_fetch_insights.side_effect = [
+        GraphAPIError("boom"),
+        {"reach": 50, "reach_follower": 40, "reach_nonfollower": 10, "likes": 5, "comments": 0,
+         "saved": 1, "follows": 0, "profile_activity": 2, "link_taps": 0, "views": None, "avg_watch_time": None},
+    ]
+    # HEADER_ROW_IDX=2 に合わせ、1〜2行目はダミーの空行としてパディングする。
+    tab1_ws = FakeWorksheet([
+        [], [],
+        ["日付", "投稿ＵＲＬ", "全体リーチ", "フォロワー％", "フォロワー", "フォロワー外", "いいね", "保存"],
+    ])
+    tab2_ws = FakeWorksheet([
+        [], [],
+        ["日付", "①リーチ", "フォロワー", "フォロワー外", "⑨いいね", "⑩保存"],
+    ])
+    mock_open_ws.return_value = (tab1_ws, tab2_ws)
+
+    summary = sync_instagram_insights(
+        ig_user_id="IG_ID", access_token="TOKEN", sheet_id="SHEET_ID",
+        service_account_json_path="/path/to/key.json", since_date="2026-07-01",
+    )
+    assert len(tab1_ws.appended_rows) == 1  # 失敗した1件目はスキップされ、2件目だけ反映
+    assert "スキップ" in summary

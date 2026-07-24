@@ -228,3 +228,112 @@ def sync_to_sheet(worksheet, header_row_idx: int, id_col_name: str, entries: lis
             logs.append(f"新規追加: {entry['match_value']}")
 
     return logs
+
+
+TAB1_GID = 1526183674
+TAB2_GID = 0
+HEADER_ROW_IDX = 2  # シート内の実際の列見出し行（0-indexed）。実物で要確認。
+
+
+def _open_worksheets(sheet_id: str, service_account_json_path: str):
+    import gspread
+    client = gspread.service_account(filename=service_account_json_path)
+    spreadsheet = client.open_by_key(sheet_id)
+    tab1 = spreadsheet.get_worksheet_by_id(TAB1_GID)
+    tab2 = spreadsheet.get_worksheet_by_id(TAB2_GID)
+    return tab1, tab2
+
+
+def _build_tab1_entry(media: dict, insights: dict, rates: dict) -> dict:
+    """タブ1は「フォロワー％」（構成比）、「フォロワー」「フォロワー外」（実数）の
+    3列に分かれているため、reach_followerを実数列に、reach/reachの比率を％列に入れる。
+    """
+    date_str = to_jst_date_str(media["timestamp"])
+    reach = insights["reach"] or 0
+    follower_pct = round(insights["reach_follower"] / reach, 4) if reach else 0.0
+    return {
+        "match_value": media["permalink"],
+        "updates": {
+            "日付": date_str,
+            "全体リーチ": insights["reach"],
+            "フォロワー％": follower_pct,
+            "フォロワー": insights["reach_follower"],
+            "フォロワー外": insights["reach_nonfollower"],
+            "再生数": insights["views"] if insights["views"] is not None else "",
+            "平均再生時間": insights["avg_watch_time"] if insights["avg_watch_time"] is not None else "",
+            "いいね率": rates["like_rate"],
+            "保存率": rates["save_rate"],
+            "プロアク率": rates["profile_activity_rate"],
+            "リンクタップ率": rates["link_tap_rate"],
+            "プロアク": insights["profile_activity"],
+            "リンクタップ": insights["link_taps"],
+            "いいね": insights["likes"],
+            "保存": insights["saved"],
+            "コメント": insights["comments"],
+            "フォロー数": insights["follows"],
+        },
+        "new_row_defaults": {"日付": date_str, "投稿ＵＲＬ": media["permalink"]},
+    }
+
+
+def _build_tab2_entry(date_str: str, insights: dict) -> dict:
+    return {
+        "match_value": date_str,
+        "updates": {
+            "①リーチ": insights["reach"],
+            "フォロワー": insights["reach_follower"],
+            "フォロワー外": insights["reach_nonfollower"],
+            "⑨いいね": insights["likes"],
+            "⑩保存": insights["saved"],
+            "⑪プロフアクセス": insights["profile_activity"],
+            "リンククリック": insights["link_taps"],
+            "⑫フォロー": insights["follows"],
+        },
+        "new_row_defaults": {"日付": date_str},
+    }
+
+
+def sync_instagram_insights(
+    ig_user_id: str, access_token: str, sheet_id: str,
+    service_account_json_path: str, since_date: str,
+) -> str:
+    """直近の投稿のInsightsを取得し、タブ1・2に自動入力する。戻り値はログサマリー文字列。"""
+    try:
+        media_items = fetch_recent_media(ig_user_id, access_token, since_date)
+    except TokenExpiredError as e:
+        return f"トークン期限切れです。.envのMETA_ACCESS_TOKENを再発行してください: {e}"
+    except (RateLimitError, GraphAPIError) as e:
+        return f"投稿一覧の取得に失敗しました: {e}"
+
+    tab1_entries = []
+    tab2_source = {}
+    skipped = []
+
+    for media in media_items:
+        try:
+            insights = fetch_media_insights(media["id"], media["media_product_type"], access_token)
+        except TokenExpiredError as e:
+            return f"トークン期限切れです。.envのMETA_ACCESS_TOKENを再発行してください: {e}"
+        except (RateLimitError, GraphAPIError) as e:
+            skipped.append(f"{media['permalink']} ({e})")
+            continue
+
+        rates = compute_rates(insights)
+        tab1_entries.append(_build_tab1_entry(media, insights, rates))
+
+        date_str = to_jst_date_str(media["timestamp"])
+        if date_str not in tab2_source:
+            tab2_source[date_str] = insights
+        else:
+            skipped.append(f"{media['permalink']} (同日{date_str}の2件目以降のためタブ2は手動確認)")
+
+    tab1_ws, tab2_ws = _open_worksheets(sheet_id, service_account_json_path)
+    tab1_logs = sync_to_sheet(tab1_ws, HEADER_ROW_IDX, "投稿ＵＲＬ", tab1_entries)
+
+    tab2_entries = [_build_tab2_entry(date_str, insights) for date_str, insights in tab2_source.items()]
+    tab2_logs = sync_to_sheet(tab2_ws, HEADER_ROW_IDX, "日付", tab2_entries)
+
+    summary = f"タブ1: {len(tab1_logs)}件処理、タブ2: {len(tab2_logs)}件処理"
+    if skipped:
+        summary += f" / スキップ: {len(skipped)}件（{'; '.join(skipped)}）"
+    return summary
