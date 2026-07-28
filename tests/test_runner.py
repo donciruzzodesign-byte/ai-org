@@ -10,6 +10,13 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 from runner import run_agent, run_video_agent, tuesday_video_task, coffee_tuesday_video_task
 
 
+def _stream_cm(resp):
+    """client.messages.stream(...) の with構文をモックするコンテキストマネージャを作る。"""
+    cm = MagicMock()
+    cm.__enter__.return_value.get_final_message.return_value = resp
+    return cm
+
+
 def test_save_log_creates_file_with_content():
     import runner
     from datetime import datetime
@@ -42,11 +49,11 @@ def test_run_agent_calls_api_and_saves_log():
 
         with patch('runner.__file__', os.path.join(tmpdir, 'runner.py')), \
              patch('runner.client') as mock_client:
-            mock_client.messages.create.return_value = mock_response
+            mock_client.messages.stream.return_value.__enter__.return_value.get_final_message.return_value = mock_response
             result = runner.run_agent('sommelier', 'テーマを提案してください', '月曜：テーマ決定')
 
         assert result == 'AIの返答テキスト'
-        mock_client.messages.create.assert_called_once()
+        mock_client.messages.stream.assert_called_once()
 
 
 def test_coffee_task_functions_are_callable():
@@ -65,7 +72,7 @@ def test_run_agent_saves_to_notion():
     fake_response.stop_reason = "end_turn"
     fake_response.content = [MagicMock(text="テスト出力", spec=["text"])]
 
-    with patch("runner.client.messages.create", return_value=fake_response), \
+    with patch("runner.client.messages.stream", return_value=_stream_cm(fake_response)), \
          patch("runner.save_to_notion", return_value="OK") as mock_notion, \
          patch("runner.save_log"):
         run_agent("sommelier", "テスト", "テストラベル")
@@ -125,7 +132,7 @@ def _text_response(text, stop_reason):
 def test_run_agent_saves_yokakunin_on_normal_finish(monkeypatch):
     import runner
     resp = _text_response("完成した台本です。ここまでで終わり。", "end_turn")
-    with patch.object(runner.client.messages, "create", return_value=resp), \
+    with patch.object(runner.client.messages, "stream", return_value=_stream_cm(resp)), \
          patch.object(runner, "save_to_notion", return_value="ok") as mock_save, \
          patch.object(runner, "save_log"), \
          patch.object(runner, "notion_find_wip", return_value="途中の制作物はありません"):
@@ -138,13 +145,13 @@ def test_run_agent_auto_continues_on_max_tokens(monkeypatch):
     import runner
     first = _text_response("前半の途中まで", "max_tokens")
     second = _text_response("後半の続き。完了。", "end_turn")
-    with patch.object(runner.client.messages, "create", side_effect=[first, second]) as mock_create, \
+    with patch.object(runner.client.messages, "stream", side_effect=[_stream_cm(first), _stream_cm(second)]) as mock_stream, \
          patch.object(runner, "save_to_notion", return_value="ok") as mock_save, \
          patch.object(runner, "save_log"), \
          patch.object(runner, "notion_find_wip", return_value="途中の制作物はありません"):
         result = runner.run_agent("creator", "台本を書いて", "火曜：動画台本作成")
     # 2回呼ばれ、全文が結合され、要確認で保存
-    assert mock_create.call_count == 2
+    assert mock_stream.call_count == 2
     assert "前半の途中まで" in result and "後半の続き" in result
     assert mock_save.call_args.kwargs.get("status") == "要確認"
 
@@ -152,7 +159,7 @@ def test_run_agent_auto_continues_on_max_tokens(monkeypatch):
 def test_run_agent_falls_back_to_tochu_when_still_truncated(monkeypatch):
     import runner
     trunc = _text_response("延々と切れ続ける", "max_tokens")
-    with patch.object(runner.client.messages, "create", return_value=trunc), \
+    with patch.object(runner.client.messages, "stream", return_value=_stream_cm(trunc)), \
          patch.object(runner, "save_to_notion", return_value="ok") as mock_save, \
          patch.object(runner, "save_log"), \
          patch.object(runner, "notion_find_wip", return_value="途中の制作物はありません"):
@@ -182,7 +189,7 @@ def test_run_agent_resumes_existing_wip_page(monkeypatch):
     import runner
     resp = _text_response("続きを書いて完成させました。以上です。", "end_turn")
     find_out = "途中の制作物:\n- pageABC | ワイン | 火曜：ワイン動画台本作成 (2026-07-10)"
-    with patch.object(runner.client.messages, "create", return_value=resp) as mock_create, \
+    with patch.object(runner.client.messages, "stream", return_value=_stream_cm(resp)) as mock_stream, \
          patch.object(runner, "notion_find_wip", return_value=find_out), \
          patch.object(runner, "notion_read_page", return_value="前回の途中原稿本文") as mock_read, \
          patch.object(runner, "notion_append_to_page", return_value="更新しました") as mock_append, \
@@ -192,7 +199,7 @@ def test_run_agent_resumes_existing_wip_page(monkeypatch):
 
     # 既存原稿を読み、プロンプトに注入して生成、既存ページへ追記、新規保存はしない
     mock_read.assert_called_once_with("pageABC")
-    sent_messages = mock_create.call_args.kwargs["messages"]
+    sent_messages = mock_stream.call_args.kwargs["messages"]
     assert "前回の途中原稿本文" in sent_messages[0]["content"]
     mock_append.assert_called_once()
     assert mock_append.call_args[0][0] == "pageABC"
@@ -204,14 +211,14 @@ def test_run_agent_read_error_falls_back_to_new_page(monkeypatch):
     import runner
     resp = _text_response("新規に書き起こした完成原稿です。以上。", "end_turn")
     find_out = "途中の制作物:\n- pageABC | ワイン | 火曜：ワイン動画台本作成 (2026-07-10)"
-    with patch.object(runner.client.messages, "create", return_value=resp) as mock_create, \
+    with patch.object(runner.client.messages, "stream", return_value=_stream_cm(resp)) as mock_stream, \
          patch.object(runner, "notion_find_wip", return_value=find_out), \
          patch.object(runner, "notion_read_page", return_value="Notion読み取りエラー: 404 not found"), \
          patch.object(runner, "notion_append_to_page", return_value="x") as mock_append, \
          patch.object(runner, "save_to_notion", return_value="ok") as mock_save, \
          patch.object(runner, "save_log"):
         runner.run_agent("creator", "ワインの台本を書いて", "火曜：ワイン動画台本作成")
-    sent = mock_create.call_args.kwargs["messages"][0]["content"]
+    sent = mock_stream.call_args.kwargs["messages"][0]["content"]
     assert "Notion読み取りエラー" not in sent          # error text NOT injected
     mock_append.assert_not_called()                     # did not append to unreadable page
     mock_save.assert_called_once()                      # fell back to new page

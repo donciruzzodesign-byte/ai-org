@@ -80,13 +80,14 @@ def chat(agent_id: str, label: str) -> bool:
 
         # ツール使用ループ
         while True:
-            response = client.messages.create(
+            with client.messages.stream(
                 model=MODEL,
                 max_tokens=32000,
                 system=system_prompt,
                 tools=TOOL_DEFINITIONS,
                 messages=history,
-            )
+            ) as stream:
+                response = stream.get_final_message()
 
             if response.stop_reason == "tool_use":
                 history.append({"role": "assistant", "content": response.content})

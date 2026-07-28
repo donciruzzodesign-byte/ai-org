@@ -99,17 +99,18 @@ def run_agent(agent_name: str, prompt: str, label: str, max_continuations: int =
     continuations = 0
     truncated = False
 
+    def _create_message():
+        with client.messages.stream(
+            model=MODEL,
+            max_tokens=32000,
+            system=system,
+            tools=TOOL_DEFINITIONS,
+            messages=messages,
+        ) as stream:
+            return stream.get_final_message()
+
     while True:
-        response = _with_retry(
-            lambda: client.messages.create(
-                model=MODEL,
-                max_tokens=32000,
-                system=system,
-                tools=TOOL_DEFINITIONS,
-                messages=messages,
-            ),
-            label,
-        )
+        response = _with_retry(_create_message, label)
 
         if response.stop_reason == "tool_use":
             messages.append({"role": "assistant", "content": response.content})
