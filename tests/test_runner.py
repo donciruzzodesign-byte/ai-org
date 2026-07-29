@@ -77,7 +77,7 @@ def test_run_agent_saves_to_notion():
          patch("runner.save_log"):
         run_agent("sommelier", "テスト", "テストラベル")
 
-    mock_notion.assert_called_once_with(f"テストラベル ({today})", "テスト出力", status="要確認")
+    mock_notion.assert_called_once_with(f"テストラベル ({today})", "テスト出力", status="要確認", theme="")
 
 
 def test_run_video_agent_calls_video_tools(tmp_path):
@@ -190,8 +190,10 @@ def test_run_agent_resumes_existing_wip_page(monkeypatch):
     resp = _text_response("続きを書いて完成させました。以上です。", "end_turn")
     find_out = "途中の制作物:\n- pageABC | ワイン | 火曜：ワイン動画台本作成 (2026-07-10)"
     with patch.object(runner.client.messages, "stream", return_value=_stream_cm(resp)) as mock_stream, \
+         patch.object(runner, "notion_recent_themes", return_value=""), \
          patch.object(runner, "notion_find_wip", return_value=find_out), \
          patch.object(runner, "notion_read_page", return_value="前回の途中原稿本文") as mock_read, \
+         patch.object(runner, "extract_theme", return_value=""), \
          patch.object(runner, "notion_append_to_page", return_value="更新しました") as mock_append, \
          patch.object(runner, "save_to_notion", return_value="ok") as mock_save, \
          patch.object(runner, "save_log"):
@@ -212,8 +214,10 @@ def test_run_agent_read_error_falls_back_to_new_page(monkeypatch):
     resp = _text_response("新規に書き起こした完成原稿です。以上。", "end_turn")
     find_out = "途中の制作物:\n- pageABC | ワイン | 火曜：ワイン動画台本作成 (2026-07-10)"
     with patch.object(runner.client.messages, "stream", return_value=_stream_cm(resp)) as mock_stream, \
+         patch.object(runner, "notion_recent_themes", return_value=""), \
          patch.object(runner, "notion_find_wip", return_value=find_out), \
          patch.object(runner, "notion_read_page", return_value="Notion読み取りエラー: 404 not found"), \
+         patch.object(runner, "extract_theme", return_value=""), \
          patch.object(runner, "notion_append_to_page", return_value="x") as mock_append, \
          patch.object(runner, "save_to_notion", return_value="ok") as mock_save, \
          patch.object(runner, "save_log"):
@@ -222,3 +226,83 @@ def test_run_agent_read_error_falls_back_to_new_page(monkeypatch):
     assert "Notion読み取りエラー" not in sent          # error text NOT injected
     mock_append.assert_not_called()                     # did not append to unreadable page
     mock_save.assert_called_once()                      # fell back to new page
+
+
+def test_run_agent_injects_recent_themes_into_prompt(monkeypatch):
+    import runner
+    resp = _text_response("新しいテーマ提案です。以上。", "end_turn")
+    with patch.object(runner.client.messages, "stream", return_value=_stream_cm(resp)) as mock_stream, \
+         patch.object(runner, "notion_recent_themes",
+                      return_value="- ピエモンテ州のネッビオーロ（月曜：今週テーマ決定 (2026-07-20)）") as mock_recent, \
+         patch.object(runner, "notion_find_wip", return_value="途中の制作物はありません"), \
+         patch.object(runner, "extract_theme", return_value=""), \
+         patch.object(runner, "save_to_notion", return_value="ok"), \
+         patch.object(runner, "save_log"):
+        runner.run_agent("sommelier", "今週のワインテーマを提案してください", "月曜：今週テーマ決定")
+
+    mock_recent.assert_called_once_with("ワイン")
+    sent_prompt = mock_stream.call_args.kwargs["messages"][0]["content"]
+    assert "重複回避" in sent_prompt
+    assert "ピエモンテ州のネッビオーロ" in sent_prompt
+
+
+def test_run_agent_skips_theme_injection_when_no_recent_themes(monkeypatch):
+    import runner
+    resp = _text_response("初回のテーマ提案です。以上。", "end_turn")
+    with patch.object(runner.client.messages, "stream", return_value=_stream_cm(resp)) as mock_stream, \
+         patch.object(runner, "notion_recent_themes", return_value=""), \
+         patch.object(runner, "notion_find_wip", return_value="途中の制作物はありません"), \
+         patch.object(runner, "extract_theme", return_value=""), \
+         patch.object(runner, "save_to_notion", return_value="ok"), \
+         patch.object(runner, "save_log"):
+        runner.run_agent("sommelier", "今週のワインテーマを提案してください", "月曜：今週テーマ決定")
+
+    sent_prompt = mock_stream.call_args.kwargs["messages"][0]["content"]
+    assert "重複回避" not in sent_prompt
+
+
+def test_run_agent_does_not_call_recent_themes_for_other_category(monkeypatch):
+    import runner
+    resp = _text_response("分析レポートです。以上。", "end_turn")
+    with patch.object(runner.client.messages, "stream", return_value=_stream_cm(resp)), \
+         patch.object(runner, "notion_recent_themes") as mock_recent, \
+         patch.object(runner, "extract_theme") as mock_extract, \
+         patch.object(runner, "save_to_notion", return_value="ok"), \
+         patch.object(runner, "save_log"):
+        runner.run_agent("marketer", "反応を分析してください", "日曜：反応分析レポート")
+
+    mock_recent.assert_not_called()
+    mock_extract.assert_not_called()
+
+
+def test_run_agent_extracts_theme_and_passes_to_save_to_notion(monkeypatch):
+    import runner
+    resp = _text_response("ピエモンテ州のネッビオーロを紹介します。以上。", "end_turn")
+    with patch.object(runner.client.messages, "stream", return_value=_stream_cm(resp)), \
+         patch.object(runner, "notion_recent_themes", return_value=""), \
+         patch.object(runner, "notion_find_wip", return_value="途中の制作物はありません"), \
+         patch.object(runner, "extract_theme", return_value="ピエモンテ州のネッビオーロ") as mock_extract, \
+         patch.object(runner, "save_to_notion", return_value="ok") as mock_save, \
+         patch.object(runner, "save_log"):
+        runner.run_agent("sommelier", "今週のワインテーマを提案してください", "月曜：今週テーマ決定")
+
+    mock_extract.assert_called_once_with("ピエモンテ州のネッビオーロを紹介します。以上。")
+    assert mock_save.call_args.kwargs.get("theme") == "ピエモンテ州のネッビオーロ"
+
+
+def test_run_agent_extracts_theme_and_passes_to_notion_append_to_page(monkeypatch):
+    import runner
+    resp = _text_response("続きを完成させました。以上です。", "end_turn")
+    find_out = "途中の制作物:\n- pageABC | ワイン | 火曜：ワイン動画台本作成 (2026-07-10)"
+    with patch.object(runner.client.messages, "stream", return_value=_stream_cm(resp)), \
+         patch.object(runner, "notion_recent_themes", return_value=""), \
+         patch.object(runner, "notion_find_wip", return_value=find_out), \
+         patch.object(runner, "notion_read_page", return_value="前回の途中原稿本文"), \
+         patch.object(runner, "extract_theme", return_value="トスカーナ州のサンジョヴェーゼ") as mock_extract, \
+         patch.object(runner, "notion_append_to_page", return_value="更新しました") as mock_append, \
+         patch.object(runner, "save_to_notion", return_value="ok"), \
+         patch.object(runner, "save_log"):
+        runner.run_agent("creator", "ワインの台本を書いて", "火曜：ワイン動画台本作成")
+
+    mock_extract.assert_called_once()
+    assert mock_append.call_args.kwargs.get("theme") == "トスカーナ州のサンジョヴェーゼ"

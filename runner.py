@@ -6,6 +6,7 @@ import anthropic
 from tools import (
     TOOL_DEFINITIONS, execute_tool, save_to_notion, notion_find_wip,
     notion_read_page, notion_append_to_page, _infer_category,
+    notion_recent_themes, extract_theme,
 )
 from tools_video import VIDEO_TOOL_DEFINITIONS, execute_video_tool
 from tools_express import generate_weekly_assets, parse_creator_metadata
@@ -81,6 +82,15 @@ def run_agent(agent_name: str, prompt: str, label: str, max_continuations: int =
     resume_page_id = ""
     category = _infer_category(label, prompt)
     if category in ("ワイン", "コーヒー"):
+        recent_themes = notion_recent_themes(category)
+        if recent_themes:
+            prompt = (
+                prompt
+                + "\n\n【重複回避】直近の制作物テーマ一覧です。"
+                + "同じ産地・品種・切り口・商品の重複を避けて新しい提案をしてください:\n"
+                + recent_themes
+            )
+
         find_out = notion_find_wip(category)
         candidate_id = _wip_page_id_for_label(find_out, label)
         if candidate_id:
@@ -149,10 +159,11 @@ def run_agent(agent_name: str, prompt: str, label: str, max_continuations: int =
     status = "途中" if truncated else "要確認"
     print(f"\n{'⚠️ 途中保存' if truncated else '✅'} {label} 完了（{status}）")
 
+    theme = extract_theme(final_text) if category in ("ワイン", "コーヒー") else ""
     if resume_page_id:
-        notion_result = notion_append_to_page(resume_page_id, final_text, status=status)
+        notion_result = notion_append_to_page(resume_page_id, final_text, status=status, theme=theme)
     else:
-        notion_result = save_to_notion(f"{label} ({now.strftime('%Y-%m-%d')})", final_text, status=status)
+        notion_result = save_to_notion(f"{label} ({now.strftime('%Y-%m-%d')})", final_text, status=status, theme=theme)
     print(f"   📝 Notion: {notion_result}")
     return final_text
 
