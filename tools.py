@@ -299,19 +299,22 @@ def extract_theme(content: str) -> str:
 
 
 def _create_database_page(token: str, database_id: str, title: str, category: str,
-                          status: str = "要確認") -> Optional[str]:
+                          status: str = "要確認", theme: str = "") -> Optional[str]:
     headers = {
         "Authorization": f"Bearer {token}",
         "Content-Type": "application/json",
         "Notion-Version": "2022-06-28",
     }
+    properties = {
+        "title": {"title": [{"text": {"content": title}}]},
+        "カテゴリ": {"select": {"name": category}},
+        "ステータス": {"select": {"name": status}},
+    }
+    if theme:
+        properties["テーマ"] = {"rich_text": [{"text": {"content": theme}}]}
     payload = {
         "parent": {"database_id": database_id},
-        "properties": {
-            "title": {"title": [{"text": {"content": title}}]},
-            "カテゴリ": {"select": {"name": category}},
-            "ステータス": {"select": {"name": status}},
-        }
+        "properties": properties,
     }
     try:
         resp = requests.post("https://api.notion.com/v1/pages", headers=headers,
@@ -350,7 +353,7 @@ def _add_blocks_to_page(token: str, page_id: str, content: str) -> Optional[str]
     return None
 
 
-def save_to_notion(title: str, content: str, status: str = "要確認") -> str:
+def save_to_notion(title: str, content: str, status: str = "要確認", theme: str = "") -> str:
     token = os.environ.get("NOTION_API_KEY")
     database_id = os.environ.get("NOTION_DATABASE_ID")
     page_id = os.environ.get("NOTION_PAGE_ID")
@@ -359,7 +362,7 @@ def save_to_notion(title: str, content: str, status: str = "要確認") -> str:
 
     if database_id:
         child_id = _create_database_page(token, database_id, title,
-                                         _infer_category(title, content), status)
+                                         _infer_category(title, content), status, theme)
         if not child_id:
             return "ページ作成エラー: Notion APIがデータベースにページを作成できませんでした"
         created_label = "データベースページ"

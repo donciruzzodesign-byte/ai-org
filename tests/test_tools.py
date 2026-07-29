@@ -566,3 +566,43 @@ def test_notion_recent_themes_returns_empty_on_error(monkeypatch):
     with patch("tools.requests.post", return_value=resp):
         out = notion_recent_themes("ワイン")
     assert out == ""
+
+
+def test_save_to_notion_includes_theme_property_when_provided(monkeypatch):
+    monkeypatch.setenv("NOTION_API_KEY", "test-token")
+    monkeypatch.setenv("NOTION_DATABASE_ID", "db-id-123")
+    monkeypatch.delenv("NOTION_PAGE_ID", raising=False)
+
+    create_resp = MagicMock()
+    create_resp.status_code = 200
+    create_resp.json.return_value = {"id": "row-id"}
+    patch_resp = MagicMock()
+    patch_resp.status_code = 200
+    patch_resp.json.return_value = {}
+
+    with patch("tools.requests.post", return_value=create_resp) as mock_post, \
+         patch("tools.requests.patch", return_value=patch_resp):
+        save_to_notion("タイトル", "## 内容", theme="ピエモンテ州のネッビオーロ")
+
+    props = mock_post.call_args[1]["json"]["properties"]
+    assert props["テーマ"] == {"rich_text": [{"text": {"content": "ピエモンテ州のネッビオーロ"}}]}
+
+
+def test_save_to_notion_omits_theme_property_when_not_provided(monkeypatch):
+    monkeypatch.setenv("NOTION_API_KEY", "test-token")
+    monkeypatch.setenv("NOTION_DATABASE_ID", "db-id-123")
+    monkeypatch.delenv("NOTION_PAGE_ID", raising=False)
+
+    create_resp = MagicMock()
+    create_resp.status_code = 200
+    create_resp.json.return_value = {"id": "row-id"}
+    patch_resp = MagicMock()
+    patch_resp.status_code = 200
+    patch_resp.json.return_value = {}
+
+    with patch("tools.requests.post", return_value=create_resp) as mock_post, \
+         patch("tools.requests.patch", return_value=patch_resp):
+        save_to_notion("タイトル", "## 内容")
+
+    props = mock_post.call_args[1]["json"]["properties"]
+    assert "テーマ" not in props
