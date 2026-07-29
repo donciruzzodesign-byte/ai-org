@@ -506,12 +506,12 @@ def notion_read_page(page_id: str) -> str:
     return "\n".join(t for t in texts if t)
 
 
-def notion_update_status(page_id: str, status: str) -> str:
-    """ページの ステータス セレクトを更新する。"""
-    token = os.environ.get("NOTION_API_KEY")
-    if not token:
-        return "NOTION_API_KEY が未設定のためスキップ"
-    body = {"properties": {"ステータス": {"select": {"name": status}}}}
+def _update_page_properties(token: str, page_id: str, status: str, theme: str = "") -> str:
+    """ページの ステータス（と任意でテーマ）を更新する。"""
+    properties = {"ステータス": {"select": {"name": status}}}
+    if theme:
+        properties["テーマ"] = {"rich_text": [{"text": {"content": theme}}]}
+    body = {"properties": properties}
     try:
         resp = requests.patch(
             f"https://api.notion.com/v1/pages/{page_id}",
@@ -524,15 +524,23 @@ def notion_update_status(page_id: str, status: str) -> str:
     return f"ステータスを{status}に更新しました"
 
 
-def notion_append_to_page(page_id: str, content: str, status: str = "要確認") -> str:
-    """既存ページに本文を追記し、ステータスを更新する（runner内部利用）。"""
+def notion_update_status(page_id: str, status: str) -> str:
+    """ページの ステータス セレクトを更新する。"""
+    token = os.environ.get("NOTION_API_KEY")
+    if not token:
+        return "NOTION_API_KEY が未設定のためスキップ"
+    return _update_page_properties(token, page_id, status)
+
+
+def notion_append_to_page(page_id: str, content: str, status: str = "要確認", theme: str = "") -> str:
+    """既存ページに本文を追記し、ステータス（と任意でテーマ）を更新する（runner内部利用）。"""
     token = os.environ.get("NOTION_API_KEY")
     if not token:
         return "NOTION_API_KEY が未設定のためスキップ"
     err = _add_blocks_to_page(token, page_id, content)
     if err:
         return err
-    return notion_update_status(page_id, status)
+    return _update_page_properties(token, page_id, status, theme)
 
 
 def execute_tool(name: str, inputs: dict) -> str:

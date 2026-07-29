@@ -606,3 +606,34 @@ def test_save_to_notion_omits_theme_property_when_not_provided(monkeypatch):
 
     props = mock_post.call_args[1]["json"]["properties"]
     assert "テーマ" not in props
+
+
+def test_notion_append_to_page_updates_theme_when_provided(monkeypatch):
+    monkeypatch.setenv("NOTION_API_KEY", "test-token")
+    blocks_resp = MagicMock()
+    blocks_resp.status_code = 200
+    patch_resp = MagicMock()
+    patch_resp.status_code = 200
+    patch_resp.json.return_value = {}
+    with patch("tools.requests.patch", side_effect=[blocks_resp, patch_resp]) as mock_patch:
+        out = notion_append_to_page("page-1", "追記内容", status="要確認", theme="トスカーナ州のサンジョヴェーゼ")
+
+    props_call = mock_patch.call_args_list[1]
+    body = props_call[1]["json"]
+    assert body["properties"]["テーマ"] == {"rich_text": [{"text": {"content": "トスカーナ州のサンジョヴェーゼ"}}]}
+    assert body["properties"]["ステータス"] == {"select": {"name": "要確認"}}
+    assert "要確認" in out
+
+
+def test_notion_append_to_page_omits_theme_when_not_provided(monkeypatch):
+    monkeypatch.setenv("NOTION_API_KEY", "test-token")
+    blocks_resp = MagicMock()
+    blocks_resp.status_code = 200
+    patch_resp = MagicMock()
+    patch_resp.status_code = 200
+    patch_resp.json.return_value = {}
+    with patch("tools.requests.patch", side_effect=[blocks_resp, patch_resp]) as mock_patch:
+        notion_append_to_page("page-1", "追記内容", status="要確認")
+
+    body = mock_patch.call_args_list[1][1]["json"]
+    assert "テーマ" not in body["properties"]
