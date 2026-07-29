@@ -488,3 +488,81 @@ def test_extract_theme_returns_empty_for_empty_content():
     from tools import extract_theme
     assert extract_theme("") == ""
     assert extract_theme("   ") == ""
+
+
+def test_extract_rich_text_joins_plain_text():
+    from tools import _extract_rich_text
+    prop = {"rich_text": [{"plain_text": "ピエモンテ州の"}, {"plain_text": "ネッビオーロ"}]}
+    assert _extract_rich_text(prop) == "ピエモンテ州のネッビオーロ"
+    assert _extract_rich_text({"rich_text": []}) == ""
+    assert _extract_rich_text({}) == ""
+    assert _extract_rich_text(None) == ""
+
+
+def test_notion_recent_themes_queries_by_category_sorted_desc(monkeypatch):
+    from tools import notion_recent_themes
+    monkeypatch.setenv("NOTION_API_KEY", "test-token")
+    monkeypatch.setenv("NOTION_DATABASE_ID", "db-id-123")
+
+    resp = MagicMock()
+    resp.status_code = 200
+    resp.json.return_value = {
+        "results": [
+            {"properties": {
+                "名前": {"type": "title", "title": [{"plain_text": "月曜：今週テーマ決定 (2026-07-20)"}]},
+                "テーマ": {"rich_text": [{"plain_text": "ピエモンテ州のネッビオーロ"}]},
+            }},
+            {"properties": {
+                "名前": {"type": "title", "title": [{"plain_text": "月曜：州別おすすめワイン紹介 (2026-07-13)"}]},
+                "テーマ": {"rich_text": [{"plain_text": "トスカーナ州のサンジョヴェーゼ"}]},
+            }},
+        ]
+    }
+    with patch("tools.requests.post", return_value=resp) as mock_post:
+        out = notion_recent_themes("ワイン", limit=8)
+
+    body = mock_post.call_args[1]["json"]
+    assert body["filter"] == {"property": "カテゴリ", "select": {"equals": "ワイン"}}
+    assert body["sorts"] == [{"timestamp": "created_time", "direction": "descending"}]
+    assert body["page_size"] == 8
+    assert "ピエモンテ州のネッビオーロ" in out
+    assert "トスカーナ州のサンジョヴェーゼ" in out
+    assert "月曜：今週テーマ決定 (2026-07-20)" in out
+
+
+def test_notion_recent_themes_skips_pages_without_theme(monkeypatch):
+    from tools import notion_recent_themes
+    monkeypatch.setenv("NOTION_API_KEY", "test-token")
+    monkeypatch.setenv("NOTION_DATABASE_ID", "db-id-123")
+    resp = MagicMock()
+    resp.status_code = 200
+    resp.json.return_value = {
+        "results": [
+            {"properties": {
+                "名前": {"type": "title", "title": [{"plain_text": "古いページ"}]},
+                "テーマ": {"rich_text": []},
+            }},
+        ]
+    }
+    with patch("tools.requests.post", return_value=resp):
+        out = notion_recent_themes("ワイン")
+    assert out == ""
+
+
+def test_notion_recent_themes_returns_empty_without_env(monkeypatch):
+    from tools import notion_recent_themes
+    monkeypatch.delenv("NOTION_API_KEY", raising=False)
+    monkeypatch.delenv("NOTION_DATABASE_ID", raising=False)
+    assert notion_recent_themes("ワイン") == ""
+
+
+def test_notion_recent_themes_returns_empty_on_error(monkeypatch):
+    from tools import notion_recent_themes
+    monkeypatch.setenv("NOTION_API_KEY", "test-token")
+    monkeypatch.setenv("NOTION_DATABASE_ID", "db-id-123")
+    resp = MagicMock()
+    resp.status_code = 400
+    resp.json.return_value = {"message": "bad"}
+    with patch("tools.requests.post", return_value=resp):
+        out = notion_recent_themes("ワイン")
+    assert out == ""

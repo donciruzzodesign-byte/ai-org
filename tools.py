@@ -395,6 +395,13 @@ def _extract_title(props: dict) -> str:
     return ""
 
 
+def _extract_rich_text(prop: dict) -> str:
+    """rich_textプロパティからプレーンテキストを結合して返す。"""
+    if not isinstance(prop, dict):
+        return ""
+    return "".join(t.get("plain_text", "") for t in prop.get("rich_text", []))
+
+
 def notion_find_wip(category: str = "") -> str:
     """ステータス=途中 のDBページを検索して一覧テキストを返す。"""
     token = os.environ.get("NOTION_API_KEY")
@@ -427,6 +434,39 @@ def notion_find_wip(category: str = "") -> str:
         cat = props.get("カテゴリ", {}).get("select") or {}
         lines.append(f"- {pid} | {cat.get('name', '')} | {title}")
     return "途中の制作物:\n" + "\n".join(lines)
+
+
+def notion_recent_themes(category: str, limit: int = 8) -> str:
+    """直近のテーマ一覧を取得する（重複回避のための参考情報）。テーマ未設定のページはスキップ。"""
+    token = os.environ.get("NOTION_API_KEY")
+    database_id = os.environ.get("NOTION_DATABASE_ID")
+    if not token or not database_id:
+        return ""
+    body = {
+        "filter": {"property": "カテゴリ", "select": {"equals": category}},
+        "sorts": [{"timestamp": "created_time", "direction": "descending"}],
+        "page_size": limit,
+    }
+    try:
+        resp = requests.post(
+            f"https://api.notion.com/v1/databases/{database_id}/query",
+            headers=_notion_headers(token), json=body, timeout=15,
+        )
+        if resp.status_code != 200:
+            return ""
+        results = resp.json().get("results", [])
+    except Exception:
+        return ""
+
+    lines = []
+    for page in results:
+        props = page.get("properties", {})
+        theme = _extract_rich_text(props.get("テーマ", {}))
+        if not theme:
+            continue
+        title = _extract_title(props) or ""
+        lines.append(f"- {theme}（{title}）")
+    return "\n".join(lines)
 
 
 def _extract_block_text(block: dict) -> str:
