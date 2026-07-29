@@ -76,6 +76,7 @@ def test_multiline_mixed():
 
 
 from unittest.mock import patch, MagicMock
+from datetime import datetime
 from tools import _create_child_page
 
 
@@ -522,12 +523,38 @@ def test_notion_recent_themes_queries_by_category_sorted_desc(monkeypatch):
         out = notion_recent_themes("ワイン", limit=8)
 
     body = mock_post.call_args[1]["json"]
-    assert body["filter"] == {"property": "カテゴリ", "select": {"equals": "ワイン"}}
+    assert body["filter"]["and"][0] == {"property": "カテゴリ", "select": {"equals": "ワイン"}}
+    assert "created_time" in body["filter"]["and"][1]
+    assert "before" in body["filter"]["and"][1]["created_time"]
     assert body["sorts"] == [{"timestamp": "created_time", "direction": "descending"}]
     assert body["page_size"] == 8
     assert "ピエモンテ州のネッビオーロ" in out
     assert "トスカーナ州のサンジョヴェーゼ" in out
     assert "月曜：今週テーマ決定 (2026-07-20)" in out
+
+
+def test_notion_recent_themes_scopes_query_to_before_current_week(monkeypatch):
+    """今週月曜00:00より前に作成されたページのみを対象とするフィルタが送信されること。"""
+    from tools import notion_recent_themes
+
+    monkeypatch.setenv("NOTION_API_KEY", "test-token")
+    monkeypatch.setenv("NOTION_DATABASE_ID", "db-id-123")
+
+    resp = MagicMock()
+    resp.status_code = 200
+    resp.json.return_value = {"results": []}
+
+    fixed_now = datetime(2026, 7, 30, 15, 0, 0)  # 木曜
+    expected_week_start = datetime(2026, 7, 27, 0, 0, 0).isoformat()  # 直前の月曜00:00
+
+    with patch("tools.datetime") as mock_datetime, \
+         patch("tools.requests.post", return_value=resp) as mock_post:
+        mock_datetime.now.return_value = fixed_now
+        notion_recent_themes("ワイン")
+
+    body = mock_post.call_args[1]["json"]
+    created_time_filter = body["filter"]["and"][1]["created_time"]
+    assert created_time_filter == {"before": expected_week_start}
 
 
 def test_notion_recent_themes_skips_pages_without_theme(monkeypatch):

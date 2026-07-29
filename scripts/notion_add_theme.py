@@ -26,6 +26,8 @@ def _load_env() -> None:
 
 def classify_existing_page(page_id: str) -> str:
     content = notion_read_page(page_id)
+    if not content or content.startswith("Notion読み取りエラー") or content.endswith("スキップ"):
+        return ""
     return extract_theme(content)
 
 

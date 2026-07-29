@@ -13,6 +13,27 @@ def test_classify_existing_page_calls_extract_theme():
     assert result == "バローロ特集"
 
 
+def test_classify_existing_page_skips_when_read_returns_error_string():
+    """notion_read_page が例外を投げず『Notion読み取りエラー: ...』文字列を返すケース
+    （404/403/レート制限など）で、そのままextract_themeに渡してテーマ化しないこと。"""
+    with patch("scripts.notion_add_theme.notion_read_page",
+               return_value="Notion読み取りエラー: 404 not found"), \
+         patch("scripts.notion_add_theme.extract_theme") as mock_extract:
+        result = classify_existing_page("p1")
+    mock_extract.assert_not_called()
+    assert result == ""
+
+
+def test_classify_existing_page_skips_when_read_returns_skip_string():
+    """NOTION_API_KEY未設定時のnotion_read_pageの「...スキップ」文字列も同様にガードする。"""
+    with patch("scripts.notion_add_theme.notion_read_page",
+               return_value="NOTION_API_KEY が未設定のためスキップ"), \
+         patch("scripts.notion_add_theme.extract_theme") as mock_extract:
+        result = classify_existing_page("p1")
+    mock_extract.assert_not_called()
+    assert result == ""
+
+
 def test_extract_theme_property_reads_rich_text():
     page = {"properties": {"テーマ": {"rich_text": [{"plain_text": "ピエモンテ州のネッビオーロ"}]}}}
     assert _extract_theme_property(page) == "ピエモンテ州のネッビオーロ"

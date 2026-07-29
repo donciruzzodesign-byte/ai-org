@@ -2,6 +2,7 @@ import os
 import re
 import requests
 from bs4 import BeautifulSoup
+from datetime import datetime, timedelta
 from typing import Optional
 from urllib.parse import quote
 
@@ -439,14 +440,26 @@ def notion_find_wip(category: str = "") -> str:
     return "途中の制作物:\n" + "\n".join(lines)
 
 
+def _week_start_iso(now: Optional[datetime] = None) -> str:
+    """今週月曜 00:00 のISO文字列を返す（Monday=0）。他週との重複回避で「今週分」を除外するために使う。"""
+    now = now or datetime.now()
+    week_start = (now - timedelta(days=now.weekday())).replace(
+        hour=0, minute=0, second=0, microsecond=0
+    )
+    return week_start.isoformat()
+
+
 def notion_recent_themes(category: str, limit: int = 8) -> str:
-    """直近のテーマ一覧を取得する（重複回避のための参考情報）。テーマ未設定のページはスキップ。"""
+    """直近のテーマ一覧を取得する（重複回避のための参考情報）。テーマ未設定のページ・今週作成分はスキップ。"""
     token = os.environ.get("NOTION_API_KEY")
     database_id = os.environ.get("NOTION_DATABASE_ID")
     if not token or not database_id:
         return ""
     body = {
-        "filter": {"property": "カテゴリ", "select": {"equals": category}},
+        "filter": {"and": [
+            {"property": "カテゴリ", "select": {"equals": category}},
+            {"timestamp": "created_time", "created_time": {"before": _week_start_iso()}},
+        ]},
         "sorts": [{"timestamp": "created_time", "direction": "descending"}],
         "page_size": limit,
     }

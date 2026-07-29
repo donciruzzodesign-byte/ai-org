@@ -228,6 +228,28 @@ def test_run_agent_read_error_falls_back_to_new_page(monkeypatch):
     mock_save.assert_called_once()                      # fell back to new page
 
 
+def test_run_agent_resume_path_skips_recent_themes_injection(monkeypatch):
+    """WIP再開時は、直近テーマ一覧があっても【重複回避】ブロックを注入しない（自分自身のテーマを避けよと言わない）。"""
+    import runner
+    resp = _text_response("続きを書いて完成させました。以上です。", "end_turn")
+    find_out = "途中の制作物:\n- pageABC | ワイン | 火曜：ワイン動画台本作成 (2026-07-10)"
+    with patch.object(runner.client.messages, "stream", return_value=_stream_cm(resp)) as mock_stream, \
+         patch.object(runner, "notion_recent_themes",
+                      return_value="- トスカーナ州のサンジョヴェーゼ（月曜：今週テーマ決定 (2026-07-20)）") as mock_recent, \
+         patch.object(runner, "notion_find_wip", return_value=find_out), \
+         patch.object(runner, "notion_read_page", return_value="前回の途中原稿本文"), \
+         patch.object(runner, "extract_theme", return_value=""), \
+         patch.object(runner, "notion_append_to_page", return_value="更新しました"), \
+         patch.object(runner, "save_to_notion", return_value="ok"), \
+         patch.object(runner, "save_log"):
+        runner.run_agent("creator", "ワインの台本を書いて", "火曜：ワイン動画台本作成")
+
+    mock_recent.assert_not_called()
+    sent_prompt = mock_stream.call_args.kwargs["messages"][0]["content"]
+    assert "重複回避" not in sent_prompt
+    assert "前回の途中原稿" in sent_prompt
+
+
 def test_run_agent_injects_recent_themes_into_prompt(monkeypatch):
     import runner
     resp = _text_response("新しいテーマ提案です。以上。", "end_turn")
