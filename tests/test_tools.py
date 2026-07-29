@@ -461,3 +461,30 @@ def test_notion_find_wip_skips_without_env(monkeypatch):
     monkeypatch.delenv("NOTION_DATABASE_ID", raising=False)
     out = notion_find_wip("ワイン")
     assert "未設定" in out
+
+
+def test_extract_theme_returns_summary_text():
+    from tools import extract_theme
+    fake_client = MagicMock()
+    fake_resp = MagicMock()
+    fake_resp.content = [MagicMock(text="ピエモンテ州のネッビオーロ特集", spec=["text"])]
+    fake_client.messages.create.return_value = fake_resp
+    with patch("tools._get_anthropic_client", return_value=fake_client):
+        result = extract_theme("今週はピエモンテ州のネッビオーロについて特集します。" * 3)
+    assert result == "ピエモンテ州のネッビオーロ特集"
+    fake_client.messages.create.assert_called_once()
+    kwargs = fake_client.messages.create.call_args.kwargs
+    assert kwargs["model"] == "claude-haiku-4-5-20251001"
+
+
+def test_extract_theme_returns_empty_on_exception():
+    from tools import extract_theme
+    with patch("tools._get_anthropic_client", side_effect=Exception("no api key")):
+        result = extract_theme("何かの内容")
+    assert result == ""
+
+
+def test_extract_theme_returns_empty_for_empty_content():
+    from tools import extract_theme
+    assert extract_theme("") == ""
+    assert extract_theme("   ") == ""

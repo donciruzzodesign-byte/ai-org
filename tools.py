@@ -265,6 +265,39 @@ def _detect_completion_status(content: str) -> str:
     return "途中"
 
 
+_anthropic_client = None
+
+
+def _get_anthropic_client():
+    global _anthropic_client
+    if _anthropic_client is None:
+        import anthropic
+        _anthropic_client = anthropic.Anthropic()
+    return _anthropic_client
+
+
+def extract_theme(content: str) -> str:
+    """生成された本文から重複回避用の一言テーマ（20文字以内）を抽出する。失敗時は空文字列。"""
+    if not content or not content.strip():
+        return ""
+    try:
+        client = _get_anthropic_client()
+        resp = client.messages.create(
+            model="claude-haiku-4-5-20251001",
+            max_tokens=60,
+            messages=[{
+                "role": "user",
+                "content": (
+                    "以下の文章の主題を日本語で20文字以内の1行で要約してください。"
+                    "要約のみを出力し、他の説明は書かないでください。\n\n" + content[:3000]
+                ),
+            }],
+        )
+        return "".join(b.text for b in resp.content if hasattr(b, "text")).strip()
+    except Exception:
+        return ""
+
+
 def _create_database_page(token: str, database_id: str, title: str, category: str,
                           status: str = "要確認") -> Optional[str]:
     headers = {
