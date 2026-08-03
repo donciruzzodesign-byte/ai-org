@@ -145,47 +145,69 @@ def _graph_insights_get(media_id: str, metric: str, access_token: str, breakdown
 
 
 def _parse_totals(payload: dict) -> dict:
-    """breakdownなしの単純な合計値レスポンスを {メトリクス名: 値} に変換する。"""
-    return {item["name"]: item["total_value"]["value"] for item in payload.get("data", [])}
+    """合計値レスポンスを {メトリクス名: 値} に変換する。breakdownを指定しない場合、
+    Graph APIは metric_type=total_value を指定しても素の values 形式で返してくる
+    （total_value 形式はbreakdown指定時のみ）。両形式に対応する。
+    """
+    result = {}
+    for item in payload.get("data", []):
+        if "total_value" in item:
+            result[item["name"]] = item["total_value"]["value"]
+        else:
+            result[item["name"]] = item["values"][0]["value"]
+    return result
 
 
 def _parse_breakdown(payload: dict) -> dict:
-    """breakdown付きレスポンスを {"total": 合計値, "breakdown": {次元名: 値}} に変換する。"""
+    """breakdown付きレスポンスを {"total": 合計値, "breakdown": {次元名: 値}} に変換する。
+    内訳の合計が0件のときはbreakdownsを含まないvalues形式で返ってくるため、その場合は
+    breakdownを空辞書として扱う。
+    """
     entry = payload["data"][0]
-    total = entry["total_value"]["value"]
-    breakdown = {}
-    for result in entry["total_value"]["breakdowns"][0]["results"]:
-        dim = result["dimension_values"][0]
-        breakdown[dim] = result["value"]
-    return {"total": total, "breakdown": breakdown}
+    if "total_value" in entry:
+        total = entry["total_value"]["value"]
+        breakdown = {}
+        for result in entry["total_value"].get("breakdowns", [{}])[0].get("results", []):
+            dim = result["dimension_values"][0]
+            breakdown[dim] = result["value"]
+        return {"total": total, "breakdown": breakdown}
+    return {"total": entry["values"][0]["value"], "breakdown": {}}
+
+
+# profile_activity / follows はFEED・STORY投稿のみ対応。REELSでは
+# 「The Media Insights API does not support the profile_activity metric
+# for this media product type.」のようなエラーになるため取得自体をスキップする。
+_PROFILE_METRICS_UNSUPPORTED_TYPES = {"REELS"}
 
 
 def fetch_media_insights(media_id: str, media_product_type: str, access_token: str) -> dict:
-    """1投稿分のInsightsを取得し、シートの自動入力列に対応する形へ正規化する。"""
-    reach_payload = _graph_insights_get(media_id, "reach", access_token, breakdown="follow_type")
-    reach_data = _parse_breakdown(reach_payload)
-
-    profile_payload = _graph_insights_get(media_id, "profile_activity", access_token, breakdown="action_type")
-    profile_data = _parse_breakdown(profile_payload)
-
-    totals_payload = _graph_insights_get(
-        media_id, "likes,comments,saved,follows,profile_visits", access_token
-    )
+    """1投稿分のInsightsを取得し、シートの自動入力列に対応する形へ正規化する。
+    reachのfollow_typeブレークダウンは投稿単位のGraph APIでは提供されないため、
+    全体リーチのみ取得する（フォロワー/フォロワー外の内訳はシート側で手動記入）。
+    """
+    metrics = "reach,likes,comments,saved"
+    if media_product_type not in _PROFILE_METRICS_UNSUPPORTED_TYPES:
+        metrics += ",follows"
+    totals_payload = _graph_insights_get(media_id, metrics, access_token)
     totals = _parse_totals(totals_payload)
 
     result = {
-        "reach": reach_data["total"],
-        "reach_follower": reach_data["breakdown"].get("FOLLOWER", 0),
-        "reach_nonfollower": reach_data["breakdown"].get("NON_FOLLOWER", 0),
+        "reach": totals.get("reach", 0),
         "likes": totals.get("likes", 0),
         "comments": totals.get("comments", 0),
         "saved": totals.get("saved", 0),
         "follows": totals.get("follows", 0),
-        "profile_activity": profile_data["total"],
-        "link_taps": profile_data["breakdown"].get("BIO_LINK_CLICKED", 0),
+        "profile_activity": 0,
+        "link_taps": 0,
         "views": None,
         "avg_watch_time": None,
     }
+
+    if media_product_type not in _PROFILE_METRICS_UNSUPPORTED_TYPES:
+        profile_payload = _graph_insights_get(media_id, "profile_activity", access_token, breakdown="action_type")
+        profile_data = _parse_breakdown(profile_payload)
+        result["profile_activity"] = profile_data["total"]
+        result["link_taps"] = profile_data["breakdown"].get("BIO_LINK_CLICKED", 0)
 
     if media_product_type == "REELS":
         video_payload = _graph_insights_get(media_id, "views,ig_reels_avg_watch_time", access_token)
@@ -245,20 +267,15 @@ def _open_worksheets(sheet_id: str, service_account_json_path: str):
 
 
 def _build_tab1_entry(media: dict, insights: dict, rates: dict) -> dict:
-    """タブ1は「フォロワー％」（構成比）、「フォロワー」「フォロワー外」（実数）の
-    3列に分かれているため、reach_followerを実数列に、reach/reachの比率を％列に入れる。
+    """フォロワー％／フォロワー／フォロワー外の内訳はGraph APIで取得できないため、
+    自動入力の対象外（シート側で手動記入）とし、全体リーチのみ反映する。
     """
     date_str = to_jst_date_str(media["timestamp"])
-    reach = insights["reach"] or 0
-    follower_pct = round(insights["reach_follower"] / reach, 4) if reach else 0.0
     return {
         "match_value": media["permalink"],
         "updates": {
             "日付": date_str,
             "全体リーチ": insights["reach"],
-            "フォロワー％": follower_pct,
-            "フォロワー": insights["reach_follower"],
-            "フォロワー外": insights["reach_nonfollower"],
             "再生数": insights["views"] if insights["views"] is not None else "",
             "平均再生時間": insights["avg_watch_time"] if insights["avg_watch_time"] is not None else "",
             "いいね率": rates["like_rate"],
@@ -277,12 +294,11 @@ def _build_tab1_entry(media: dict, insights: dict, rates: dict) -> dict:
 
 
 def _build_tab2_entry(date_str: str, insights: dict) -> dict:
+    """フォロワー／フォロワー外はGraph APIで取得できないため自動入力の対象外。"""
     return {
         "match_value": date_str,
         "updates": {
             "①リーチ": insights["reach"],
-            "フォロワー": insights["reach_follower"],
-            "フォロワー外": insights["reach_nonfollower"],
             "⑨いいね": insights["likes"],
             "⑩保存": insights["saved"],
             "⑪プロフアクセス": insights["profile_activity"],

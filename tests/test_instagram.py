@@ -1,6 +1,6 @@
 from unittest.mock import patch, MagicMock
 import requests
-from tools_instagram import to_jst_date_str, compute_rates, group_media_by_date, find_row_by_value, fetch_recent_media, fetch_media_insights, sync_to_sheet, TokenExpiredError, RateLimitError, GraphAPIError
+from tools_instagram import to_jst_date_str, compute_rates, group_media_by_date, find_row_by_value, fetch_recent_media, fetch_media_insights, sync_to_sheet, TokenExpiredError, RateLimitError, GraphAPIError, _parse_totals, _parse_breakdown
 
 
 def test_to_jst_date_str_converts_utc_to_jst_date():
@@ -182,18 +182,16 @@ def _breakdown_response(total_value, dimension_key, breakdown_results):
 def test_fetch_media_insights_image_post(mock_get):
     def side_effect(url, params, timeout):
         metric = params.get("metric", "")
-        if metric == "reach":
-            return _mock_response(200, _breakdown_response(100, "follow_type", {"FOLLOWER": 80, "NON_FOLLOWER": 20}))
         if metric == "profile_activity":
             return _mock_response(200, _breakdown_response(10, "action_type", {"BIO_LINK_CLICKED": 3, "OTHER": 7}))
-        if metric == "likes,comments,saved,follows,profile_visits":
+        if metric == "reach,likes,comments,saved,follows":
             return _mock_response(200, {
                 "data": [
+                    {"name": "reach", "total_value": {"value": 100}},
                     {"name": "likes", "total_value": {"value": 15}},
                     {"name": "comments", "total_value": {"value": 2}},
                     {"name": "saved", "total_value": {"value": 5}},
                     {"name": "follows", "total_value": {"value": 1}},
-                    {"name": "profile_visits", "total_value": {"value": 8}},
                 ]
             })
         raise AssertionError(f"想定外のmetricリクエスト: {metric}")
@@ -201,8 +199,6 @@ def test_fetch_media_insights_image_post(mock_get):
     mock_get.side_effect = side_effect
     result = fetch_media_insights("MEDIA_ID", "IMAGE", "TOKEN")
     assert result["reach"] == 100
-    assert result["reach_follower"] == 80
-    assert result["reach_nonfollower"] == 20
     assert result["likes"] == 15
     assert result["comments"] == 2
     assert result["saved"] == 5
@@ -215,20 +211,18 @@ def test_fetch_media_insights_image_post(mock_get):
 
 @patch("tools_instagram.requests.get")
 def test_fetch_media_insights_reels_post_includes_video_metrics(mock_get):
+    """REELSはprofile_activity/followsに未対応（Graph APIがエラーを返す）ため、
+    そのリクエスト自体を行わない。profile_activity/link_taps/followsは0固定。
+    """
     def side_effect(url, params, timeout):
         metric = params.get("metric", "")
-        if metric == "reach":
-            return _mock_response(200, _breakdown_response(50, "follow_type", {"FOLLOWER": 40, "NON_FOLLOWER": 10}))
-        if metric == "profile_activity":
-            return _mock_response(200, _breakdown_response(2, "action_type", {"BIO_LINK_CLICKED": 1, "OTHER": 1}))
-        if metric == "likes,comments,saved,follows,profile_visits":
+        if metric == "reach,likes,comments,saved":
             return _mock_response(200, {
                 "data": [
+                    {"name": "reach", "total_value": {"value": 50}},
                     {"name": "likes", "total_value": {"value": 5}},
                     {"name": "comments", "total_value": {"value": 0}},
                     {"name": "saved", "total_value": {"value": 1}},
-                    {"name": "follows", "total_value": {"value": 0}},
-                    {"name": "profile_visits", "total_value": {"value": 3}},
                 ]
             })
         if metric == "views,ig_reels_avg_watch_time":
@@ -244,6 +238,55 @@ def test_fetch_media_insights_reels_post_includes_video_metrics(mock_get):
     result = fetch_media_insights("MEDIA_ID", "REELS", "TOKEN")
     assert result["views"] == 155
     assert result["avg_watch_time"] == 3.2
+    assert result["profile_activity"] == 0
+    assert result["link_taps"] == 0
+    assert result["follows"] == 0
+
+
+@patch("tools_instagram.requests.get")
+def test_fetch_media_insights_handles_classic_values_response_shape(mock_get):
+    """metric_type=total_valueを指定しても、breakdown未指定の実際のGraph APIレスポンスは
+    total_valueを含まない従来の values 形式で返ってくる（実アカウントでの動作確認で判明）。
+    breakdown指定でも合計が0件のときは同様にvalues形式になる。
+    """
+    def side_effect(url, params, timeout):
+        metric = params.get("metric", "")
+        if metric == "profile_activity":
+            return _mock_response(200, {
+                "data": [{"name": "profile_activity", "period": "lifetime", "values": [{"value": 0}]}]
+            })
+        if metric == "reach,likes,comments,saved,follows":
+            return _mock_response(200, {
+                "data": [
+                    {"name": "reach", "period": "lifetime", "values": [{"value": 3}]},
+                    {"name": "likes", "period": "lifetime", "values": [{"value": 0}]},
+                    {"name": "comments", "period": "lifetime", "values": [{"value": 0}]},
+                    {"name": "saved", "period": "lifetime", "values": [{"value": 0}]},
+                    {"name": "follows", "period": "lifetime", "values": [{"value": 0}]},
+                ]
+            })
+        raise AssertionError(f"想定外のmetricリクエスト: {metric}")
+
+    mock_get.side_effect = side_effect
+    result = fetch_media_insights("MEDIA_ID", "IMAGE", "TOKEN")
+    assert result["reach"] == 3
+    assert result["profile_activity"] == 0
+    assert result["link_taps"] == 0
+
+
+def test_parse_totals_handles_both_response_shapes():
+    payload = {
+        "data": [
+            {"name": "reach", "total_value": {"value": 10}},
+            {"name": "likes", "values": [{"value": 5}]},
+        ]
+    }
+    assert _parse_totals(payload) == {"reach": 10, "likes": 5}
+
+
+def test_parse_breakdown_falls_back_to_zero_when_no_breakdown_data():
+    payload = {"data": [{"name": "profile_activity", "values": [{"value": 0}]}]}
+    assert _parse_breakdown(payload) == {"total": 0, "breakdown": {}}
 
 
 @patch("tools_instagram.requests.get")
@@ -338,7 +381,7 @@ def test_sync_instagram_insights_happy_path(mock_fetch_media, mock_fetch_insight
         "timestamp": "2026-07-20T10:00:00+0000", "caption": "テスト", "media_product_type": "REELS",
     }]
     mock_fetch_insights.return_value = {
-        "reach": 100, "reach_follower": 80, "reach_nonfollower": 20,
+        "reach": 100,
         "likes": 10, "comments": 1, "saved": 5, "follows": 2,
         "profile_activity": 8, "link_taps": 3, "views": 150, "avg_watch_time": 3.5,
     }
@@ -388,7 +431,7 @@ def test_sync_instagram_insights_skips_media_on_insights_failure(mock_fetch_medi
     ]
     mock_fetch_insights.side_effect = [
         GraphAPIError("boom"),
-        {"reach": 50, "reach_follower": 40, "reach_nonfollower": 10, "likes": 5, "comments": 0,
+        {"reach": 50, "likes": 5, "comments": 0,
          "saved": 1, "follows": 0, "profile_activity": 2, "link_taps": 0, "views": None, "avg_watch_time": None},
     ]
     # HEADER_ROW_IDX=2 に合わせ、1〜2行目はダミーの空行としてパディングする。
