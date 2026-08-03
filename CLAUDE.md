@@ -26,6 +26,10 @@ OPENAI_API_KEY=...          # 画像生成（gpt-image-1）に必須
 PEXELS_API_KEY=...          # B-roll動画取得に必須
 ELEVENLABS_API_KEY=...      # ナレーション（現在は無効化中・有料プラン必要）
 ELEVENLABS_VOICE_ID=...     # ElevenLabs ボイスID
+META_ACCESS_TOKEN=...        # 任意（Instagram Insights自動連携に必須）
+META_IG_USER_ID=...          # 任意（同上）
+GOOGLE_SERVICE_ACCOUNT_JSON=... # 任意（同上：Sheets書き込み用サービスアカウントキーのパス）
+INSTAGRAM_SHEET_ID=...       # 任意（同上：対象スプレッドシートID）
 ```
 
 ## Notionステータスと続き生成
@@ -71,6 +75,7 @@ ELEVENLABS_VOICE_ID=...     # ElevenLabs ボイスID
 | 火 | 12:00 | コーヒー動画素材生成 | video |
 | 火 | 13:00 | ワインnote記事原稿生成 | creator |
 | 火 | 13:30 | コーヒーnote記事原稿生成 | creator |
+| 水 | 08:45 | Instagram Insights同期 | — |
 | 水 | 09:00 | レビュー通知（手動確認） | — |
 | 木 | — | AE で auto_edit.jsx 実行 → 仕上げ（オーナー手動） | — |
 | 金 | 09:00 | SNS投稿文＋商品リスト | marketer |
@@ -90,12 +95,17 @@ python3 runner.py
 # 動画パイプラインの手動テスト実行
 python3 test_video_full.py
 
+# Instagram Insightsをスプレッドシートに手動同期
+python3 scripts/sync_instagram_insights.py
+
 # ログ確認
 cat logs/$(date +%Y-%m-%d).txt
 
 # テスト実行
 python3 -m pytest tests/ -v
 ```
+
+📖 **Instagram Insights自動連携のセットアップ**: [`docs/instagram_insights_setup.md`](docs/instagram_insights_setup.md)
 
 ## 動画パイプライン（tools_video.py）
 

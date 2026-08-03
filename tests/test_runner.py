@@ -328,3 +328,45 @@ def test_run_agent_extracts_theme_and_passes_to_notion_append_to_page(monkeypatc
 
     mock_extract.assert_called_once()
     assert mock_append.call_args.kwargs.get("theme") == "トスカーナ州のサンジョヴェーゼ"
+
+
+from unittest.mock import patch
+from runner import instagram_insights_task
+
+# NOTE: instagram_insights_task() skips calling sync_instagram_insights when
+# any of these env vars is unset (see runner.py). Neither this worktree nor
+# the main repo's .env defines them, so both tests below patch os.environ to
+# ensure the function actually reaches the sync call being tested, rather
+# than silently short-circuiting on the "not configured" branch.
+_FAKE_IG_ENV = {
+    "META_ACCESS_TOKEN": "fake-token",
+    "META_IG_USER_ID": "fake-ig-user-id",
+    "GOOGLE_SERVICE_ACCOUNT_JSON": "fake-service-account.json",
+    "INSTAGRAM_SHEET_ID": "fake-sheet-id",
+}
+
+
+@patch("runner.sync_instagram_insights")
+def test_instagram_insights_task_calls_sync_and_does_not_raise(mock_sync):
+    mock_sync.return_value = "タブ1: 1件処理、タブ2: 1件処理"
+    with patch.dict(os.environ, _FAKE_IG_ENV):
+        instagram_insights_task()  # 例外を投げなければOK
+    mock_sync.assert_called_once()
+
+
+@patch("runner.sync_instagram_insights")
+def test_instagram_insights_task_swallows_exceptions(mock_sync):
+    mock_sync.side_effect = Exception("boom")
+    with patch.dict(os.environ, _FAKE_IG_ENV):
+        instagram_insights_task()  # 例外が外に漏れないことを確認
+    mock_sync.assert_called_once()
+
+
+@patch("runner.sync_instagram_insights")
+def test_instagram_insights_task_skips_when_env_vars_missing(mock_sync):
+    ig_env_keys = ["META_ACCESS_TOKEN", "META_IG_USER_ID", "GOOGLE_SERVICE_ACCOUNT_JSON", "INSTAGRAM_SHEET_ID"]
+    with patch.dict(os.environ, {}, clear=False):
+        for key in ig_env_keys:
+            os.environ.pop(key, None)
+        instagram_insights_task()  # 環境変数未設定でも例外を投げずスキップすること
+    mock_sync.assert_not_called()
