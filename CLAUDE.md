@@ -26,6 +26,8 @@ OPENAI_API_KEY=...          # 画像生成（gpt-image-1）に必須
 PEXELS_API_KEY=...          # B-roll動画取得に必須
 ELEVENLABS_API_KEY=...      # ナレーション（現在は無効化中・有料プラン必要）
 ELEVENLABS_VOICE_ID=...     # ElevenLabs ボイスID
+HF_API_KEY=...               # 任意（Higgsfield AI動画クリップ生成に必須）
+HF_API_SECRET=...            # 任意（同上）
 META_ACCESS_TOKEN=...        # 任意（Instagram Insights自動連携に必須）
 META_IG_USER_ID=...          # 任意（同上）
 GOOGLE_SERVICE_ACCOUNT_JSON=... # 任意（同上：Sheets書き込み用サービスアカウントキーのパス）
@@ -118,6 +120,7 @@ python3 -m pytest tests/ -v
 | `timeline.json` | シーン構成データ |
 | `edit_guide.md` | After Effects 編集手順 |
 | `auto_edit.jsx` | AE自動配置スクリプト（File→Scripts→Run で実行） |
+| `ai_video/scene_NN.mp4` | Higgsfield生成AI動画クリップ（任意、brollの代わりに使うシーンのみ） |
 | `note_article.md` | note記事原稿（投稿メモ・タイトル案・本文・ハッシュタグ。水曜レビュー時に手動でnoteへコピペ） |
 
 ### 手持ち写真の利用（任意）
