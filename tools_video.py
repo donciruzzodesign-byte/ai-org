@@ -1,7 +1,9 @@
 import os
 import json
 import base64
+import time
 import requests
+import higgsfield_client
 import anthropic
 from typing import Optional
 from PIL import Image
@@ -338,6 +340,71 @@ def fetch_broll(keyword: str, clip_index: int, output_dir: str) -> str:
         return f"B-roll保存: {clip_path} (キーワード: {keyword})"
     except Exception as e:
         return f"B-roll取得エラー: {e}"
+
+
+HIGGSFIELD_BASE_URL = "https://platform.higgsfield.ai"
+HIGGSFIELD_MODEL = "higgsfield-ai/dop/standard"
+HIGGSFIELD_POLL_INTERVAL_SEC = 5
+HIGGSFIELD_POLL_TIMEOUT_SEC = 300
+HIGGSFIELD_TERMINAL_STATUSES = {"completed", "failed", "nsfw", "canceled"}
+
+
+def generate_scene_video(scene_number: int, output_dir: str, motion_description: str = "") -> str:
+    api_key = os.environ.get("HF_API_KEY")
+    api_secret = os.environ.get("HF_API_SECRET")
+    if not api_key or not api_secret:
+        return "HF_API_KEY / HF_API_SECRET が未設定のためスキップ"
+
+    video_dir = os.path.join(output_dir, "ai_video")
+    _ensure_dir(video_dir)
+    video_path = os.path.join(video_dir, f"scene_{scene_number:02d}.mp4")
+
+    if os.path.exists(video_path):
+        return f"スキップ（既存）: {video_path}"
+
+    image_path = os.path.join(output_dir, "images", f"scene_{scene_number:02d}.png")
+    if not os.path.exists(image_path):
+        return f"シーン画像が見つかりません（先にgenerate_scene_imageかassign_photoで作成してください）: {image_path}"
+
+    headers = {"Authorization": f"Key {api_key}:{api_secret}"}
+
+    try:
+        image_url = higgsfield_client.upload_file(image_path)
+
+        submit_resp = requests.post(
+            f"{HIGGSFIELD_BASE_URL}/{HIGGSFIELD_MODEL}",
+            headers={**headers, "Content-Type": "application/json"},
+            json={"image_url": image_url, "prompt": motion_description},
+            timeout=30,
+        )
+        if submit_resp.status_code not in (200, 201, 202):
+            return f"動画生成リクエストエラー (scene {scene_number}): {submit_resp.status_code} {submit_resp.text[:200]}"
+        status_url = submit_resp.json()["status_url"]
+
+        elapsed = 0
+        status_json = {}
+        while elapsed < HIGGSFIELD_POLL_TIMEOUT_SEC:
+            status_resp = requests.get(status_url, headers=headers, timeout=30)
+            status_json = status_resp.json()
+            if status_json.get("status") in HIGGSFIELD_TERMINAL_STATUSES:
+                break
+            time.sleep(HIGGSFIELD_POLL_INTERVAL_SEC)
+            elapsed += HIGGSFIELD_POLL_INTERVAL_SEC
+        else:
+            return f"動画生成タイムアウト (scene {scene_number})"
+
+        status = status_json.get("status")
+        if status != "completed":
+            return f"動画生成エラー (scene {scene_number}): status={status}"
+
+        video_url = status_json["video"]["url"]
+        video_resp = requests.get(video_url, timeout=120, stream=True)
+        with open(video_path, "wb") as f:
+            for chunk in video_resp.iter_content(chunk_size=8192):
+                f.write(chunk)
+        return f"AI動画保存: {video_path}"
+    except Exception as e:
+        return f"動画生成エラー (scene {scene_number}): {e}"
 
 
 def save_timeline(timeline: dict, output_dir: str) -> str:

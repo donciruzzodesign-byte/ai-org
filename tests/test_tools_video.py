@@ -502,3 +502,124 @@ def test_generate_scene_image_reference_mime_from_extension(monkeypatch, tmp_pat
 
     image_part = mock_post.call_args[1]["files"]["image"]
     assert image_part[2] == "image/jpeg"
+
+
+from tools_video import generate_scene_video
+
+
+def test_generate_scene_video_skips_when_no_key(monkeypatch, tmp_path):
+    monkeypatch.delenv("HF_API_KEY", raising=False)
+    monkeypatch.delenv("HF_API_SECRET", raising=False)
+    result = generate_scene_video(1, str(tmp_path))
+    assert "未設定" in result
+
+
+def test_generate_scene_video_missing_source_image(monkeypatch, tmp_path):
+    monkeypatch.setenv("HF_API_KEY", "id")
+    monkeypatch.setenv("HF_API_SECRET", "secret")
+    result = generate_scene_video(1, str(tmp_path))
+    assert "見つかりません" in result
+
+
+def test_generate_scene_video_skips_existing_file(monkeypatch, tmp_path):
+    monkeypatch.setenv("HF_API_KEY", "id")
+    monkeypatch.setenv("HF_API_SECRET", "secret")
+    video_dir = tmp_path / "ai_video"
+    video_dir.mkdir()
+    (video_dir / "scene_01.mp4").write_bytes(b"existing")
+
+    with patch("tools_video.higgsfield_client.upload_file") as mock_upload:
+        result = generate_scene_video(1, str(tmp_path))
+
+    mock_upload.assert_not_called()
+    assert "スキップ" in result
+
+
+def test_generate_scene_video_saves_mp4(monkeypatch, tmp_path):
+    monkeypatch.setenv("HF_API_KEY", "id")
+    monkeypatch.setenv("HF_API_SECRET", "secret")
+    images_dir = tmp_path / "images"
+    images_dir.mkdir()
+    (images_dir / "scene_01.png").write_bytes(b"fake-png")
+
+    submit_resp = MagicMock()
+    submit_resp.status_code = 200
+    submit_resp.json.return_value = {
+        "status": "queued",
+        "request_id": "req-1",
+        "status_url": "https://platform.higgsfield.ai/requests/req-1/status",
+        "cancel_url": "https://platform.higgsfield.ai/requests/req-1/cancel",
+    }
+
+    status_resp = MagicMock()
+    status_resp.json.return_value = {
+        "status": "completed",
+        "video": {"url": "https://example.com/out.mp4"},
+    }
+
+    video_resp = MagicMock()
+    video_resp.iter_content = MagicMock(return_value=[b"fake-video-data"])
+
+    with patch("tools_video.higgsfield_client.upload_file", return_value="https://example.com/uploaded.png"), \
+         patch("tools_video.requests.post", return_value=submit_resp), \
+         patch("tools_video.requests.get", side_effect=[status_resp, video_resp]), \
+         patch("tools_video.time.sleep"):
+        result = generate_scene_video(1, str(tmp_path), motion_description="slow zoom in")
+
+    assert "ai_video" in result
+    video_path = tmp_path / "ai_video" / "scene_01.mp4"
+    assert video_path.exists()
+    assert video_path.read_bytes() == b"fake-video-data"
+
+
+def test_generate_scene_video_returns_error_on_failed_status(monkeypatch, tmp_path):
+    monkeypatch.setenv("HF_API_KEY", "id")
+    monkeypatch.setenv("HF_API_SECRET", "secret")
+    images_dir = tmp_path / "images"
+    images_dir.mkdir()
+    (images_dir / "scene_01.png").write_bytes(b"fake-png")
+
+    submit_resp = MagicMock()
+    submit_resp.status_code = 200
+    submit_resp.json.return_value = {
+        "status": "queued",
+        "status_url": "https://platform.higgsfield.ai/requests/req-1/status",
+    }
+    status_resp = MagicMock()
+    status_resp.json.return_value = {"status": "failed"}
+
+    with patch("tools_video.higgsfield_client.upload_file", return_value="https://example.com/uploaded.png"), \
+         patch("tools_video.requests.post", return_value=submit_resp), \
+         patch("tools_video.requests.get", return_value=status_resp), \
+         patch("tools_video.time.sleep"):
+        result = generate_scene_video(1, str(tmp_path))
+
+    assert "エラー" in result
+    assert "failed" in result
+
+
+def test_generate_scene_video_returns_error_on_timeout(monkeypatch, tmp_path):
+    monkeypatch.setenv("HF_API_KEY", "id")
+    monkeypatch.setenv("HF_API_SECRET", "secret")
+    images_dir = tmp_path / "images"
+    images_dir.mkdir()
+    (images_dir / "scene_01.png").write_bytes(b"fake-png")
+
+    submit_resp = MagicMock()
+    submit_resp.status_code = 200
+    submit_resp.json.return_value = {
+        "status": "queued",
+        "status_url": "https://platform.higgsfield.ai/requests/req-1/status",
+    }
+    status_resp = MagicMock()
+    status_resp.json.return_value = {"status": "in_progress"}
+
+    with patch("tools_video.higgsfield_client.upload_file", return_value="https://example.com/uploaded.png"), \
+         patch("tools_video.requests.post", return_value=submit_resp), \
+         patch("tools_video.requests.get", return_value=status_resp), \
+         patch("tools_video.time.sleep"), \
+         patch("tools_video.HIGGSFIELD_POLL_TIMEOUT_SEC", 5), \
+         patch("tools_video.HIGGSFIELD_POLL_INTERVAL_SEC", 5):
+        result = generate_scene_video(1, str(tmp_path))
+
+    assert "タイムアウト" in result
