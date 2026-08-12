@@ -514,6 +514,14 @@ def test_generate_scene_video_skips_when_no_key(monkeypatch, tmp_path):
     assert "未設定" in result
 
 
+def test_generate_scene_video_skips_when_sdk_not_installed(monkeypatch, tmp_path):
+    monkeypatch.setenv("HF_API_KEY", "id")
+    monkeypatch.setenv("HF_API_SECRET", "secret")
+    monkeypatch.setattr("tools_video.higgsfield_client", None)
+    result = generate_scene_video(1, str(tmp_path))
+    assert "インストール" in result
+
+
 def test_generate_scene_video_missing_source_image(monkeypatch, tmp_path):
     monkeypatch.setenv("HF_API_KEY", "id")
     monkeypatch.setenv("HF_API_SECRET", "secret")
@@ -670,3 +678,24 @@ def test_generate_ae_script_prefers_broll_over_ai_video(tmp_path):
     content = (tmp_path / "auto_edit.jsx").read_text(encoding="utf-8")
     assert "broll_01.mp4" in content
     assert "ai_video/scene_01.mp4" not in content
+
+
+def test_generate_ae_script_reels_comp_uses_ai_video_fallback(tmp_path):
+    timeline = {
+        "title": "バローロ特集",
+        "duration_sec": 600,
+        "narration": "audio/narration.mp3",
+        "scenes": [{
+            "id": 1, "in_sec": 0, "out_sec": 60,
+            "type": "slide", "image": "images/scene_01.png",
+            "ai_video": "ai_video/scene_01.mp4",
+            "caption": "テスト",
+        }],
+        "reels_highlights": [
+            {"id": 1, "in_sec": 10, "out_sec": 40, "reason": "ハイライト"}
+        ],
+    }
+    generate_ae_script(timeline, str(tmp_path))
+    content = (tmp_path / "auto_edit.jsx").read_text(encoding="utf-8")
+    assert "reelsBroll_0" in content
+    assert "scene_01.mp4" in content

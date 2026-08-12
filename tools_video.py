@@ -3,7 +3,10 @@ import json
 import base64
 import time
 import requests
-import higgsfield_client
+try:
+    import higgsfield_client
+except ImportError:
+    higgsfield_client = None
 import anthropic
 from typing import Optional
 from PIL import Image
@@ -368,6 +371,9 @@ def generate_scene_video(scene_number: int, output_dir: str, motion_description:
     if not api_key or not api_secret:
         return "HF_API_KEY / HF_API_SECRET が未設定のためスキップ"
 
+    if higgsfield_client is None:
+        return "higgsfield-client がインストールされていないためスキップ（pip install -r requirements.txt を実行してください）"
+
     video_dir = os.path.join(output_dir, "ai_video")
     _ensure_dir(video_dir)
     video_path = os.path.join(video_dir, f"scene_{scene_number:02d}.mp4")
@@ -392,7 +398,10 @@ def generate_scene_video(scene_number: int, output_dir: str, motion_description:
         )
         if submit_resp.status_code not in (200, 201, 202):
             return f"動画生成リクエストエラー (scene {scene_number}): {submit_resp.status_code} {submit_resp.text[:200]}"
-        status_url = submit_resp.json()["status_url"]
+        resp_json = submit_resp.json()
+        status_url = resp_json.get("status_url")
+        if not status_url:
+            return f"動画生成レスポンスエラー (scene {scene_number}): status_urlが取得できません: {str(resp_json)[:200]}"
 
         elapsed = 0
         status_json = {}
@@ -410,7 +419,10 @@ def generate_scene_video(scene_number: int, output_dir: str, motion_description:
         if status != "completed":
             return f"動画生成エラー (scene {scene_number}): status={status}"
 
-        video_url = status_json["video"]["url"]
+        video_info = status_json.get("video") or {}
+        video_url = video_info.get("url")
+        if not video_url:
+            return f"動画生成レスポンスエラー (scene {scene_number}): video.urlが取得できません: {str(status_json)[:200]}"
         video_resp = requests.get(video_url, timeout=120, stream=True)
         with open(video_path, "wb") as f:
             for chunk in video_resp.iter_content(chunk_size=8192):
@@ -568,7 +580,7 @@ def generate_ae_script(timeline: dict, output_dir: str) -> str:
                 h_dur = h_out - h_in
                 for scene in scenes:
                     if scene.get("in_sec", 0) <= h_in < scene.get("out_sec", 0):
-                        broll_rel = scene.get("broll", "")
+                        broll_rel = scene.get("broll") or scene.get("ai_video", "")
                         if broll_rel:
                             bp = esc(os.path.join(output_dir, broll_rel))
                             L += [
