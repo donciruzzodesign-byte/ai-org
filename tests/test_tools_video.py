@@ -632,3 +632,41 @@ def test_execute_video_tool_dispatches_generate_scene_video(monkeypatch, tmp_pat
         "scene_number": 1, "output_dir": str(tmp_path)
     })
     assert "未設定" in result
+
+
+def test_generate_ae_script_jsx_references_ai_video_when_no_broll(tmp_path):
+    timeline = {
+        "title": "バローロ特集",
+        "duration_sec": 600,
+        "narration": "audio/narration.mp3",
+        "scenes": [{
+            "id": 1, "in_sec": 0, "out_sec": 60,
+            "type": "slide", "image": "images/scene_01.png",
+            "ai_video": "ai_video/scene_01.mp4",
+            "caption": "テスト",
+        }],
+        "reels_highlights": [],
+    }
+    generate_ae_script(timeline, str(tmp_path))
+    content = (tmp_path / "auto_edit.jsx").read_text(encoding="utf-8")
+    assert "scene_01.mp4" in content
+
+
+def test_generate_ae_script_prefers_broll_over_ai_video(tmp_path):
+    timeline = {
+        "title": "バローロ特集",
+        "duration_sec": 600,
+        "narration": "audio/narration.mp3",
+        "scenes": [{
+            "id": 1, "in_sec": 0, "out_sec": 60,
+            "type": "slide", "image": "images/scene_01.png",
+            "broll": "broll/broll_01.mp4",
+            "ai_video": "ai_video/scene_01.mp4",
+            "caption": "テスト",
+        }],
+        "reels_highlights": [],
+    }
+    generate_ae_script(timeline, str(tmp_path))
+    content = (tmp_path / "auto_edit.jsx").read_text(encoding="utf-8")
+    assert "broll_01.mp4" in content
+    assert "ai_video/scene_01.mp4" not in content

@@ -502,7 +502,7 @@ def generate_ae_script(timeline: dict, output_dir: str) -> str:
             out_sec = scene.get("out_sec", 0)
             caption = scene.get("caption", "")
             image_rel = scene.get("image", "")
-            broll_rel = scene.get("broll", "")
+            broll_rel = scene.get("broll") or scene.get("ai_video", "")
             v = f"s{scene_num(sid)}"
 
             L.append(f'    // --- シーン {scene_num(sid)} ({in_sec}s〜{out_sec}s) ---')
