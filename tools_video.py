@@ -103,6 +103,19 @@ VIDEO_TOOL_DEFINITIONS = [
             "required": ["photo", "scene_number", "output_dir"]
         }
     }
+    ,{
+        "name": "generate_scene_video",
+        "description": "シーン画像(images/scene_NN.png)を元にHiggsfield APIでAI動画クリップ(ai_video/scene_NN.mp4)を生成します。事前にgenerate_scene_imageかassign_photoでシーン画像を作成しておく必要があります。fetch_broll(ストック映像)の代わりに使う、ブランド統一感を出したいシーン向けの選択肢です。",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "scene_number": {"type": "integer", "description": "シーン番号（1始まり）"},
+                "output_dir": {"type": "string", "description": "保存先ディレクトリ"},
+                "motion_description": {"type": "string", "description": "任意。動きの説明（英語推奨、例: 'slow zoom in, gentle camera pan'）"}
+            },
+            "required": ["scene_number", "output_dir"]
+        }
+    }
 ]
 
 
@@ -605,6 +618,10 @@ def execute_video_tool(name: str, inputs: dict) -> str:
         )
     elif name == "fetch_broll":
         return fetch_broll(inputs["keyword"], inputs["clip_index"], inputs["output_dir"])
+    elif name == "generate_scene_video":
+        return generate_scene_video(
+            inputs["scene_number"], inputs["output_dir"], inputs.get("motion_description", ""),
+        )
     elif name == "save_timeline":
         return save_timeline(inputs["timeline"], inputs["output_dir"])
     elif name == "analyze_image":

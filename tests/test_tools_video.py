@@ -623,3 +623,12 @@ def test_generate_scene_video_returns_error_on_timeout(monkeypatch, tmp_path):
         result = generate_scene_video(1, str(tmp_path))
 
     assert "タイムアウト" in result
+
+
+def test_execute_video_tool_dispatches_generate_scene_video(monkeypatch, tmp_path):
+    monkeypatch.delenv("HF_API_KEY", raising=False)
+    monkeypatch.delenv("HF_API_SECRET", raising=False)
+    result = execute_video_tool("generate_scene_video", {
+        "scene_number": 1, "output_dir": str(tmp_path)
+    })
+    assert "未設定" in result
