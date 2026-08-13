@@ -132,7 +132,7 @@ def consume_paid_video_flag() -> bool:
             os.remove(HIGGSFIELD_ONESHOT_FLAG_PATH)
             return True
         return False
-    except OSError:
+    except Exception:
         return False
 
 
