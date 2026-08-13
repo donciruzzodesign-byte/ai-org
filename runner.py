@@ -8,7 +8,7 @@ from tools import (
     notion_read_page, notion_append_to_page, _infer_category,
     notion_recent_themes, extract_theme,
 )
-from tools_video import VIDEO_TOOL_DEFINITIONS, execute_video_tool
+from tools_video import VIDEO_TOOL_DEFINITIONS, VIDEO_TOOL_DEFINITIONS_FREE, execute_video_tool, consume_paid_video_flag
 from tools_express import generate_weekly_assets, parse_creator_metadata
 from tools_instagram import sync_instagram_insights
 
@@ -316,10 +316,11 @@ def collab_task(theme: str):
         print(f"  ❌ 連携タスク失敗: {e}")
 
 
-def run_video_agent(script_text: str, topic: str, output_dir: str) -> str:
+def run_video_agent(script_text: str, topic: str, output_dir: str, allow_paid_video: bool = False) -> str:
     system = load_agent("video")
     prompt = f"出力先ディレクトリ: {output_dir}\n\nトピック: {topic}\n\n台本：\n{script_text}"
     messages = [{"role": "user", "content": prompt}]
+    tools = VIDEO_TOOL_DEFINITIONS if allow_paid_video else VIDEO_TOOL_DEFINITIONS_FREE
 
     while True:
         response = _with_retry(
@@ -327,7 +328,7 @@ def run_video_agent(script_text: str, topic: str, output_dir: str) -> str:
                 model=MODEL,
                 max_tokens=16000,
                 system=system,
-                tools=VIDEO_TOOL_DEFINITIONS,
+                tools=tools,
                 messages=messages,
             ),
             f"video-{topic}",
@@ -359,7 +360,8 @@ def tuesday_video_task():
         script = _read_todays_log()
         date_str = datetime.now().strftime("%Y-%m-%d")
         output_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "output", f"{date_str}-wine")
-        run_video_agent(script, "イタリアワイン", output_dir)
+        allow_paid_video = consume_paid_video_flag()
+        run_video_agent(script, "イタリアワイン", output_dir, allow_paid_video=allow_paid_video)
     except Exception as e:
         print(f"  ❌ 火曜：ワイン動画素材生成 失敗: {e}")
 
@@ -369,7 +371,8 @@ def coffee_tuesday_video_task():
         script = _read_todays_log()
         date_str = datetime.now().strftime("%Y-%m-%d")
         output_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "output", f"{date_str}-coffee")
-        run_video_agent(script, "イタリアコーヒー", output_dir)
+        allow_paid_video = consume_paid_video_flag()
+        run_video_agent(script, "イタリアコーヒー", output_dir, allow_paid_video=allow_paid_video)
     except Exception as e:
         print(f"  ❌ 火曜：コーヒー動画素材生成 失敗: {e}")
 

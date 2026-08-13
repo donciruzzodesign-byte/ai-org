@@ -109,6 +109,58 @@ def test_run_video_agent_calls_video_tools(tmp_path):
     assert result == "素材生成完了"
 
 
+def test_run_video_agent_default_excludes_paid_tool(tmp_path):
+    final_block = MagicMock()
+    final_block.text = "完了"
+    final_response = MagicMock()
+    final_response.stop_reason = "end_turn"
+    final_response.content = [final_block]
+
+    with patch("runner.client.messages.create", return_value=final_response) as mock_create, \
+         patch("runner.save_log"):
+        run_video_agent("台本", "イタリアワイン", str(tmp_path))
+
+    sent_tools = mock_create.call_args[1]["tools"]
+    tool_names = [t["name"] for t in sent_tools]
+    assert "generate_scene_video" not in tool_names
+
+
+def test_run_video_agent_allow_paid_video_includes_paid_tool(tmp_path):
+    final_block = MagicMock()
+    final_block.text = "完了"
+    final_response = MagicMock()
+    final_response.stop_reason = "end_turn"
+    final_response.content = [final_block]
+
+    with patch("runner.client.messages.create", return_value=final_response) as mock_create, \
+         patch("runner.save_log"):
+        run_video_agent("台本", "イタリアワイン", str(tmp_path), allow_paid_video=True)
+
+    sent_tools = mock_create.call_args[1]["tools"]
+    tool_names = [t["name"] for t in sent_tools]
+    assert "generate_scene_video" in tool_names
+
+
+def test_tuesday_video_task_passes_consumed_flag_to_run_video_agent():
+    with patch("runner.consume_paid_video_flag", return_value=True) as mock_flag, \
+         patch("runner.run_video_agent") as mock_run, \
+         patch("runner._read_todays_log", return_value="台本"):
+        tuesday_video_task()
+
+    mock_flag.assert_called_once()
+    assert mock_run.call_args[1]["allow_paid_video"] is True
+
+
+def test_coffee_tuesday_video_task_passes_consumed_flag_to_run_video_agent():
+    with patch("runner.consume_paid_video_flag", return_value=False) as mock_flag, \
+         patch("runner.run_video_agent") as mock_run, \
+         patch("runner._read_todays_log", return_value="台本"):
+        coffee_tuesday_video_task()
+
+    mock_flag.assert_called_once()
+    assert mock_run.call_args[1]["allow_paid_video"] is False
+
+
 def test_tuesday_video_task_catches_exception(monkeypatch):
     with patch("runner.run_video_agent", side_effect=Exception("API error")):
         tuesday_video_task()
