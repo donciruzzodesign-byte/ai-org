@@ -121,6 +121,20 @@ VIDEO_TOOL_DEFINITIONS = [
     }
 ]
 
+HIGGSFIELD_ONESHOT_FLAG_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".higgsfield_auto_once")
+
+VIDEO_TOOL_DEFINITIONS_FREE = [t for t in VIDEO_TOOL_DEFINITIONS if t["name"] != "generate_scene_video"]
+
+
+def consume_paid_video_flag() -> bool:
+    try:
+        if os.path.exists(HIGGSFIELD_ONESHOT_FLAG_PATH):
+            os.remove(HIGGSFIELD_ONESHOT_FLAG_PATH)
+            return True
+        return False
+    except OSError:
+        return False
+
 
 def _ensure_dir(path: str) -> None:
     os.makedirs(path, exist_ok=True)

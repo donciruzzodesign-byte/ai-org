@@ -699,3 +699,47 @@ def test_generate_ae_script_reels_comp_uses_ai_video_fallback(tmp_path):
     content = (tmp_path / "auto_edit.jsx").read_text(encoding="utf-8")
     assert "reelsBroll_0" in content
     assert "scene_01.mp4" in content
+
+
+from tools_video import consume_paid_video_flag, VIDEO_TOOL_DEFINITIONS_FREE
+
+
+def test_consume_paid_video_flag_true_and_deletes_file(tmp_path, monkeypatch):
+    flag_path = str(tmp_path / ".higgsfield_auto_once")
+    with open(flag_path, "w", encoding="utf-8") as f:
+        f.write("")
+    monkeypatch.setattr("tools_video.HIGGSFIELD_ONESHOT_FLAG_PATH", flag_path)
+
+    result = consume_paid_video_flag()
+
+    assert result is True
+    assert not os.path.exists(flag_path)
+
+
+def test_consume_paid_video_flag_false_when_absent(tmp_path, monkeypatch):
+    flag_path = str(tmp_path / ".higgsfield_auto_once")
+    monkeypatch.setattr("tools_video.HIGGSFIELD_ONESHOT_FLAG_PATH", flag_path)
+
+    result = consume_paid_video_flag()
+
+    assert result is False
+
+
+def test_consume_paid_video_flag_second_call_is_false(tmp_path, monkeypatch):
+    flag_path = str(tmp_path / ".higgsfield_auto_once")
+    with open(flag_path, "w", encoding="utf-8") as f:
+        f.write("")
+    monkeypatch.setattr("tools_video.HIGGSFIELD_ONESHOT_FLAG_PATH", flag_path)
+
+    first = consume_paid_video_flag()
+    second = consume_paid_video_flag()
+
+    assert first is True
+    assert second is False
+
+
+def test_video_tool_definitions_free_excludes_generate_scene_video():
+    names = [t["name"] for t in VIDEO_TOOL_DEFINITIONS_FREE]
+    assert "generate_scene_video" not in names
+    assert "fetch_broll" in names
+    assert "generate_scene_image" in names
