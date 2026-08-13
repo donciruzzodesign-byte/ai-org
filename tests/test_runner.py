@@ -81,7 +81,7 @@ def test_run_agent_saves_to_notion():
 
 
 def test_run_video_agent_calls_video_tools(tmp_path):
-    """run_video_agent が VIDEO_TOOL_DEFINITIONS を使って Claude を呼び出すことを確認。"""
+    """run_video_agent がツール定義を使って Claude を呼び出すことを確認（デフォルトはVIDEO_TOOL_DEFINITIONS_FREE）。"""
     import runner
 
     tool_use_block = MagicMock()
@@ -139,6 +139,37 @@ def test_run_video_agent_allow_paid_video_includes_paid_tool(tmp_path):
     sent_tools = mock_create.call_args[1]["tools"]
     tool_names = [t["name"] for t in sent_tools]
     assert "generate_scene_video" in tool_names
+
+
+def test_run_video_agent_default_appends_paid_tool_constraint_to_system_prompt(tmp_path):
+    final_block = MagicMock()
+    final_block.text = "完了"
+    final_response = MagicMock()
+    final_response.stop_reason = "end_turn"
+    final_response.content = [final_block]
+
+    with patch("runner.client.messages.create", return_value=final_response) as mock_create, \
+         patch("runner.save_log"):
+        run_video_agent("台本", "イタリアワイン", str(tmp_path))
+
+    sent_system = mock_create.call_args[1]["system"]
+    assert "generate_scene_video" in sent_system
+    assert "使用できません" in sent_system
+
+
+def test_run_video_agent_allow_paid_video_omits_constraint_from_system_prompt(tmp_path):
+    final_block = MagicMock()
+    final_block.text = "完了"
+    final_response = MagicMock()
+    final_response.stop_reason = "end_turn"
+    final_response.content = [final_block]
+
+    with patch("runner.client.messages.create", return_value=final_response) as mock_create, \
+         patch("runner.save_log"):
+        run_video_agent("台本", "イタリアワイン", str(tmp_path), allow_paid_video=True)
+
+    sent_system = mock_create.call_args[1]["system"]
+    assert "今回の制約" not in sent_system
 
 
 def test_tuesday_video_task_passes_consumed_flag_to_run_video_agent():

@@ -127,6 +127,7 @@ VIDEO_TOOL_DEFINITIONS_FREE = [t for t in VIDEO_TOOL_DEFINITIONS if t["name"] !=
 
 
 def consume_paid_video_flag() -> bool:
+    """フラグファイルが存在すれば削除してTrueを返す。存在しない、または例外発生時は常にFalse（フェイルセーフ：疑わしいときは許可しない）。"""
     try:
         if os.path.exists(HIGGSFIELD_ONESHOT_FLAG_PATH):
             os.remove(HIGGSFIELD_ONESHOT_FLAG_PATH)

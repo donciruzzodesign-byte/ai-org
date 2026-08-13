@@ -318,9 +318,12 @@ def collab_task(theme: str):
 
 def run_video_agent(script_text: str, topic: str, output_dir: str, allow_paid_video: bool = False) -> str:
     system = load_agent("video")
+    if not allow_paid_video:
+        system += "\n\n## 今回の制約\n今回は`generate_scene_video`は使用できません。ステップ3.5はスキップし、全シーンで`fetch_broll`を使い、timelineに`ai_video`を設定しないこと。"
     prompt = f"出力先ディレクトリ: {output_dir}\n\nトピック: {topic}\n\n台本：\n{script_text}"
     messages = [{"role": "user", "content": prompt}]
     tools = VIDEO_TOOL_DEFINITIONS if allow_paid_video else VIDEO_TOOL_DEFINITIONS_FREE
+    print(f"  🎬 Higgsfield: {'許可（ワンショット消費）' if allow_paid_video else '無効（デフォルト）'}")
 
     while True:
         response = _with_retry(

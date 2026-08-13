@@ -701,7 +701,7 @@ def test_generate_ae_script_reels_comp_uses_ai_video_fallback(tmp_path):
     assert "scene_01.mp4" in content
 
 
-from tools_video import consume_paid_video_flag, VIDEO_TOOL_DEFINITIONS_FREE
+from tools_video import consume_paid_video_flag, VIDEO_TOOL_DEFINITIONS_FREE, VIDEO_TOOL_DEFINITIONS
 
 
 def test_consume_paid_video_flag_true_and_deletes_file(tmp_path, monkeypatch):
@@ -743,3 +743,4 @@ def test_video_tool_definitions_free_excludes_generate_scene_video():
     assert "generate_scene_video" not in names
     assert "fetch_broll" in names
     assert "generate_scene_image" in names
+    assert len(VIDEO_TOOL_DEFINITIONS_FREE) == len(VIDEO_TOOL_DEFINITIONS) - 1
