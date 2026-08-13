@@ -21,3 +21,6 @@ output/
 
 # superpowers 作業用スクラッチ（進捗レジャー等）
 .superpowers/
+
+# Higgsfieldワンショット許可フラグ（ランタイム状態、コミット対象外）
+.higgsfield_auto_once

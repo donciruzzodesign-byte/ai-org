@@ -123,6 +123,15 @@ python3 -m pytest tests/ -v
 | `ai_video/scene_NN.mp4` | Higgsfield生成AI動画クリップ（任意、brollの代わりに使うシーンのみ） |
 | `note_article.md` | note記事原稿（投稿メモ・タイトル案・本文・ハッシュタグ。水曜レビュー時に手動でnoteへコピペ） |
 
+### Higgsfield AI動画生成の実行制御（ワンショット許可）
+週次自動実行（火曜11:00ワイン／12:00コーヒー）では、`generate_scene_video`（Higgsfield課金API）はデフォルトで無効。使う回だけ事前に以下を実行する：
+
+```bash
+python3 scripts/enable_higgsfield_once.py
+```
+
+実行すると次回の自動動画生成1回分だけ有効になり、使用後は自動的にまた無効へ戻る（ワンショット）。ワイン・コーヒーは別々に消費されるため、同じ週に両方で使いたい場合はそれぞれの回の前に実行すること。Claude Codeでの`@video`エージェント利用（インタラクティブ）はこの制限の対象外。
+
 ### 手持ち写真の利用（任意）
 `output/YYYY-MM-DD-{wine|coffee}/my_photos/` に写真を置くと、動画エージェントが実写を優先してシーンに配置する（`scan_photos` で解析 → `assign_photo` で配置）。写真がないシーンのみ AI 生成。`my_photos/` が空・無い場合は従来どおり全シーン AI 生成。
 
