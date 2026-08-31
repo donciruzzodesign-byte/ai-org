@@ -139,6 +139,15 @@ python3 scripts/enable_higgsfield_once.py
 
 📖 操作マニュアル（かんたん版）: [`docs/画像入力機能マニュアル.md`](docs/画像入力機能マニュアル.md)
 
+## 参考投稿の分析（人気のInstagram投稿を取り入れる）
+
+marketer・creatorエージェントは、人気投稿のスクリーンショットを見て「フック・キャプション構成・ビジュアルスタイル・CTA・人気の理由」を分析し、コンテンツ作成に取り入れることができる。
+
+- **対話利用（Claude Code）**：スクリーンショット画像のパスを `@marketer` / `@creator` に渡すだけでよい（Readツール＋Claudeのvisionでそのまま見える）。URLしかない場合は、先にClaude Codeのブラウザ操作機能（claude-in-chrome）でページを開いてスクリーンショットを撮ってからパスを渡す。
+- **週次自動実行**：`reference_posts/wine/` `reference_posts/coffee/`（リポジトリ直下、Git管理外）にスクリーンショットを入れておくと、金曜のSNS投稿文作成タスクが `scan_reference_posts` ツールで自動解析して投稿文に反映する。使用済みのスクショは `reference_posts/{category}/archive/YYYY-MM-DD/` へ自動移動され、翌週以降は再利用されない。フォルダが空なら従来どおり動作する。
+
+追加ツール: `analyze_image`（画像をClaude Visionで解析、汎用）, `scan_reference_posts`（reference_posts/{category}/ 一括解析）。
+
 ## Claude Code でのエージェント呼び出し方
 
 .claude/agents/ に各エージェント定義があるため、Claude Code から直接呼び出し可能：

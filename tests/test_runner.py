@@ -453,3 +453,55 @@ def test_instagram_insights_task_skips_when_env_vars_missing(mock_sync):
             os.environ.pop(key, None)
         instagram_insights_task()  # 環境変数未設定でも例外を投げずスキップすること
     mock_sync.assert_not_called()
+
+
+import runner
+
+
+@patch("runner.archive_reference_posts", return_value="アーカイブ対象なし")
+@patch("runner.list_reference_post_files", return_value=[])
+@patch("runner.run_agent")
+@patch("runner._read_todays_log", return_value="")
+def test_friday_task_skips_reference_note_when_empty(mock_log, mock_run_agent, mock_list, mock_archive):
+    runner.friday_task()
+    prompt = mock_run_agent.call_args[0][1]
+    assert "scan_reference_posts" not in prompt
+    mock_list.assert_called_once_with("wine")
+    mock_archive.assert_called_once_with("wine")
+
+
+@patch("runner.archive_reference_posts", return_value="2件をアーカイブしました")
+@patch("runner.list_reference_post_files", return_value=["a.png", "b.png"])
+@patch("runner.run_agent")
+@patch("runner._read_todays_log", return_value="")
+def test_friday_task_injects_reference_posts_when_present(mock_log, mock_run_agent, mock_list, mock_archive):
+    runner.friday_task()
+    prompt = mock_run_agent.call_args[0][1]
+    assert "scan_reference_posts" in prompt
+    assert "category='wine'" in prompt
+    assert "2件" in prompt
+    mock_archive.assert_called_once_with("wine")
+
+
+@patch("runner.archive_reference_posts", return_value="アーカイブ対象なし")
+@patch("runner.list_reference_post_files", return_value=[])
+@patch("runner.run_agent")
+@patch("runner._read_todays_log", return_value="")
+def test_coffee_friday_task_skips_reference_note_when_empty(mock_log, mock_run_agent, mock_list, mock_archive):
+    runner.coffee_friday_task()
+    prompt = mock_run_agent.call_args[0][1]
+    assert "scan_reference_posts" not in prompt
+    mock_list.assert_called_once_with("coffee")
+    mock_archive.assert_called_once_with("coffee")
+
+
+@patch("runner.archive_reference_posts", return_value="1件をアーカイブしました")
+@patch("runner.list_reference_post_files", return_value=["c.jpg"])
+@patch("runner.run_agent")
+@patch("runner._read_todays_log", return_value="")
+def test_coffee_friday_task_injects_reference_posts_when_present(mock_log, mock_run_agent, mock_list, mock_archive):
+    runner.coffee_friday_task()
+    prompt = mock_run_agent.call_args[0][1]
+    assert "scan_reference_posts" in prompt
+    assert "category='coffee'" in prompt
+    mock_archive.assert_called_once_with("coffee")

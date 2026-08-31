@@ -7,6 +7,7 @@ from tools import (
     TOOL_DEFINITIONS, execute_tool, save_to_notion, notion_find_wip,
     notion_read_page, notion_append_to_page, _infer_category,
     notion_recent_themes, extract_theme,
+    list_reference_post_files, archive_reference_posts,
 )
 from tools_video import VIDEO_TOOL_DEFINITIONS, VIDEO_TOOL_DEFINITIONS_FREE, execute_video_tool, consume_paid_video_flag
 from tools_express import generate_weekly_assets, parse_creator_metadata
@@ -183,6 +184,18 @@ def _read_todays_log() -> str:
         return ""
 
 
+def _reference_posts_note(category: str) -> str:
+    """reference_posts/{category}/ に画像があれば、marketerへの参考投稿の案内文を返す（なければ空文字）。"""
+    files = list_reference_post_files(category)
+    if not files:
+        return ""
+    return (
+        f"\n\n【参考投稿】reference_posts/{category}/ に人気投稿のスクリーンショットが{len(files)}件あります。"
+        f"scan_reference_posts ツール（category='{category}'）で分析し、"
+        "フック・キャプション構成・ビジュアルスタイル・CTAの工夫を今週の投稿文に取り入れてください。"
+    )
+
+
 def _write_note_article(text: str, output_dir: str) -> str:
     """note記事原稿を output_dir/note_article.md に保存し、パスを返す。"""
     os.makedirs(output_dir, exist_ok=True)
@@ -250,8 +263,9 @@ def friday_task():
             "②Instagramキャプション（note誘導リンク付き）"
             "③アフィリエイト商品リスト（楽天・Amazon想定、3点）"
             "をそれぞれ作成してください。"
-        )
+        ) + _reference_posts_note("wine")
         run_agent("marketer", prompt, "金曜：SNS投稿文＋商品リスト")
+        print(f"  📦 {archive_reference_posts('wine')}")
     except Exception as e:
         print(f"  ❌ 金曜：SNS投稿文＋商品リスト 失敗: {e}")
 
@@ -483,8 +497,9 @@ def coffee_friday_task():
             "②Instagramキャプション（note誘導リンク付き）"
             "③アフィリエイト商品リスト（楽天・Amazon想定、コーヒー豆・器具3点）"
             "をそれぞれ作成してください。"
-        )
+        ) + _reference_posts_note("coffee")
         run_agent("marketer", prompt, "金曜：コーヒーSNS投稿文＋商品リスト")
+        print(f"  📦 {archive_reference_posts('coffee')}")
     except Exception as e:
         print(f"  ❌ 金曜：コーヒーSNS投稿文＋商品リスト 失敗: {e}")
 

@@ -664,3 +664,82 @@ def test_notion_append_to_page_omits_theme_when_not_provided(monkeypatch):
 
     body = mock_patch.call_args_list[1][1]["json"]
     assert "テーマ" not in body["properties"]
+
+
+import json
+import tools
+from tools import list_reference_post_files, scan_reference_posts, archive_reference_posts, execute_tool
+
+
+def test_list_reference_post_files_returns_empty_when_no_folder(tmp_path, monkeypatch):
+    monkeypatch.setattr(tools, "_REFERENCE_POSTS_ROOT", str(tmp_path))
+    assert list_reference_post_files("wine") == []
+
+
+def test_list_reference_post_files_ignores_non_images_and_archive(tmp_path, monkeypatch):
+    monkeypatch.setattr(tools, "_REFERENCE_POSTS_ROOT", str(tmp_path))
+    posts_dir = tmp_path / "wine"
+    posts_dir.mkdir()
+    (posts_dir / "post1.jpg").write_bytes(b"a")
+    (posts_dir / "note.txt").write_text("x")
+    (posts_dir / "archive").mkdir()
+
+    assert list_reference_post_files("wine") == ["post1.jpg"]
+
+
+def test_scan_reference_posts_returns_empty_when_no_folder(tmp_path, monkeypatch):
+    monkeypatch.setattr(tools, "_REFERENCE_POSTS_ROOT", str(tmp_path))
+    assert scan_reference_posts("wine") == "[]"
+
+
+def test_scan_reference_posts_analyzes_each_image(tmp_path, monkeypatch):
+    monkeypatch.setattr(tools, "_REFERENCE_POSTS_ROOT", str(tmp_path))
+    posts_dir = tmp_path / "wine"
+    posts_dir.mkdir()
+    (posts_dir / "post1.jpg").write_bytes(b"a")
+    (posts_dir / "post2.png").write_bytes(b"b")
+
+    with patch("tools.analyze_image", return_value="解析結果") as mock_analyze:
+        result = scan_reference_posts("wine")
+
+    data = json.loads(result)
+    assert len(data) == 2
+    files = {d["file"] for d in data}
+    assert files == {"post1.jpg", "post2.png"}
+    assert all(d["analysis"] == "解析結果" for d in data)
+    assert mock_analyze.call_count == 2
+
+
+def test_archive_reference_posts_returns_message_when_no_files(tmp_path, monkeypatch):
+    monkeypatch.setattr(tools, "_REFERENCE_POSTS_ROOT", str(tmp_path))
+    assert archive_reference_posts("wine") == "アーカイブ対象なし"
+
+
+def test_archive_reference_posts_moves_files_into_dated_folder(tmp_path, monkeypatch):
+    monkeypatch.setattr(tools, "_REFERENCE_POSTS_ROOT", str(tmp_path))
+    posts_dir = tmp_path / "wine"
+    posts_dir.mkdir()
+    (posts_dir / "post1.jpg").write_bytes(b"a")
+
+    result = archive_reference_posts("wine")
+
+    assert "1件" in result
+    assert not (posts_dir / "post1.jpg").exists()
+    archived = list((posts_dir / "archive").glob("*/post1.jpg"))
+    assert len(archived) == 1
+    assert list_reference_post_files("wine") == []
+
+
+def test_execute_tool_dispatches_analyze_image(tmp_path):
+    img = tmp_path / "x.png"
+    img.write_bytes(b"a")
+    with patch("tools.analyze_image", return_value="ok") as mock_analyze:
+        result = execute_tool("analyze_image", {"image_path": str(img), "question": "何"})
+    assert result == "ok"
+    mock_analyze.assert_called_once_with(str(img), "何")
+
+
+def test_execute_tool_dispatches_scan_reference_posts(tmp_path, monkeypatch):
+    monkeypatch.setattr(tools, "_REFERENCE_POSTS_ROOT", str(tmp_path))
+    result = execute_tool("scan_reference_posts", {"category": "wine"})
+    assert result == "[]"

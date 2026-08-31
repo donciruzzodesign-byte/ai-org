@@ -1,10 +1,13 @@
 import os
 import re
+import json
 import requests
 from bs4 import BeautifulSoup
 from datetime import datetime, timedelta
 from typing import Optional
 from urllib.parse import quote
+
+from tools_video import analyze_image
 
 TOOL_DEFINITIONS = [
     {
@@ -104,6 +107,33 @@ TOOL_DEFINITIONS = [
                 "status": {"type": "string", "description": "途中 / 要確認 / 完成 のいずれか"}
             },
             "required": ["page_id", "status"]
+        }
+    },
+    {
+        "name": "analyze_image",
+        "description": "画像をClaude Visionで解析します。参考にしたい人気投稿のスクリーンショットなどを渡し、知りたい観点を質問として指定してください。",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "image_path": {"type": "string", "description": "解析する画像ファイルのパス"},
+                "question": {"type": "string", "description": "画像について知りたいこと（例：フックやキャプション構成、CTAなど）"}
+            },
+            "required": ["image_path", "question"]
+        }
+    },
+    {
+        "name": "scan_reference_posts",
+        "description": (
+            "reference_posts/{category}/ フォルダに保存された人気投稿のスクリーンショットをすべて解析し、"
+            "フック・キャプション構成・ビジュアルスタイル・CTA・人気の理由をまとめて返します。"
+            "SNS投稿文を作成する前に、参考投稿が案内されていたらこのツールで分析して活かしてください。"
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "category": {"type": "string", "description": "wine または coffee"}
+            },
+            "required": ["category"]
         }
     }
 ]
@@ -556,6 +586,59 @@ def notion_append_to_page(page_id: str, content: str, status: str = "要確認",
     return _update_page_properties(token, page_id, status, theme)
 
 
+_REFERENCE_POSTS_ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "reference_posts")
+
+_REFERENCE_POST_EXTS = (".png", ".jpg", ".jpeg", ".webp", ".gif")
+
+_REFERENCE_POST_QUESTION = (
+    "このInstagram投稿のスクリーンショットを見て、"
+    "(1)冒頭のフック（最初の1文/ビジュアル）(2)キャプションの構成 "
+    "(3)ビジュアルスタイル・色使い (4)CTA（行動喚起） "
+    "(5)人気の理由として考えられる点、を簡潔にまとめてください。"
+)
+
+
+def _reference_posts_dir(category: str) -> str:
+    return os.path.join(_REFERENCE_POSTS_ROOT, category)
+
+
+def list_reference_post_files(category: str) -> list:
+    """reference_posts/{category}/ 直下の画像ファイル名一覧（archive/ は含まない）。"""
+    posts_dir = _reference_posts_dir(category)
+    if not os.path.isdir(posts_dir):
+        return []
+    return sorted(
+        name for name in os.listdir(posts_dir)
+        if name.lower().endswith(_REFERENCE_POST_EXTS) and os.path.isfile(os.path.join(posts_dir, name))
+    )
+
+
+def scan_reference_posts(category: str) -> str:
+    """reference_posts/{category}/ の画像をすべてClaude Visionで解析してJSON文字列で返す。"""
+    posts_dir = _reference_posts_dir(category)
+    try:
+        results = [
+            {"file": name, "analysis": analyze_image(os.path.join(posts_dir, name), _REFERENCE_POST_QUESTION)}
+            for name in list_reference_post_files(category)
+        ]
+        return json.dumps(results, ensure_ascii=False)
+    except Exception as e:
+        return f"参考投稿スキャンエラー: {e}"
+
+
+def archive_reference_posts(category: str) -> str:
+    """解析済みの参考投稿を reference_posts/{category}/archive/YYYY-MM-DD/ へ移動する。"""
+    posts_dir = _reference_posts_dir(category)
+    files = list_reference_post_files(category)
+    if not files:
+        return "アーカイブ対象なし"
+    archive_dir = os.path.join(posts_dir, "archive", datetime.now().strftime("%Y-%m-%d"))
+    os.makedirs(archive_dir, exist_ok=True)
+    for name in files:
+        os.rename(os.path.join(posts_dir, name), os.path.join(archive_dir, name))
+    return f"{len(files)}件を{archive_dir}へアーカイブしました"
+
+
 def execute_tool(name: str, inputs: dict) -> str:
     if name == "web_search":
         return web_search(inputs["query"], inputs.get("region", "jp-jp"))
@@ -569,4 +652,8 @@ def execute_tool(name: str, inputs: dict) -> str:
         return notion_read_page(inputs["page_id"])
     elif name == "notion_update_status":
         return notion_update_status(inputs["page_id"], inputs["status"])
+    elif name == "analyze_image":
+        return analyze_image(inputs["image_path"], inputs["question"])
+    elif name == "scan_reference_posts":
+        return scan_reference_posts(inputs["category"])
     return f"不明なツール: {name}"

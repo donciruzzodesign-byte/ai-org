@@ -13,6 +13,9 @@ __pycache__/
 # 動画素材（生成物・容量大）
 output/
 
+# 参考投稿スクリーンショット（週次SNS投稿文作成の参考用、ローカルのみ）
+reference_posts/
+
 # macOS
 .DS_Store
 
