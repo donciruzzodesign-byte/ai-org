@@ -143,6 +143,8 @@ python3 scripts/enable_higgsfield_once.py
 
 marketer・creatorエージェントは、人気投稿のスクリーンショットを見て「フック・キャプション構成・ビジュアルスタイル・CTA・人気の理由」を分析し、コンテンツ作成に取り入れることができる。
 
+**標準参照アカウント**：Instagramの `@m.works1219` と `@domaine_veritas` を常時参考にするアカウントとして両エージェントの定義（`.claude/agents/marketer.md` / `agents/marketer.txt` / `.claude/agents/creator.md` / `agents/creator.txt`）に恒久指示として組み込み済み。これらのアカウントの投稿スクリーンショットが渡された場合は最優先で分析に反映し、渡されていない場合もフックの作り方・キャプション構成・世界観のあるビジュアル・CTAの出し方を目標水準として意識する。週次自動実行に反映させたい場合は、これらのアカウントの投稿スクリーンショットを `reference_posts/wine/`（または `coffee/`）に置いておくとよい。
+
 - **対話利用（Claude Code）**：スクリーンショット画像のパスを `@marketer` / `@creator` に渡すだけでよい（Readツール＋Claudeのvisionでそのまま見える）。URLしかない場合は、先にClaude Codeのブラウザ操作機能（claude-in-chrome）でページを開いてスクリーンショットを撮ってからパスを渡す。
 - **週次自動実行**：`reference_posts/wine/` `reference_posts/coffee/`（リポジトリ直下、Git管理外）にスクリーンショットを入れておくと、金曜のSNS投稿文作成タスクが `scan_reference_posts` ツールで自動解析して投稿文に反映する。使用済みのスクショは `reference_posts/{category}/archive/YYYY-MM-DD/` へ自動移動され、翌週以降は再利用されない。フォルダが空なら従来どおり動作する。
 
