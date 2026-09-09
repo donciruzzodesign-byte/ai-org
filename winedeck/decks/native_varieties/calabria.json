@@ -1,0 +1,58 @@
+{
+  "name": "calabria",
+  "wine_type": "red",
+  "slides": [
+    {
+      "kind": "profile",
+      "wine_type": "red",
+      "eyebrow": "CALABRIA",
+      "name_it": "Gaglioppo",
+      "name_kana": "ガリオッポ",
+      "grape_photo": "photos/calabria_01_grape.jpg",
+      "origin": [
+        "古代ギリシャ植民地起源説",
+        "チロー地区ワインの主要品種"
+      ],
+      "feature": [
+        "見た目より力強い。ドライ",
+        "フルーツとスパイス、高い酸"
+      ],
+      "local": {
+        "name": "ンドゥイヤ",
+        "note": "スパイシーな香りが唐辛子と同調する",
+        "photo": "photos/calabria_01_local.jpg"
+      },
+      "jp": {
+        "name": "モツ鍋（辛味噌）／麻婆豆腐",
+        "note": "香辛料のニュアンスが共鳴",
+        "photo": "photos/calabria_01_jp.jpg"
+      }
+    },
+    {
+      "kind": "profile",
+      "wine_type": "white",
+      "eyebrow": "CALABRIA",
+      "name_it": "Greco Bianco",
+      "name_kana": "グレコ・ビアンコ",
+      "grape_photo": "photos/calabria_02_grape.jpg",
+      "origin": [
+        "ギリシャ移民が伝えた品種",
+        "ビアンコ村の甘口伝統"
+      ],
+      "feature": [
+        "陰干しの甘口白の原料。",
+        "アプリコットとはちみつの香り"
+      ],
+      "local": {
+        "name": "アーモンド菓子",
+        "note": "濃縮した甘みが素朴な菓子と調和する",
+        "photo": "photos/calabria_02_local.jpg"
+      },
+      "jp": {
+        "name": "干し柿／みたらし団子",
+        "note": "ドライフルーツ的な甘みと合う",
+        "photo": "photos/calabria_02_jp.jpg"
+      }
+    }
+  ]
+}

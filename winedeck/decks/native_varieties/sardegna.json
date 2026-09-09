@@ -1,0 +1,110 @@
+{
+  "name": "sardegna",
+  "wine_type": "red",
+  "slides": [
+    {
+      "kind": "profile",
+      "wine_type": "white",
+      "eyebrow": "SARDEGNA",
+      "name_it": "Vermentino di Gallura",
+      "name_kana": "ヴェルメンティーノ",
+      "grape_photo": "photos/sardegna_01_grape.jpg",
+      "origin": [
+        "スペイン起源の説がある品種",
+        "サルデーニャ唯一の白DOCG"
+      ],
+      "feature": [
+        "柑橘と潮の",
+        "ミネラル感が特徴"
+      ],
+      "local": {
+        "name": "ボッタルガのパスタ",
+        "note": "塩気ミネラルが塩味と共鳴する",
+        "photo": "photos/sardegna_01_local.jpg"
+      },
+      "jp": {
+        "name": "からすみ／あさりの潮汁",
+        "note": "塩味とミネラルが直接的に合う",
+        "photo": "photos/sardegna_01_jp.jpg"
+      }
+    },
+    {
+      "kind": "profile",
+      "wine_type": "red",
+      "eyebrow": "SARDEGNA",
+      "name_it": "Cannonau",
+      "name_kana": "カンノナウ",
+      "grape_photo": "photos/sardegna_02_grape.jpg",
+      "origin": [
+        "スペイン起源説が有力品種",
+        "グルナッシュと同一とされる"
+      ],
+      "feature": [
+        "長寿の島の品種。ドライ",
+        "フルーツとスパイス、力強い味わい"
+      ],
+      "local": {
+        "name": "仔豚の丸焼き",
+        "note": "力強い果実味が脂ののった肉に合う",
+        "photo": "photos/sardegna_02_local.jpg"
+      },
+      "jp": {
+        "name": "豚の角煮／みたらし団子",
+        "note": "甘みが甘辛味と共鳴する",
+        "photo": "photos/sardegna_02_jp.jpg"
+      }
+    },
+    {
+      "kind": "profile",
+      "wine_type": "red",
+      "eyebrow": "SARDEGNA",
+      "name_it": "Carignano del Sulcis",
+      "name_kana": "カリニャーノ",
+      "grape_photo": "photos/sardegna_03_grape.jpg",
+      "origin": [
+        "スペイン系のスルチス固有種",
+        "台木不要の古樹で栽培"
+      ],
+      "feature": [
+        "古樹も多いスルチス産。",
+        "凝縮果実味にスパイスと強い渋み"
+      ],
+      "local": {
+        "name": "サルシッチャソースのパスタ",
+        "note": "凝縮果実味が合う",
+        "photo": "photos/sardegna_03_local.jpg"
+      },
+      "jp": {
+        "name": "豚の角煮／味噌煮込み",
+        "note": "力強い果実味と甘辛味が合う",
+        "photo": "photos/sardegna_03_jp.jpg"
+      }
+    },
+    {
+      "kind": "profile",
+      "wine_type": "white",
+      "eyebrow": "SARDEGNA",
+      "name_it": "Nuragus",
+      "name_kana": "ヌラーグス",
+      "grape_photo": "photos/sardegna_04_grape.jpg",
+      "origin": [
+        "ヌラーゲ文明に由来する名",
+        "サルデーニャ最古の品種"
+      ],
+      "feature": [
+        "サルデーニャ最古の土着白。",
+        "シトラスとハーブの軽快さ"
+      ],
+      "local": {
+        "name": "ボッタルガのサラダ",
+        "note": "軽快な酸が魚介の塩気と合う",
+        "photo": "photos/sardegna_04_local.jpg"
+      },
+      "jp": {
+        "name": "冷やしそうめん／貝の酒蒸し",
+        "note": "軽快さが夏の和食と合う",
+        "photo": "photos/sardegna_04_jp.jpg"
+      }
+    }
+  ]
+}

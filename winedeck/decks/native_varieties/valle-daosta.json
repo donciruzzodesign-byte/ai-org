@@ -1,0 +1,58 @@
+{
+  "name": "valle-daosta",
+  "wine_type": "red",
+  "slides": [
+    {
+      "kind": "profile",
+      "wine_type": "red",
+      "eyebrow": "VALLE D'AOSTA",
+      "name_it": "Petit Rouge",
+      "name_kana": "プティ・ルージュ",
+      "grape_photo": "photos/valle-daosta_01_grape.jpg",
+      "origin": [
+        "ヴァッレダオスタ土着品種",
+        "アルプス急斜面で栽培継承"
+      ],
+      "feature": [
+        "淡いルビー色。スミレと",
+        "野イチゴ、軽やかな酸"
+      ],
+      "local": {
+        "name": "フォンティーナのフォンデュータ",
+        "note": "乳脂を軽やかな酸が受け止める",
+        "photo": "photos/valle-daosta_01_local.jpg"
+      },
+      "jp": {
+        "name": "鶏の照り焼き",
+        "note": "出汁の旨みに果実味が寄り添う",
+        "photo": "photos/valle-daosta_01_jp.jpg"
+      }
+    },
+    {
+      "kind": "profile",
+      "wine_type": "white",
+      "eyebrow": "VALLE D'AOSTA",
+      "name_it": "Prié Blanc",
+      "name_kana": "プリエ・ブラン",
+      "grape_photo": "photos/valle-daosta_02_grape.jpg",
+      "origin": [
+        "モルジェックス村起源とされる",
+        "欧州最高標高の畑で栽培"
+      ],
+      "feature": [
+        "標高1000m超で栽培。青リンゴの",
+        "高い酸と山ハーブの香り"
+      ],
+      "local": {
+        "name": "山チーズのフォンデュ",
+        "note": "高い酸がコクを爽やかにする",
+        "photo": "photos/valle-daosta_02_local.jpg"
+      },
+      "jp": {
+        "name": "冷奴",
+        "note": "きりっとした酸がさっぱり系と合う",
+        "photo": "photos/valle-daosta_02_jp.jpg"
+      }
+    }
+  ]
+}

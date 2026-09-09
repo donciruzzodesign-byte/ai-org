@@ -1,0 +1,58 @@
+{
+  "name": "lazio",
+  "wine_type": "red",
+  "slides": [
+    {
+      "kind": "profile",
+      "wine_type": "red",
+      "eyebrow": "LAZIO",
+      "name_it": "Cesanese",
+      "name_kana": "チェザネーゼ",
+      "grape_photo": "photos/lazio_01_grape.jpg",
+      "origin": [
+        "古代ラツィオの土着品種",
+        "開墾地を意味する名の説"
+      ],
+      "feature": [
+        "ラツィオ唯一の赤DOCG。",
+        "スパイシーな果実と穏やかな渋み"
+      ],
+      "local": {
+        "name": "仔羊のロースト",
+        "note": "脂の旨みとスパイス香が寄り添う",
+        "photo": "photos/lazio_01_local.jpg"
+      },
+      "jp": {
+        "name": "ジンギスカン／もつ鍋",
+        "note": "羊の脂と果実味が好相性",
+        "photo": "photos/lazio_01_jp.jpg"
+      }
+    },
+    {
+      "kind": "profile",
+      "wine_type": "white",
+      "eyebrow": "LAZIO",
+      "name_it": "Malvasia Puntinata",
+      "name_kana": "マルヴァジア",
+      "grape_photo": "photos/lazio_02_grape.jpg",
+      "origin": [
+        "果皮の斑点が名前の由来",
+        "フラスカーティの高貴品種"
+      ],
+      "feature": [
+        "フラスカーティの上質種。",
+        "ハーブと蜂蜜、しっかりした酸"
+      ],
+      "local": {
+        "name": "ローマ風アーティチョーク",
+        "note": "ハーブ香が同調する",
+        "photo": "photos/lazio_02_local.jpg"
+      },
+      "jp": {
+        "name": "山菜の天ぷら",
+        "note": "ほろ苦さと春の香りが調和する",
+        "photo": "photos/lazio_02_jp.jpg"
+      }
+    }
+  ]
+}

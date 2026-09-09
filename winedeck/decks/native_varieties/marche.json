@@ -1,0 +1,84 @@
+{
+  "name": "marche",
+  "wine_type": "red",
+  "slides": [
+    {
+      "kind": "profile",
+      "wine_type": "white",
+      "eyebrow": "MARCHE",
+      "name_it": "Verdicchio",
+      "name_kana": "ヴェルディッキオ",
+      "grape_photo": "photos/marche_01_grape.jpg",
+      "origin": [
+        "マルケ州の伝統白品種",
+        "ソアーヴェ系品種と同系統"
+      ],
+      "feature": [
+        "青リンゴとアーモンド、",
+        "シャープな酸とミネラル感"
+      ],
+      "local": {
+        "name": "ブロデット",
+        "note": "高い酸が魚介の旨みと塩気に合う",
+        "photo": "photos/marche_01_local.jpg"
+      },
+      "jp": {
+        "name": "寿司（白身／貝）",
+        "note": "シャープな酸とミネラルが好相性",
+        "photo": "photos/marche_01_jp.jpg"
+      }
+    },
+    {
+      "kind": "profile",
+      "wine_type": "red",
+      "eyebrow": "MARCHE",
+      "name_it": "Lacrima di Morro d'Alba",
+      "name_kana": "ラクリマ",
+      "grape_photo": "photos/marche_02_grape.jpg",
+      "origin": [
+        "熟すと果皮が裂ける品種",
+        "涙を意味する名が由来"
+      ],
+      "feature": [
+        "希少芳香系赤。バラと",
+        "ブラックベリーの華やかな香り"
+      ],
+      "local": {
+        "name": "ヴィンチスグラッシ",
+        "note": "華やかな香りが肉料理を引き立てる",
+        "photo": "photos/marche_02_local.jpg"
+      },
+      "jp": {
+        "name": "豚の角煮",
+        "note": "バラの香りが甘辛い煮込みと調和する",
+        "photo": "photos/marche_02_jp.jpg"
+      }
+    },
+    {
+      "kind": "profile",
+      "wine_type": "red",
+      "eyebrow": "MARCHE",
+      "name_it": "Vernaccia Nera di Serrapetrona",
+      "name_kana": "ヴェルナッチャ・ネーラ",
+      "grape_photo": "photos/marche_03_grape.jpg",
+      "origin": [
+        "セッラペトローナ村の固有種",
+        "発泡赤ワインに伝統活用"
+      ],
+      "feature": [
+        "希少発泡赤DOCG。バラと",
+        "ベリー、瓶内二次発酵の泡"
+      ],
+      "local": {
+        "name": "肉団子",
+        "note": "泡の爽快感が肉料理をリフレッシュ",
+        "photo": "photos/marche_03_local.jpg"
+      },
+      "jp": {
+        "name": "唐揚げ",
+        "note": "泡と華やかな香りが揚げ物と好相性",
+        "photo": "photos/marche_03_jp.jpg"
+      }
+    }
+  ]
+}

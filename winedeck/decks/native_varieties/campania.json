@@ -1,0 +1,110 @@
+{
+  "name": "campania",
+  "wine_type": "red",
+  "slides": [
+    {
+      "kind": "profile",
+      "wine_type": "red",
+      "eyebrow": "CAMPANIA",
+      "name_it": "Aglianico",
+      "name_kana": "アリアニコ",
+      "grape_photo": "photos/campania_01_grape.jpg",
+      "origin": [
+        "ギリシャ植民者が伝えた品種",
+        "南のバローロと称される"
+      ],
+      "feature": [
+        "黒系果実とタバコ香、",
+        "力強い渋み"
+      ],
+      "local": {
+        "name": "ジェノヴェーゼソース",
+        "note": "濃厚な煮込みに負けない骨格",
+        "photo": "photos/campania_01_local.jpg"
+      },
+      "jp": {
+        "name": "和牛すき焼き",
+        "note": "力強い渋みが濃厚な旨みと調和する",
+        "photo": "photos/campania_01_jp.jpg"
+      }
+    },
+    {
+      "kind": "profile",
+      "wine_type": "white",
+      "eyebrow": "CAMPANIA",
+      "name_it": "Greco di Tufo",
+      "name_kana": "グレコ・ディ・トゥーフォ",
+      "grape_photo": "photos/campania_02_grape.jpg",
+      "origin": [
+        "ギリシャ起源の白品種",
+        "トゥーフォ村の火山土壌育ち"
+      ],
+      "feature": [
+        "火山性土壌。桃と柑橘の香り、",
+        "厚みある余韻"
+      ],
+      "local": {
+        "name": "水牛モッツァレラ",
+        "note": "ミネラル感がミルキー感と調和する",
+        "photo": "photos/campania_02_local.jpg"
+      },
+      "jp": {
+        "name": "鯛のカルパッチョ",
+        "note": "火山性ミネラルが旨みを引き立てる",
+        "photo": "photos/campania_02_jp.jpg"
+      }
+    },
+    {
+      "kind": "profile",
+      "wine_type": "white",
+      "eyebrow": "CAMPANIA",
+      "name_it": "Fiano di Avellino",
+      "name_kana": "フィアーノ",
+      "grape_photo": "photos/campania_03_grape.jpg",
+      "origin": [
+        "古代ローマの蜂ブドウ由来説",
+        "アヴェッリーノで名品評価"
+      ],
+      "feature": [
+        "白DOCG。ヘーゼルナッツと",
+        "白い花、厚みある長熟白"
+      ],
+      "local": {
+        "name": "水牛チーズ／魚介リゾット",
+        "note": "ナッツ香がチーズと合う",
+        "photo": "photos/campania_03_local.jpg"
+      },
+      "jp": {
+        "name": "ぎんなん／茶碗蒸し",
+        "note": "ナッツ香が上品な出汁と調和する",
+        "photo": "photos/campania_03_jp.jpg"
+      }
+    },
+    {
+      "kind": "profile",
+      "wine_type": "white",
+      "eyebrow": "CAMPANIA",
+      "name_it": "Falanghina",
+      "name_kana": "ファランギーナ",
+      "grape_photo": "photos/campania_04_grape.jpg",
+      "origin": [
+        "古代ローマのファレルヌム起源説",
+        "ナポリ周辺で栽培継承"
+      ],
+      "feature": [
+        "古代からの土着種。青リンゴと",
+        "白い花、軽快な酸"
+      ],
+      "local": {
+        "name": "魚介フリット／ピッツァ",
+        "note": "フレッシュな酸が合う",
+        "photo": "photos/campania_04_local.jpg"
+      },
+      "jp": {
+        "name": "白身魚の天ぷら",
+        "note": "軽快な酸が夏の和食と好相性",
+        "photo": "photos/campania_04_jp.jpg"
+      }
+    }
+  ]
+}

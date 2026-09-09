@@ -1,0 +1,84 @@
+{
+  "name": "veneto",
+  "wine_type": "red",
+  "slides": [
+    {
+      "kind": "profile",
+      "wine_type": "white",
+      "eyebrow": "VENETO",
+      "name_it": "Garganega",
+      "name_kana": "ガルガーネガ",
+      "grape_photo": "photos/veneto_01_grape.jpg",
+      "origin": [
+        "古代ギリシャ起源の説あり",
+        "ソアーヴェの主要品種"
+      ],
+      "feature": [
+        "白い花とアーモンド、",
+        "洋梨の香り、軽快な酸"
+      ],
+      "local": {
+        "name": "バッカラ煮込み",
+        "note": "ミネラル感が塩気の魚料理と合う",
+        "photo": "photos/veneto_01_local.jpg"
+      },
+      "jp": {
+        "name": "だし巻き卵",
+        "note": "繊細な酸が優しい味わいと調和する",
+        "photo": "photos/veneto_01_jp.jpg"
+      }
+    },
+    {
+      "kind": "profile",
+      "wine_type": "red",
+      "eyebrow": "VENETO",
+      "name_it": "Corvina",
+      "name_kana": "コルヴィーナ",
+      "grape_photo": "photos/veneto_02_grape.jpg",
+      "origin": [
+        "カラスに似た黒さが名の由来",
+        "アマローネの中核品種に発展"
+      ],
+      "feature": [
+        "ヴァルポリチェッラの主要品種。",
+        "チェリーとほろ苦い杏仁香"
+      ],
+      "local": {
+        "name": "馬肉の煮込み",
+        "note": "凝縮果実味が濃厚な煮込みに合う",
+        "photo": "photos/veneto_02_local.jpg"
+      },
+      "jp": {
+        "name": "朴葉味噌焼き",
+        "note": "ビターチェリー感が味噌だれと合う",
+        "photo": "photos/veneto_02_jp.jpg"
+      }
+    },
+    {
+      "kind": "profile",
+      "wine_type": "red",
+      "eyebrow": "VENETO",
+      "name_it": "Raboso",
+      "name_kana": "ラボーゾ",
+      "grape_photo": "photos/veneto_03_grape.jpg",
+      "origin": [
+        "ピアーヴェ川流域が起源",
+        "強い酸味が名の由来"
+      ],
+      "feature": [
+        "「頑固者」の意。高酸で骨太、",
+        "ブラックベリーとスパイス"
+      ],
+      "local": {
+        "name": "豆のパスタ",
+        "note": "高い酸が煮込みの重さを引締め",
+        "photo": "photos/veneto_03_local.jpg"
+      },
+      "jp": {
+        "name": "牛すじの煮込み",
+        "note": "酸と渋みが濃厚な旨みと拮抗する",
+        "photo": "photos/veneto_03_jp.jpg"
+      }
+    }
+  ]
+}

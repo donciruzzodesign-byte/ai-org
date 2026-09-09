@@ -1,0 +1,25 @@
+{
+  "name": "sample_barbera",
+  "wine_type": "red",
+  "slides": [
+    {
+      "kind": "profile",
+      "eyebrow": "PIEMONTE",
+      "name_it": "Barbera",
+      "name_kana": "バルベーラ",
+      "grape_photo": "photos/sample_barbera_grape.jpg",
+      "origin": ["18世紀末モンフェッラートが起源", "80年代バリック熟成で評価一変"],
+      "feature": ["濃いガーネット色。際立つ高い酸と", "おだやかな渋みを持つ日常のワイン"],
+      "local": {
+        "name": "牛肉のブラザート",
+        "note": "高い酸が煮込みの脂を切ってくれる",
+        "photo": "photos/sample_barbera_local.jpg"
+      },
+      "jp": {
+        "name": "肉じゃが／すき焼き",
+        "note": "甘辛だれと酸のバランスが良い",
+        "photo": "photos/sample_barbera_jp.jpg"
+      }
+    }
+  ]
+}

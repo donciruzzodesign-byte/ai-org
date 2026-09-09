@@ -1,0 +1,32 @@
+{
+  "name": "molise",
+  "wine_type": "red",
+  "slides": [
+    {
+      "kind": "profile",
+      "wine_type": "red",
+      "eyebrow": "MOLISE",
+      "name_it": "Tintilia",
+      "name_kana": "ティンティリア",
+      "grape_photo": "photos/molise_01_grape.jpg",
+      "origin": [
+        "スペイン起源の説がある品種",
+        "2000年代モリーゼで復権"
+      ],
+      "feature": [
+        "モリーゼ固有の希少種。",
+        "スパイシーな黒果実と力強い渋み"
+      ],
+      "local": {
+        "name": "仔羊のグリル",
+        "note": "素朴で力強い郷土料理に負けない",
+        "photo": "photos/molise_01_local.jpg"
+      },
+      "jp": {
+        "name": "もつ煮込み／牛すじ",
+        "note": "スパイシーな果実味が調和する",
+        "photo": "photos/molise_01_jp.jpg"
+      }
+    }
+  ]
+}

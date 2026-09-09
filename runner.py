@@ -14,20 +14,38 @@ from tools_express import generate_weekly_assets, parse_creator_metadata
 from tools_instagram import sync_instagram_insights
 
 _RETRY_DELAYS = [15, 30, 60]
+_NON_RETRYABLE_STATUS_CODES = {400, 401, 403, 404, 422}
+
+
+def _is_retryable(e: Exception) -> bool:
+    """接続エラー・タイムアウトは常にリトライ対象。APIStatusErrorは429/5xx（529のOverloaded含む）のみ対象、
+    400/401/403/404/422等のクライアントエラーはリトライしても無駄なので対象外。"""
+    if isinstance(e, anthropic.APIConnectionError):
+        return True
+    if isinstance(e, anthropic.APIStatusError):
+        return e.status_code not in _NON_RETRYABLE_STATUS_CODES
+    return False
 
 
 def _with_retry(fn, label):
-    """APIConnectionError 時に最大3回リトライしてから再送出。クラッシュ防止のため呼び出し元でも except する。"""
+    """接続エラー・タイムアウト・レート制限・5xx（Overloaded含む）時に最大3回リトライしてから再送出。
+
+    クラッシュ防止のため呼び出し元でも except する。
+    """
     for attempt, delay in enumerate(_RETRY_DELAYS, start=1):
         try:
             return fn()
-        except anthropic.APIConnectionError as e:
-            print(f"  ⚠️ {label} 接続エラー（{attempt}/{len(_RETRY_DELAYS)}回目）。{delay}秒後にリトライ...")
+        except Exception as e:
+            if not _is_retryable(e):
+                raise
+            print(f"  ⚠️ {label} エラー（{type(e).__name__}, {attempt}/{len(_RETRY_DELAYS)}回目）。{delay}秒後にリトライ...")
             time.sleep(delay)
     try:
         return fn()
-    except anthropic.APIConnectionError as e:
-        print(f"  ❌ {label} 接続エラー。リトライ上限に達しました。")
+    except Exception as e:
+        if not _is_retryable(e):
+            raise
+        print(f"  ❌ {label} エラー（{type(e).__name__}）。リトライ上限に達しました。")
         raise
 
 def _load_env():
@@ -60,6 +78,25 @@ def save_log(content: str, label: str):
         f.write(f"\n=== {label} ({now.strftime('%H:%M')}) ===\n")
         f.write(content)
         f.write("\n")
+
+
+def _report_failure(label: str, error: Exception):
+    """タスク失敗時に、標準出力だけでなくローカルログとNotionにも記録を残す。
+
+    標準出力はバッファリングされて見えなくなることがあるため、失敗自体が
+    どこにも残らないのを防ぐ目的。
+    """
+    print(f"  ❌ {label} 失敗: {error}")
+    now = datetime.now()
+    error_text = f"{label} が失敗しました。\n\nエラー内容:\n{error}"
+    save_log(f"[失敗]\n{error_text}", label)
+    try:
+        notion_result = save_to_notion(
+            f"{label}（失敗） ({now.strftime('%Y-%m-%d')})", error_text, status="要確認",
+        )
+        print(f"   📝 Notion（失敗記録）: {notion_result}")
+    except Exception as notion_error:
+        print(f"   ⚠️ 失敗記録のNotion保存にも失敗: {notion_error}")
 
 
 def _wip_page_id_for_label(find_output: str, label: str) -> str:
@@ -213,7 +250,7 @@ def monday_task():
             "月曜：今週テーマ決定",
         )
     except Exception as e:
-        print(f"  ❌ 月曜：今週テーマ決定 失敗: {e}")
+        _report_failure("月曜：今週テーマ決定", e)
 
 
 def tuesday_task():
@@ -226,7 +263,7 @@ def tuesday_task():
         )
         run_agent("creator", prompt, "火曜：動画台本作成")
     except Exception as e:
-        print(f"  ❌ 火曜：動画台本作成 失敗: {e}")
+        _report_failure("火曜：動画台本作成", e)
 
 
 def instagram_insights_task():
@@ -242,7 +279,7 @@ def instagram_insights_task():
         summary = sync_instagram_insights(ig_user_id, access_token, sheet_id, service_account_json_path, since_date)
         print(f"  📊 Instagram Insights同期: {summary}")
     except Exception as e:
-        print(f"  ❌ Instagram Insights同期 失敗: {e}")
+        _report_failure("Instagram Insights同期", e)
 
 
 def wednesday_task():
@@ -251,7 +288,7 @@ def wednesday_task():
         save_log(message, "水曜：レビュー通知")
         print(f"\n📋 レビュー依頼：Notion ページを確認してください。")
     except Exception as e:
-        print(f"  ❌ 水曜：レビュー通知 失敗: {e}")
+        _report_failure("水曜：レビュー通知", e)
 
 
 def friday_task():
@@ -267,7 +304,7 @@ def friday_task():
         run_agent("marketer", prompt, "金曜：SNS投稿文＋商品リスト")
         print(f"  📦 {archive_reference_posts('wine')}")
     except Exception as e:
-        print(f"  ❌ 金曜：SNS投稿文＋商品リスト 失敗: {e}")
+        _report_failure("金曜：SNS投稿文＋商品リスト", e)
 
 
 def sunday_task():
@@ -279,14 +316,14 @@ def sunday_task():
             "日曜：反応分析レポート",
         )
     except Exception as e:
-        print(f"  ❌ 日曜：反応分析レポート 失敗: {e}")
+        _report_failure("日曜：反応分析レポート", e)
 
 
 def regional_wines_task():
     try:
         _regional_wines_task_inner()
     except Exception as e:
-        print(f"  ❌ 月曜：州別おすすめワイン紹介 失敗: {e}")
+        _report_failure("月曜：州別おすすめワイン紹介", e)
 
 
 def _regional_wines_task_inner():
@@ -327,7 +364,7 @@ def collab_task(theme: str):
             f"連携：クリエイター台本＋スライド（{theme}）",
         )
     except Exception as e:
-        print(f"  ❌ 連携タスク失敗: {e}")
+        _report_failure("連携タスク", e)
 
 
 def run_video_agent(script_text: str, topic: str, output_dir: str, allow_paid_video: bool = False) -> str:
@@ -380,7 +417,7 @@ def tuesday_video_task():
         allow_paid_video = consume_paid_video_flag()
         run_video_agent(script, "イタリアワイン", output_dir, allow_paid_video=allow_paid_video)
     except Exception as e:
-        print(f"  ❌ 火曜：ワイン動画素材生成 失敗: {e}")
+        _report_failure("火曜：ワイン動画素材生成", e)
 
 
 def coffee_tuesday_video_task():
@@ -391,7 +428,7 @@ def coffee_tuesday_video_task():
         allow_paid_video = consume_paid_video_flag()
         run_video_agent(script, "イタリアコーヒー", output_dir, allow_paid_video=allow_paid_video)
     except Exception as e:
-        print(f"  ❌ 火曜：コーヒー動画素材生成 失敗: {e}")
+        _report_failure("火曜：コーヒー動画素材生成", e)
 
 
 def tuesday_express_task():
@@ -412,7 +449,7 @@ def tuesday_express_task():
             print(f"  🎨 {r}")
         save_log("\n".join(results), "火曜：Express素材生成（ワイン）")
     except Exception as e:
-        print(f"  ❌ 火曜：Express素材生成 失敗: {e}")
+        _report_failure("火曜：Express素材生成", e)
 
 
 def coffee_tuesday_express_task():
@@ -433,7 +470,7 @@ def coffee_tuesday_express_task():
             print(f"  🎨 {r}")
         save_log("\n".join(results), "火曜：Express素材生成（コーヒー）")
     except Exception as e:
-        print(f"  ❌ 火曜：コーヒーExpress素材生成 失敗: {e}")
+        _report_failure("火曜：コーヒーExpress素材生成", e)
 
 
 def coffee_monday_task():
@@ -446,7 +483,7 @@ def coffee_monday_task():
             "月曜：コーヒーテーマ決定",
         )
     except Exception as e:
-        print(f"  ❌ 月曜：コーヒーテーマ決定 失敗: {e}")
+        _report_failure("月曜：コーヒーテーマ決定", e)
 
 
 def coffee_regional_task():
@@ -472,7 +509,7 @@ def coffee_regional_task():
         )
         run_agent("barista", prompt, "月曜：地域別コーヒー紹介")
     except Exception as e:
-        print(f"  ❌ 月曜：地域別コーヒー紹介 失敗: {e}")
+        _report_failure("月曜：地域別コーヒー紹介", e)
 
 
 def coffee_tuesday_task():
@@ -485,7 +522,7 @@ def coffee_tuesday_task():
         )
         run_agent("creator", prompt, "火曜：コーヒー動画台本作成")
     except Exception as e:
-        print(f"  ❌ 火曜：コーヒー動画台本作成 失敗: {e}")
+        _report_failure("火曜：コーヒー動画台本作成", e)
 
 
 def coffee_friday_task():
@@ -501,7 +538,7 @@ def coffee_friday_task():
         run_agent("marketer", prompt, "金曜：コーヒーSNS投稿文＋商品リスト")
         print(f"  📦 {archive_reference_posts('coffee')}")
     except Exception as e:
-        print(f"  ❌ 金曜：コーヒーSNS投稿文＋商品リスト 失敗: {e}")
+        _report_failure("金曜：コーヒーSNS投稿文＋商品リスト", e)
 
 
 def _note_article_prompt(context: str, drink_label: str, fallback_theme: str) -> str:
@@ -534,7 +571,7 @@ def tuesday_note_task():
         path = _write_note_article(article, output_dir)
         print(f"  📝 note記事保存: {path}")
     except Exception as e:
-        print(f"  ❌ 火曜：note記事作成（ワイン） 失敗: {e}")
+        _report_failure("火曜：note記事作成（ワイン）", e)
 
 
 def coffee_tuesday_note_task():
@@ -547,7 +584,7 @@ def coffee_tuesday_note_task():
         path = _write_note_article(article, output_dir)
         print(f"  📝 note記事保存: {path}")
     except Exception as e:
-        print(f"  ❌ 火曜：note記事作成（コーヒー） 失敗: {e}")
+        _report_failure("火曜：note記事作成（コーヒー）", e)
 
 
 def main():

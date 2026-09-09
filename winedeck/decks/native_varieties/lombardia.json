@@ -1,0 +1,84 @@
+{
+  "name": "lombardia",
+  "wine_type": "red",
+  "slides": [
+    {
+      "kind": "profile",
+      "wine_type": "red",
+      "eyebrow": "LOMBARDIA",
+      "name_it": "Groppello",
+      "name_kana": "グロッペッロ",
+      "grape_photo": "photos/lombardia_01_grape.jpg",
+      "origin": [
+        "ガルダ湖畔の土着品種",
+        "ヴァルテネージの主要品種"
+      ],
+      "feature": [
+        "ガルダ湖畔の赤。淡色軽快で",
+        "チェリーとスミレの香り"
+      ],
+      "local": {
+        "name": "鴨のサルミ",
+        "note": "淡い渋みが湖畔郷土料理と合う",
+        "photo": "photos/lombardia_01_local.jpg"
+      },
+      "jp": {
+        "name": "鰻の蒲焼き",
+        "note": "フルーティさが甘辛だれと合う",
+        "photo": "photos/lombardia_01_jp.jpg"
+      }
+    },
+    {
+      "kind": "profile",
+      "wine_type": "white",
+      "eyebrow": "LOMBARDIA",
+      "name_it": "Turbiana",
+      "name_kana": "トゥルビアーナ",
+      "grape_photo": "photos/lombardia_02_grape.jpg",
+      "origin": [
+        "ルガーナ地区の伝統品種",
+        "ヴェルディッキオと同系統"
+      ],
+      "feature": [
+        "ルガーナの白。レモンと",
+        "アーモンド、しっかりした酸"
+      ],
+      "local": {
+        "name": "魚介のリゾット",
+        "note": "湖の魚介との土地の組合せ",
+        "photo": "photos/lombardia_02_local.jpg"
+      },
+      "jp": {
+        "name": "茶碗蒸し",
+        "note": "上品な酸がだしの繊細さと合う",
+        "photo": "photos/lombardia_02_jp.jpg"
+      }
+    },
+    {
+      "kind": "profile",
+      "wine_type": "red",
+      "eyebrow": "LOMBARDIA",
+      "name_it": "Moscato di Scanzo",
+      "name_kana": "モスカート・スカンツォ",
+      "grape_photo": "photos/lombardia_03_grape.jpg",
+      "origin": [
+        "ベルガモ近郊の希少品種",
+        "中世から続く陰干し伝統"
+      ],
+      "feature": [
+        "希少甘口。陰干しでドライ",
+        "フルーツとバラの濃密な香り"
+      ],
+      "local": {
+        "name": "ゴルゴンゾーラ",
+        "note": "甘美な果実味が塩気と調和する",
+        "photo": "photos/lombardia_03_local.jpg"
+      },
+      "jp": {
+        "name": "栗きんとん",
+        "note": "上品な和菓子の甘みと共鳴する",
+        "photo": "photos/lombardia_03_jp.jpg"
+      }
+    }
+  ]
+}

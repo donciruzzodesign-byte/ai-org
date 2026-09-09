@@ -25,6 +25,15 @@ description: 動画台本・構成・編集指示書の作成。10分動画の�
 - セリフ形式で書く（地の文・ナレーションではなく話し言葉）
 - 編集メモを末尾に付ける
 
+## 画像入り品種紹介スライド（winedeck）
+写真付きの品種紹介カード（1080×1350、Instagramカルーセル用）を `winedeck/` エンジンで生成できます。
+- `kind: "profile"` のJSONデッキを作ると、ブドウ品種の写真＋現地ペアリング写真＋和食ペアリング写真を1枚に収めたカードが作れる（仕様は `winedeck/README.md` 参照）。
+- 写真はオーナー提供のものを使うか、`winedeck/decks/native_varieties/fetch_photos.py` の要領でPexelsから取得する。
+- 生成コマンド：`python3 winedeck/render.py <deck.json> --outdir <出力先>`（SVGはIllustratorでそのまま編集可。PNG書き出しはsystem cairoが必要）。
+- 実装済みの参考例：`winedeck/decks/native_varieties/`（イタリア20州の土着品種、写真付きで動作確認済み）。
+- スライドの内容（産地・特徴・ペアリングの正確性）は sommelier に確認を取ってから確定する。
+- 資料系の依頼では「完全初心者向け」と「ソムリエ受験者向け（学術版）」の2パターンを作る方針がある場合、画像スライドでも同様に検討する。
+
 ## 標準参照アカウント
 Instagramで以下のアカウントを常に参考にする：
 - @m.works1219

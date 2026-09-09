@@ -1,0 +1,58 @@
+{
+  "name": "emilia-romagna",
+  "wine_type": "red",
+  "slides": [
+    {
+      "kind": "profile",
+      "wine_type": "red",
+      "eyebrow": "EMILIA-ROMAGNA",
+      "name_it": "Lambrusco",
+      "name_kana": "ランブルスコ",
+      "grape_photo": "photos/emilia-romagna_01_grape.jpg",
+      "origin": [
+        "野生ブドウ起源の古代品種",
+        "エトルリア時代から栽培"
+      ],
+      "feature": [
+        "微発泡赤。ベリー香と",
+        "爽快な泡、軽い渋み"
+      ],
+      "local": {
+        "name": "ラザニアとサルミ盛合せ",
+        "note": "泡が脂を洗い流す",
+        "photo": "photos/emilia-romagna_01_local.jpg"
+      },
+      "jp": {
+        "name": "唐揚げ／餃子",
+        "note": "微発泡の酸が揚げ物をリフレッシュ",
+        "photo": "photos/emilia-romagna_01_jp.jpg"
+      }
+    },
+    {
+      "kind": "profile",
+      "wine_type": "white",
+      "eyebrow": "EMILIA-ROMAGNA",
+      "name_it": "Albana",
+      "name_kana": "アルバーナ",
+      "grape_photo": "photos/emilia-romagna_02_grape.jpg",
+      "origin": [
+        "ローマ時代からの白品種",
+        "87年白初のDOCGに認定"
+      ],
+      "feature": [
+        "洋梨と白い花、",
+        "しっかりした骨格とほろ苦い余韻"
+      ],
+      "local": {
+        "name": "ピアディーナと生チーズ",
+        "note": "ほろ苦さがミルキー感と調和する",
+        "photo": "photos/emilia-romagna_02_local.jpg"
+      },
+      "jp": {
+        "name": "豆腐の白和え",
+        "note": "洋梨様の香りが淡白な甘みと合う",
+        "photo": "photos/emilia-romagna_02_jp.jpg"
+      }
+    }
+  ]
+}

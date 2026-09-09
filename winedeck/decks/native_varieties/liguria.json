@@ -1,0 +1,84 @@
+{
+  "name": "liguria",
+  "wine_type": "red",
+  "slides": [
+    {
+      "kind": "profile",
+      "wine_type": "white",
+      "eyebrow": "LIGURIA",
+      "name_it": "Pigato",
+      "name_kana": "ピガート",
+      "grape_photo": "photos/liguria_01_grape.jpg",
+      "origin": [
+        "リグーリア西部の土着品種",
+        "斑点果皮が名前の由来"
+      ],
+      "feature": [
+        "淡い麦わら色。アーモンドと",
+        "潮のミネラル感が特徴"
+      ],
+      "local": {
+        "name": "魚介のフリット",
+        "note": "ハーブ香がバジル香と同調する",
+        "photo": "photos/liguria_01_local.jpg"
+      },
+      "jp": {
+        "name": "白身魚の塩焼き",
+        "note": "塩気ミネラルが旨みを引き立てる",
+        "photo": "photos/liguria_01_jp.jpg"
+      }
+    },
+    {
+      "kind": "profile",
+      "wine_type": "red",
+      "eyebrow": "LIGURIA",
+      "name_it": "Rossese",
+      "name_kana": "ロッセーゼ",
+      "grape_photo": "photos/liguria_02_grape.jpg",
+      "origin": [
+        "古代リグーリアに起源",
+        "ナポレオンも愛したと伝わる"
+      ],
+      "feature": [
+        "「伊のピノ・ノワール」。淡色で",
+        "ラズベリーと白胡椒の香り"
+      ],
+      "local": {
+        "name": "ウサギ肉のオリーブ煮",
+        "note": "軽やかさがハーブ香と寄り添う",
+        "photo": "photos/liguria_02_local.jpg"
+      },
+      "jp": {
+        "name": "焼き鳥（塩）",
+        "note": "軽い渋みが鶏の脂に合う",
+        "photo": "photos/liguria_02_jp.jpg"
+      }
+    },
+    {
+      "kind": "profile",
+      "wine_type": "white",
+      "eyebrow": "LIGURIA",
+      "name_it": "Bosco",
+      "name_kana": "ボスコ",
+      "grape_photo": "photos/liguria_03_grape.jpg",
+      "origin": [
+        "チンクエテッレ原産品種",
+        "シャケトラ用に栽培継承"
+      ],
+      "feature": [
+        "洋梨とアーモンドの香り、",
+        "テラス栽培由来の塩気"
+      ],
+      "local": {
+        "name": "アンチョビのマリネ",
+        "note": "潮のミネラル感が調和する",
+        "photo": "photos/liguria_03_local.jpg"
+      },
+      "jp": {
+        "name": "しらす丼",
+        "note": "塩気の小魚料理と軽やかさが合う",
+        "photo": "photos/liguria_03_jp.jpg"
+      }
+    }
+  ]
+}

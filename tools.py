@@ -146,7 +146,7 @@ def web_search(query: str, region: str = "jp-jp") -> str:
         results = []
         for attempt in range(3):
             try:
-                with DDGS() as ddgs:
+                with DDGS(timeout=15) as ddgs:
                     results = list(ddgs.text(query, region=region, max_results=5))
                 if results:
                     break

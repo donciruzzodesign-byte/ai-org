@@ -1,0 +1,84 @@
+{
+  "name": "umbria",
+  "wine_type": "red",
+  "slides": [
+    {
+      "kind": "profile",
+      "wine_type": "red",
+      "eyebrow": "UMBRIA",
+      "name_it": "Sagrantino",
+      "name_kana": "サグランティーノ",
+      "grape_photo": "photos/umbria_01_grape.jpg",
+      "origin": [
+        "フランシスコ会修道士が伝来",
+        "サクラメント由来の説も"
+      ],
+      "feature": [
+        "世界屈指の渋み。黒系ベリーと",
+        "スパイス、長熟向き"
+      ],
+      "local": {
+        "name": "猪肉のパッパルデッレ",
+        "note": "強い渋みが野性味に対抗する",
+        "photo": "photos/umbria_01_local.jpg"
+      },
+      "jp": {
+        "name": "牛肉の味噌煮込み",
+        "note": "甘辛だれが力強い渋みを受け止める",
+        "photo": "photos/umbria_01_jp.jpg"
+      }
+    },
+    {
+      "kind": "profile",
+      "wine_type": "white",
+      "eyebrow": "UMBRIA",
+      "name_it": "Grechetto",
+      "name_kana": "グレケット",
+      "grape_photo": "photos/umbria_02_grape.jpg",
+      "origin": [
+        "ギリシャ起源を示す名前",
+        "古代からウンブリアで定着"
+      ],
+      "feature": [
+        "淡黄色で白い花とハーブ、",
+        "ほろ苦い余韻"
+      ],
+      "local": {
+        "name": "ブルスケッタ",
+        "note": "ハーブ香がオリーブ油と同調する",
+        "photo": "photos/umbria_02_local.jpg"
+      },
+      "jp": {
+        "name": "白身魚の昆布締め／枝豆",
+        "note": "素朴な旨みとハーブ香が合う",
+        "photo": "photos/umbria_02_jp.jpg"
+      }
+    },
+    {
+      "kind": "profile",
+      "wine_type": "white",
+      "eyebrow": "UMBRIA",
+      "name_it": "Trebbiano Spoletino",
+      "name_kana": "トレッビアーノ",
+      "grape_photo": "photos/umbria_03_grape.jpg",
+      "origin": [
+        "スポレート周辺の固有品種",
+        "高木仕立てで伝統栽培"
+      ],
+      "feature": [
+        "近年再評価の希少白。",
+        "厚みある果実味と豊かな酸"
+      ],
+      "local": {
+        "name": "トリュフの卵料理",
+        "note": "果実味が濃厚な卵料理と調和する",
+        "photo": "photos/umbria_03_local.jpg"
+      },
+      "jp": {
+        "name": "だし巻き卵",
+        "note": "卵料理との親和性が高い",
+        "photo": "photos/umbria_03_jp.jpg"
+      }
+    }
+  ]
+}

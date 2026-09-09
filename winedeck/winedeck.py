@@ -26,29 +26,33 @@ GOTHIC = "'Noto Sans CJK JP','Yu Gothic','Hiragino Sans',sans-serif"
 # ---- タイプ別パレット（承認済み・実フィード抽出色ベース）----
 # bg1,bg2=背景グラデ / ink=本文 / sub=補助 / accent=見出し(=答え) / gold=金トリム
 # frame=枠 / light=明地か / motif=drop|bubbles|none / tag=フッター英字
+# ink（本文文字色）は視認性統一のため二値化：明地=濃いグレー、暗地=白
+INK_LIGHT = "#2B2B2B"
+INK_DARK = "#F5F5F0"
+
 PAL = {
- "white":  dict(bg1="#F4EEDD", bg2="#E4D6B4", ink="#34291A", sub="#6E5C3C",
+ "white":  dict(bg1="#F4EEDD", bg2="#E4D6B4", ink=INK_LIGHT, sub="#6E5C3C",
                 accent="#A6791F", gold="#B8912F", frame="#B8912F", light=True,
                 motif="drop", tag="WHITE"),
- "red":    dict(bg1="#4A1220", bg2="#160609", ink="#F3EBDD", sub="#C9BCA6",
+ "red":    dict(bg1="#4A1220", bg2="#160609", ink=INK_DARK, sub="#C9BCA6",
                 accent="#E7CE86", gold="#C9A24B", frame="#C9A24B", light=False,
                 motif="drop", tag="RED"),
- "spark":  dict(bg1="#F8F1D6", bg2="#E7CC84", ink="#4A3A12", sub="#7A6428",
+ "spark":  dict(bg1="#F8F1D6", bg2="#E7CC84", ink=INK_LIGHT, sub="#7A6428",
                 accent="#B8891E", gold="#B8912F", frame="#B8912F", light=True,
                 motif="bubbles", tag="SPARKLING"),
- "rose":   dict(bg1="#F3DBD7", bg2="#E0AAA6", ink="#5A2A30", sub="#8A5058",
+ "rose":   dict(bg1="#F3DBD7", bg2="#E0AAA6", ink=INK_LIGHT, sub="#8A5058",
                 accent="#AE5966", gold="#B07782", frame="#B07782", light=True,
                 motif="drop", tag="ROSATO"),
- "orange": dict(bg1="#ECC488", bg2="#C1742E", ink="#47270E", sub="#6E4418",
+ "orange": dict(bg1="#ECC488", bg2="#C1742E", ink=INK_LIGHT, sub="#6E4418",
                 accent="#8F3F12", gold="#9C5A1E", frame="#9C5A1E", light=True,
                 motif="drop", tag="ORANGE"),
- "sweet":  dict(bg1="#F2D888", bg2="#C6942A", ink="#48360A", sub="#7A5A16",
+ "sweet":  dict(bg1="#F2D888", bg2="#C6942A", ink=INK_LIGHT, sub="#7A5A16",
                 accent="#8A5410", gold="#A6791F", frame="#A6791F", light=True,
                 motif="drop", tag="DOLCE"),
- "study":  dict(bg1="#1A2C46", bg2="#0A1120", ink="#EAF0F7", sub="#A9BAD2",
+ "study":  dict(bg1="#1A2C46", bg2="#0A1120", ink=INK_DARK, sub="#A9BAD2",
                 accent="#6BA0E0", gold="#C9A24B", frame="#C9A24B", light=False,
                 motif="none", tag="STUDY"),
- "grape":  dict(bg1="#1B1720", bg2="#050406", ink="#F0E9DC", sub="#B8AE9E",
+ "grape":  dict(bg1="#1B1720", bg2="#050406", ink=INK_DARK, sub="#B8AE9E",
                 accent="#C9A24B", gold="#C9A24B", frame="#C9A24B", light=False,
                 motif="none", tag="GRAPE"),
 }
@@ -170,6 +174,66 @@ def rows_slide(wine_type, eyebrow, title, rows, num=None, total=9, grape=None,
     if closing:
         b.append(_t(M, y+40, closing, 30, p["accent"], MINCHO, "600"))
     if p["motif"]!="none": b.append(_motif(p, W-150, 250, 54))
+    b.append(_footer(p, num, total))
+    return _svg(p, uid, "".join(b))
+
+def _img(x, y, w, h, href, uid, tag, rx=8):
+    """角丸クリップ付き画像。href は data URI（base64）を想定。"""
+    if not href:
+        return (f'<rect x="{x}" y="{y}" width="{w}" height="{h}" rx="{rx}" '
+                f'fill="#00000022" stroke="#00000033" stroke-width="1"/>')
+    cid = f"clip{uid}_{tag}"
+    return (f'<clipPath id="{cid}"><rect x="{x}" y="{y}" width="{w}" height="{h}" rx="{rx}"/></clipPath>'
+            f'<image x="{x}" y="{y}" width="{w}" height="{h}" href="{href}" '
+            f'preserveAspectRatio="xMidYMid slice" clip-path="url(#{cid})"/>')
+
+def profile_slide(wine_type, eyebrow, name_it, name_kana, grape_photo, origin_lines,
+                  feature_lines, local, jp, num=None, total=9, grape=None):
+    """品種プロファイル1枚完結カード。
+    grape_photo = data URI（任意）
+    origin_lines / feature_lines = 短文のリスト（各1〜2行、自動折り返し無し）
+    local / jp = {"name":.., "note":.., "photo": data URI（任意）}
+    """
+    p=_prep(wine_type, grape); uid=p["_uid"]; b=[]
+    b.append(_eyebrow(p, M, 128, eyebrow))
+
+    photo_y, photo_h = 152, 328
+    b.append(_img(M, photo_y, W-2*M, photo_h, grape_photo, uid, "grape", rx=6))
+    b.append(f'<rect x="{M}" y="{photo_y}" width="{W-2*M}" height="{photo_h}" fill="none" '
+             f'stroke="{p["frame"]}" stroke-width="1.2" stroke-opacity="0.6" rx="6"/>')
+
+    name_y = photo_y + photo_h + 62
+    b.append(_t(M, name_y, name_it, 50, p["ink"], MINCHO, "700"))
+    b.append(_t(M, name_y+38, name_kana, 25, p["sub"], GOTHIC, "500", spacing="2"))
+
+    hy = name_y + 66
+    b.append(_hair(p, M, W-M, hy, op="0.4"))
+
+    oy = hy + 38
+    b.append(_t(M, oy, "由来", 19, p["gold"], GOTHIC, "600", spacing="2"))
+    for i, line in enumerate(origin_lines[:2]):
+        b.append(_t(M, oy+32+i*31, line, 24, p["ink"], GOTHIC))
+
+    fy = oy + 32 + 2*31 + 28
+    b.append(_t(M, fy, "特徴", 19, p["gold"], GOTHIC, "600", spacing="2"))
+    for i, line in enumerate(feature_lines[:2]):
+        b.append(_t(M, fy+32+i*31, line, 24, p["ink"], GOTHIC))
+
+    th = 128
+    py = fy + 32 + 2*31 + 36
+    tx = M + th + 26
+    col_w = (W - M) - tx
+    b.append(_img(M, py, th, th, local.get("photo"), uid, "local"))
+    b.append(_t(tx, py+28, "現地ペアリング", 18, p["gold"], GOTHIC, "600", spacing="1"))
+    b.append(_t(tx, py+62, local["name"], 27, p["ink"], MINCHO, "600"))
+    b.append(_t(tx, py+94, local["note"], 21, p["sub"], GOTHIC))
+
+    py2 = py + th + 30
+    b.append(_img(M, py2, th, th, jp.get("photo"), uid, "jp"))
+    b.append(_t(tx, py2+28, "日本食ペアリング", 18, p["gold"], GOTHIC, "600", spacing="1"))
+    b.append(_t(tx, py2+62, jp["name"], 27, p["ink"], MINCHO, "600"))
+    b.append(_t(tx, py2+94, jp["note"], 21, p["sub"], GOTHIC))
+
     b.append(_footer(p, num, total))
     return _svg(p, uid, "".join(b))
 

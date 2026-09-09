@@ -1,0 +1,84 @@
+{
+  "name": "abruzzo",
+  "wine_type": "red",
+  "slides": [
+    {
+      "kind": "profile",
+      "wine_type": "red",
+      "eyebrow": "ABRUZZO",
+      "name_it": "Montepulciano d'Abruzzo",
+      "name_kana": "モンテプルチアーノ",
+      "grape_photo": "photos/abruzzo_01_grape.jpg",
+      "origin": [
+        "トスカーナの町名と混同",
+        "実はアブルッツォ原産品種"
+      ],
+      "feature": [
+        "濃紫色。ブラックチェリーと",
+        "プラム、まろやかな渋み"
+      ],
+      "local": {
+        "name": "羊肉の串焼き",
+        "note": "羊の脂と濃厚な果実味が合う",
+        "photo": "photos/abruzzo_01_local.jpg"
+      },
+      "jp": {
+        "name": "焼肉（カルビ）",
+        "note": "甘みある果実味が甘辛だれと調和する",
+        "photo": "photos/abruzzo_01_jp.jpg"
+      }
+    },
+    {
+      "kind": "profile",
+      "wine_type": "white",
+      "eyebrow": "ABRUZZO",
+      "name_it": "Pecorino",
+      "name_kana": "ペコリーノ",
+      "grape_photo": "photos/abruzzo_02_grape.jpg",
+      "origin": [
+        "羊の放牧路で見つかる品種",
+        "80年代に復活し評価上昇"
+      ],
+      "feature": [
+        "近年再評価の希少白。",
+        "柑橘とハーブ、豊かな酸"
+      ],
+      "local": {
+        "name": "ペコリーノチーズ／魚介パスタ",
+        "note": "酸が旨みと好相性",
+        "photo": "photos/abruzzo_02_local.jpg"
+      },
+      "jp": {
+        "name": "柚子胡椒の鶏料理",
+        "note": "柑橘香が和の柑橘と共鳴する",
+        "photo": "photos/abruzzo_02_jp.jpg"
+      }
+    },
+    {
+      "kind": "profile",
+      "wine_type": "white",
+      "eyebrow": "ABRUZZO",
+      "name_it": "Cococciola",
+      "name_kana": "ココッチョラ",
+      "grape_photo": "photos/abruzzo_03_grape.jpg",
+      "origin": [
+        "アブルッツォ沿岸の土着種",
+        "古くから混醸用に栽培"
+      ],
+      "feature": [
+        "希少白。フレッシュな柑橘と",
+        "ハーブ、軽快な酸"
+      ],
+      "local": {
+        "name": "アサリのスパゲッティ",
+        "note": "軽快な酸が魚介と好相性",
+        "photo": "photos/abruzzo_03_local.jpg"
+      },
+      "jp": {
+        "name": "あさりの酒蒸し／刺身",
+        "note": "柑橘香が酸味使いと調和する",
+        "photo": "photos/abruzzo_03_jp.jpg"
+      }
+    }
+  ]
+}

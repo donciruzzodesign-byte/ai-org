@@ -1,0 +1,110 @@
+{
+  "name": "toscana",
+  "wine_type": "red",
+  "slides": [
+    {
+      "kind": "profile",
+      "wine_type": "red",
+      "eyebrow": "TOSCANA",
+      "name_it": "Sangiovese",
+      "name_kana": "サンジョヴェーゼ",
+      "grape_photo": "photos/toscana_01_grape.jpg",
+      "origin": [
+        "ユピテルの血が名前の由来",
+        "トスカーナを代表する品種"
+      ],
+      "feature": [
+        "キャンティの主軸。チェリーと",
+        "ハーブ、高酸でしっかり渋み"
+      ],
+      "local": {
+        "name": "ビステッカ",
+        "note": "高い酸が赤身肉の旨みを引き立てる",
+        "photo": "photos/toscana_01_local.jpg"
+      },
+      "jp": {
+        "name": "牛タン塩焼き",
+        "note": "チェリー様の酸味が脂と好相性",
+        "photo": "photos/toscana_01_jp.jpg"
+      }
+    },
+    {
+      "kind": "profile",
+      "wine_type": "white",
+      "eyebrow": "TOSCANA",
+      "name_it": "Vernaccia di San Gimignano",
+      "name_kana": "ヴェルナッチャ",
+      "grape_photo": "photos/toscana_02_grape.jpg",
+      "origin": [
+        "13世紀にダンテも言及",
+        "66年伊初のDOC認定品種"
+      ],
+      "feature": [
+        "トスカーナ唯一の白DOCG。",
+        "アーモンドと柑橘、ほろ苦い余韻"
+      ],
+      "local": {
+        "name": "リボッリータ",
+        "note": "ほろ苦さが素朴な家庭料理と調和する",
+        "photo": "photos/toscana_02_local.jpg"
+      },
+      "jp": {
+        "name": "天ぷら",
+        "note": "苦味と酸のバランスが油分料理と合う",
+        "photo": "photos/toscana_02_jp.jpg"
+      }
+    },
+    {
+      "kind": "profile",
+      "wine_type": "red",
+      "eyebrow": "TOSCANA",
+      "name_it": "Canaiolo Nero",
+      "name_kana": "カナイオーロ・ネーロ",
+      "grape_photo": "photos/toscana_03_grape.jpg",
+      "origin": [
+        "古くからキアンティの脇役",
+        "サンジョヴェーゼ以前の主力"
+      ],
+      "feature": [
+        "やわらかい渋みと",
+        "チェリー香が特徴"
+      ],
+      "local": {
+        "name": "猪肉のサルシッチャ",
+        "note": "柔らかな渋みが素朴さと調和する",
+        "photo": "photos/toscana_03_local.jpg"
+      },
+      "jp": {
+        "name": "肉じゃが／筑前煮",
+        "note": "穏やかな渋みが根菜の甘みと合う",
+        "photo": "photos/toscana_03_jp.jpg"
+      }
+    },
+    {
+      "kind": "profile",
+      "wine_type": "white",
+      "eyebrow": "TOSCANA",
+      "name_it": "Ansonica",
+      "name_kana": "アンソニカ",
+      "grape_photo": "photos/toscana_04_grape.jpg",
+      "origin": [
+        "シチリア原産が海を渡る",
+        "エルバ島などで栽培継承"
+      ],
+      "feature": [
+        "海岸トスカーナの白。",
+        "アプリコットと潮のニュアンス"
+      ],
+      "local": {
+        "name": "カチュッコ",
+        "note": "潮のミネラル感が海の幸と調和する",
+        "photo": "photos/toscana_04_local.jpg"
+      },
+      "jp": {
+        "name": "貝の酒蒸し／干物",
+        "note": "塩気ミネラルが旨みを引き立てる",
+        "photo": "photos/toscana_04_jp.jpg"
+      }
+    }
+  ]
+}

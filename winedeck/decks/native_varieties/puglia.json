@@ -1,0 +1,110 @@
+{
+  "name": "puglia",
+  "wine_type": "red",
+  "slides": [
+    {
+      "kind": "profile",
+      "wine_type": "red",
+      "eyebrow": "PUGLIA",
+      "name_it": "Primitivo",
+      "name_kana": "プリミティーヴォ",
+      "grape_photo": "photos/puglia_01_grape.jpg",
+      "origin": [
+        "クロアチア系品種が起源",
+        "ジンファンデルと同一品種"
+      ],
+      "feature": [
+        "ジンファンデルと同一種。",
+        "凝縮果実香と高アルコール"
+      ],
+      "local": {
+        "name": "豚肉のロール焼き",
+        "note": "凝縮果実味が濃厚な肉料理と合う",
+        "photo": "photos/puglia_01_local.jpg"
+      },
+      "jp": {
+        "name": "黒毛和牛の焼肉",
+        "note": "甘い果実味が濃厚なたれと合う",
+        "photo": "photos/puglia_01_jp.jpg"
+      }
+    },
+    {
+      "kind": "profile",
+      "wine_type": "red",
+      "eyebrow": "PUGLIA",
+      "name_it": "Negroamaro",
+      "name_kana": "ネグロアマーロ",
+      "grape_photo": "photos/puglia_02_grape.jpg",
+      "origin": [
+        "サレント半島の土着品種",
+        "黒く苦いが名前の由来"
+      ],
+      "feature": [
+        "プラムとハーブ、",
+        "ほろ苦い力強さ"
+      ],
+      "local": {
+        "name": "肉ラグーのオレッキエッテ",
+        "note": "ほろ苦さが後味を締める",
+        "photo": "photos/puglia_02_local.jpg"
+      },
+      "jp": {
+        "name": "焼き鳥（レバー）",
+        "note": "ほろ苦さが旨味の強い部位と合う",
+        "photo": "photos/puglia_02_jp.jpg"
+      }
+    },
+    {
+      "kind": "profile",
+      "wine_type": "rose",
+      "eyebrow": "PUGLIA",
+      "name_it": "Bombino Nero",
+      "name_kana": "ボンビーノ・ネーロ",
+      "grape_photo": "photos/puglia_03_grape.jpg",
+      "origin": [
+        "プーリア固有の希少品種",
+        "ロゼ用DOCGの主要品種"
+      ],
+      "feature": [
+        "ロゼの名品種。淡色で",
+        "チェリーと花、軽やかな酸"
+      ],
+      "local": {
+        "name": "タコのサラダ",
+        "note": "軽やかな酸が魚介料理と好相性",
+        "photo": "photos/puglia_03_local.jpg"
+      },
+      "jp": {
+        "name": "鯛の塩焼き／たこわさ",
+        "note": "果実味とタコの旨みが調和する",
+        "photo": "photos/puglia_03_jp.jpg"
+      }
+    },
+    {
+      "kind": "profile",
+      "wine_type": "red",
+      "eyebrow": "PUGLIA",
+      "name_it": "Nero di Troia",
+      "name_kana": "ネロ・ディ・トロイア",
+      "grape_photo": "photos/puglia_04_grape.jpg",
+      "origin": [
+        "トロイアの名を持つ伝説品種",
+        "難民伝来の逸話が残る"
+      ],
+      "feature": [
+        "力強い赤。ブラックベリーと",
+        "胡椒、しっかりした渋み"
+      ],
+      "local": {
+        "name": "ラム肉のグリル",
+        "note": "力強い渋みが赤身肉に拮抗する",
+        "photo": "photos/puglia_04_local.jpg"
+      },
+      "jp": {
+        "name": "牛肉の網焼き",
+        "note": "スパイシーな果実味がたれと合う",
+        "photo": "photos/puglia_04_jp.jpg"
+      }
+    }
+  ]
+}

@@ -1,0 +1,84 @@
+{
+  "name": "friuli-venezia-giulia",
+  "wine_type": "red",
+  "slides": [
+    {
+      "kind": "profile",
+      "wine_type": "white",
+      "eyebrow": "FRIULI V.G.",
+      "name_it": "Friulano",
+      "name_kana": "フリウラーノ",
+      "grape_photo": "photos/friuli-venezia-giulia_01_grape.jpg",
+      "origin": [
+        "フリウリの伝統土着品種",
+        "2007年トカイ論争で改名"
+      ],
+      "feature": [
+        "旧トカイ。洋梨とアーモンド、",
+        "ほのかな苦味のミネラル"
+      ],
+      "local": {
+        "name": "生ハムとフリコ",
+        "note": "ミネラル感が塩気に寄り添う",
+        "photo": "photos/friuli-venezia-giulia_01_local.jpg"
+      },
+      "jp": {
+        "name": "焼き鳥（塩）",
+        "note": "ほのかな苦味が塩味と好相性",
+        "photo": "photos/friuli-venezia-giulia_01_jp.jpg"
+      }
+    },
+    {
+      "kind": "profile",
+      "wine_type": "red",
+      "eyebrow": "FRIULI V.G.",
+      "name_it": "Refosco",
+      "name_kana": "レフォスコ",
+      "grape_photo": "photos/friuli-venezia-giulia_02_grape.jpg",
+      "origin": [
+        "古代ローマ時代からの品種",
+        "プリニウスが言及と伝わる"
+      ],
+      "feature": [
+        "濃紫色。ブラックベリーと",
+        "黒胡椒、しっかりした酸と渋み"
+      ],
+      "local": {
+        "name": "豚の頭肉ソーセージ",
+        "note": "スパイス香が脂に合う",
+        "photo": "photos/friuli-venezia-giulia_02_local.jpg"
+      },
+      "jp": {
+        "name": "豚の生姜焼き",
+        "note": "黒胡椒感が生姜だれと響き合う",
+        "photo": "photos/friuli-venezia-giulia_02_jp.jpg"
+      }
+    },
+    {
+      "kind": "profile",
+      "wine_type": "white",
+      "eyebrow": "FRIULI V.G.",
+      "name_it": "Ribolla Gialla",
+      "name_kana": "リボッラ・ジャッラ",
+      "grape_photo": "photos/friuli-venezia-giulia_03_grape.jpg",
+      "origin": [
+        "14世紀文献に登場する品種",
+        "オレンジワインで再評価"
+      ],
+      "feature": [
+        "コッリオの白。シャープな酸で",
+        "青リンゴと柑橘の香り"
+      ],
+      "local": {
+        "name": "フリコと生ハム",
+        "note": "高い酸が脂を切る",
+        "photo": "photos/friuli-venezia-giulia_03_local.jpg"
+      },
+      "jp": {
+        "name": "酢の物",
+        "note": "シャープな酸が和の酸味使いと合う",
+        "photo": "photos/friuli-venezia-giulia_03_jp.jpg"
+      }
+    }
+  ]
+}

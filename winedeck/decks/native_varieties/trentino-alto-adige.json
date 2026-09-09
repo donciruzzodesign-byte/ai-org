@@ -1,0 +1,110 @@
+{
+  "name": "trentino-alto-adige",
+  "wine_type": "red",
+  "slides": [
+    {
+      "kind": "profile",
+      "wine_type": "red",
+      "eyebrow": "TRENTINO-A.A.",
+      "name_it": "Teroldego",
+      "name_kana": "テロルデゴ",
+      "grape_photo": "photos/trentino-alto-adige_01_grape.jpg",
+      "origin": [
+        "カンポロターリ平野起源",
+        "ティロル地方の名に由来"
+      ],
+      "feature": [
+        "濃紫色。ブラックベリーと",
+        "スミレ、しっかりした渋み"
+      ],
+      "local": {
+        "name": "ポレンタと肉の煮込み",
+        "note": "力強い渋みが脂に負けない",
+        "photo": "photos/trentino-alto-adige_01_local.jpg"
+      },
+      "jp": {
+        "name": "牛すき焼き",
+        "note": "濃厚な果実味が甘辛味と調和する",
+        "photo": "photos/trentino-alto-adige_01_jp.jpg"
+      }
+    },
+    {
+      "kind": "profile",
+      "wine_type": "red",
+      "eyebrow": "TRENTINO-A.A.",
+      "name_it": "Lagrein",
+      "name_kana": "ラグレイン",
+      "grape_photo": "photos/trentino-alto-adige_02_grape.jpg",
+      "origin": [
+        "中世から南チロルで栽培",
+        "修道院文書に記録が残る"
+      ],
+      "feature": [
+        "南チロル産。ダークチェリーと",
+        "モカ、力強い渋み"
+      ],
+      "local": {
+        "name": "シュペックとザワークラウト",
+        "note": "燻製香が果実味と響き合う",
+        "photo": "photos/trentino-alto-adige_02_local.jpg"
+      },
+      "jp": {
+        "name": "うなぎの蒲焼き",
+        "note": "スモーキーさと甘辛だれが合う",
+        "photo": "photos/trentino-alto-adige_02_jp.jpg"
+      }
+    },
+    {
+      "kind": "profile",
+      "wine_type": "white",
+      "eyebrow": "TRENTINO-A.A.",
+      "name_it": "Nosiola",
+      "name_kana": "ノジオーラ",
+      "grape_photo": "photos/trentino-alto-adige_03_grape.jpg",
+      "origin": [
+        "ヘーゼルナッツ香が名の由来",
+        "ヴィンサント用に伝承"
+      ],
+      "feature": [
+        "淡色でナッツと白い花の香り、",
+        "軽やかな酸"
+      ],
+      "local": {
+        "name": "カネーデルリ",
+        "note": "ナッツ香がチーズの香ばしさと合う",
+        "photo": "photos/trentino-alto-adige_03_local.jpg"
+      },
+      "jp": {
+        "name": "冷やし茶碗蒸し",
+        "note": "ナッツ香が上品な出汁と調和する",
+        "photo": "photos/trentino-alto-adige_03_jp.jpg"
+      }
+    },
+    {
+      "kind": "profile",
+      "wine_type": "red",
+      "eyebrow": "TRENTINO-A.A.",
+      "name_it": "Schiava",
+      "name_kana": "スキアーヴァ",
+      "grape_photo": "photos/trentino-alto-adige_04_grape.jpg",
+      "origin": [
+        "スラヴ起源の説がある品種",
+        "かつて南チロル最多品種"
+      ],
+      "feature": [
+        "最も伝統的な赤。淡色で",
+        "イチゴとアーモンド、穏やかな渋み"
+      ],
+      "local": {
+        "name": "シュペックとチーズ",
+        "note": "軽い渋みが冷製前菜と合う",
+        "photo": "photos/trentino-alto-adige_04_local.jpg"
+      },
+      "jp": {
+        "name": "冷しゃぶ",
+        "note": "軽快な果実味がさっぱり系と合う",
+        "photo": "photos/trentino-alto-adige_04_jp.jpg"
+      }
+    }
+  ]
+}

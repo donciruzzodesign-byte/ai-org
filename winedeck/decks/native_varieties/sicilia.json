@@ -1,0 +1,110 @@
+{
+  "name": "sicilia",
+  "wine_type": "red",
+  "slides": [
+    {
+      "kind": "profile",
+      "wine_type": "red",
+      "eyebrow": "SICILIA",
+      "name_it": "Nero d'Avola",
+      "name_kana": "ネロ・ダーヴォラ",
+      "grape_photo": "photos/sicilia_01_grape.jpg",
+      "origin": [
+        "アヴォラの町名が由来",
+        "シチリア最重要な黒品種"
+      ],
+      "feature": [
+        "シチリア代表の黒葡萄。",
+        "プラムとブラックベリーの香り"
+      ],
+      "local": {
+        "name": "パスタ・アッラ・ノルマ",
+        "note": "果実味が野菜の甘みと調和する",
+        "photo": "photos/sicilia_01_local.jpg"
+      },
+      "jp": {
+        "name": "茄子の煮浸し／すき焼き",
+        "note": "コクが甘辛味と好相性",
+        "photo": "photos/sicilia_01_jp.jpg"
+      }
+    },
+    {
+      "kind": "profile",
+      "wine_type": "red",
+      "eyebrow": "SICILIA",
+      "name_it": "Nerello Mascalese",
+      "name_kana": "ネレッロ・マスカレーゼ",
+      "grape_photo": "photos/sicilia_02_grape.jpg",
+      "origin": [
+        "マスカリ平野が名の由来",
+        "エトナ山麓で栽培継承"
+      ],
+      "feature": [
+        "「伊のピノ・ノワール」。",
+        "エトナ産で淡色エレガント"
+      ],
+      "local": {
+        "name": "兎肉の煮込み",
+        "note": "火山ミネラルが素朴な肉料理と合う",
+        "photo": "photos/sicilia_02_local.jpg"
+      },
+      "jp": {
+        "name": "鶏の水炊き／焼き鳥（塩）",
+        "note": "繊細な酸が出汁と共鳴する",
+        "photo": "photos/sicilia_02_jp.jpg"
+      }
+    },
+    {
+      "kind": "profile",
+      "wine_type": "white",
+      "eyebrow": "SICILIA",
+      "name_it": "Grillo",
+      "name_kana": "グリッロ",
+      "grape_photo": "photos/sicilia_03_grape.jpg",
+      "origin": [
+        "19世紀にマルサーラで誕生",
+        "カタラットと交配の品種"
+      ],
+      "feature": [
+        "マルサラの原料。柑橘と",
+        "トロピカル、しっかりした酸"
+      ],
+      "local": {
+        "name": "魚介クスクス",
+        "note": "トロピカルな香りが魚介の旨みと合う",
+        "photo": "photos/sicilia_03_local.jpg"
+      },
+      "jp": {
+        "name": "いわしの梅煮",
+        "note": "柑橘香と青魚の旨みが好相性",
+        "photo": "photos/sicilia_03_jp.jpg"
+      }
+    },
+    {
+      "kind": "profile",
+      "wine_type": "white",
+      "eyebrow": "SICILIA",
+      "name_it": "Catarratto",
+      "name_kana": "カタラット",
+      "grape_photo": "photos/sicilia_04_grape.jpg",
+      "origin": [
+        "滝を意味する名が由来",
+        "シチリア最多の白品種"
+      ],
+      "feature": [
+        "シチリア最多の白。",
+        "ハーブと柑橘、爽やかな酸"
+      ],
+      "local": {
+        "name": "パーネ・クンザート",
+        "note": "ハーブ香がオレガノと調和する",
+        "photo": "photos/sicilia_04_local.jpg"
+      },
+      "jp": {
+        "name": "大葉の冷奴／香味野菜",
+        "note": "ハーブ香が薬味と自然に合う",
+        "photo": "photos/sicilia_04_jp.jpg"
+      }
+    }
+  ]
+}

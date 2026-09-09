@@ -29,7 +29,7 @@ JSON仕様（deck.example.json 参照）:
 - --outdir 省略時のデフォルトは ~/Desktop/CUBOCCI_STUDIO/weekly/{--date}-wine/carousel/
   （--date 省略時は実行日）。--outdir を明示すればそちらを優先。
 """
-import sys, json, argparse, os, datetime
+import sys, json, argparse, os, datetime, base64, mimetypes
 import winedeck as wd
 
 # 1行あたりの全角換算・目安（枠内に収まる上限の実測ベース）
@@ -37,7 +37,23 @@ LIMITS = {
     "q": 12, "answer": 12, "subtitle": 16,        # cover
     "title": 13, "value": 26, "note": 30,         # 中面
     "event": 26, "point": 24, "head": 18,
+    "name_it": 20, "name_kana": 14, "origin": 16, "feature": 16,
+    "pair_name": 15, "pair_note": 17,             # profile
 }
+
+_SPEC_DIR = None  # build() 実行中にセットする、photo相対パス解決用
+
+def _data_uri(path):
+    if not path:
+        return None
+    full = path if os.path.isabs(path) else os.path.join(_SPEC_DIR, path)
+    if not os.path.exists(full):
+        warn(f"photo not found: {full}")
+        return None
+    mime = mimetypes.guess_type(full)[0] or "image/jpeg"
+    with open(full, "rb") as f:
+        b64 = base64.b64encode(f.read()).decode("ascii")
+    return f"data:{mime};base64,{b64}"
 
 DESKTOP_DIR = os.path.expanduser("~/Desktop/CUBOCCI_STUDIO")
 WEEKLY_BASE_DIR = os.path.join(DESKTOP_DIR, "weekly")
@@ -56,7 +72,9 @@ def _check_len(field, text, limit):
     if wlen > limit:
         warn(f'{field}: 長すぎる可能性（目安{limit} / 実測{wlen:.0f}）→ "{text}"')
 
-def build(spec):
+def build(spec, spec_dir=None):
+    global _SPEC_DIR
+    _SPEC_DIR = spec_dir or os.getcwd()
     name = spec.get("name", "deck")
     dtype = spec.get("wine_type", "red")
     dgrape = spec.get("grape")
@@ -96,6 +114,19 @@ def build(spec):
             for pt in s["points"]: _check_len("point", pt, LIMITS["point"])
             slides.append(wd.summary_slide(wt, s["title"], s["points"],
                           cta=s.get("cta"), sub=s.get("sub"), num=i, total=total, grape=grape))
+        elif kind == "profile":
+            _check_len("name_it", s["name_it"], LIMITS["name_it"])
+            _check_len("name_kana", s["name_kana"], LIMITS["name_kana"])
+            for line in s["origin"]: _check_len("origin", line, LIMITS["origin"])
+            for line in s["feature"]: _check_len("feature", line, LIMITS["feature"])
+            local = dict(s["local"]); jp = dict(s["jp"])
+            for d, label in ((local, "local"), (jp, "jp")):
+                _check_len(f"{label}.name", d["name"], LIMITS["pair_name"])
+                _check_len(f"{label}.note", d["note"], LIMITS["pair_note"])
+                d["photo"] = _data_uri(d.get("photo"))
+            slides.append(wd.profile_slide(wt, s["eyebrow"], s["name_it"], s["name_kana"],
+                          _data_uri(s.get("grape_photo")), s["origin"], s["feature"],
+                          local, jp, num=i, total=total, grape=grape))
         else:
             raise ValueError(f"unknown kind: {kind}")
     return name, slides
@@ -112,7 +143,7 @@ def main():
     outdir = args.outdir if args.outdir is not None else resolve_outdir(args.date)
     with open(args.spec, encoding="utf-8") as f:
         spec = json.load(f)
-    name, slides = build(spec)
+    name, slides = build(spec, spec_dir=os.path.dirname(os.path.abspath(args.spec)))
     if args.svg_only:
         os.makedirs(f"{outdir}/svg", exist_ok=True)
         for i, s in enumerate(slides, 1):

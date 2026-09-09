@@ -1,0 +1,58 @@
+{
+  "name": "basilicata",
+  "wine_type": "red",
+  "slides": [
+    {
+      "kind": "profile",
+      "wine_type": "red",
+      "eyebrow": "BASILICATA",
+      "name_it": "Aglianico del Vulture",
+      "name_kana": "アリアニコ・ヴルトゥレ",
+      "grape_photo": "photos/basilicata_01_grape.jpg",
+      "origin": [
+        "ヴルトゥレ火山麓で発展",
+        "ギリシャ由来品種が北上"
+      ],
+      "feature": [
+        "火山性土壌。ミネラル感と",
+        "スパイス、力強い渋み"
+      ],
+      "local": {
+        "name": "豆のパスタ",
+        "note": "郷土料理に火山ミネラルが合う",
+        "photo": "photos/basilicata_01_local.jpg"
+      },
+      "jp": {
+        "name": "牛肉の炭火焼き",
+        "note": "スモーキーなミネラルが調和する",
+        "photo": "photos/basilicata_01_jp.jpg"
+      }
+    },
+    {
+      "kind": "profile",
+      "wine_type": "sweet",
+      "eyebrow": "BASILICATA",
+      "name_it": "Moscato del Vulture",
+      "name_kana": "モスカート・ヴルトゥレ",
+      "grape_photo": "photos/basilicata_02_grape.jpg",
+      "origin": [
+        "ヴルトゥレ山麓の甘口品種",
+        "古くから陰干しで醸造"
+      ],
+      "feature": [
+        "山麓の甘口・微発泡種。",
+        "白い花とマスカットの香り"
+      ],
+      "local": {
+        "name": "伝統菓子タラッリ・ドルチェ",
+        "note": "甘美な香りが調和する",
+        "photo": "photos/basilicata_02_local.jpg"
+      },
+      "jp": {
+        "name": "白桃のコンポート",
+        "note": "華やかな香りが上品な甘みと合う",
+        "photo": "photos/basilicata_02_jp.jpg"
+      }
+    }
+  ]
+}

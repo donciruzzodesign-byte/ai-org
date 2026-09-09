@@ -1,0 +1,110 @@
+{
+  "name": "piemonte",
+  "wine_type": "red",
+  "slides": [
+    {
+      "kind": "profile",
+      "wine_type": "red",
+      "eyebrow": "PIEMONTE",
+      "name_it": "Barbera",
+      "name_kana": "バルベーラ",
+      "grape_photo": "photos/piemonte_01_grape.jpg",
+      "origin": [
+        "18世紀末モンフェッラートが起源",
+        "80年代バリック熟成で評価一変"
+      ],
+      "feature": [
+        "濃いガーネット色。際立つ高い酸と",
+        "おだやかな渋みを持つ日常のワイン"
+      ],
+      "local": {
+        "name": "牛肉のブラザート",
+        "note": "高い酸が煮込みの脂を切ってくれる",
+        "photo": "photos/piemonte_01_local.jpg"
+      },
+      "jp": {
+        "name": "肉じゃが／すき焼き",
+        "note": "甘辛だれと酸のバランスが良い",
+        "photo": "photos/piemonte_01_jp.jpg"
+      }
+    },
+    {
+      "kind": "profile",
+      "wine_type": "white",
+      "eyebrow": "PIEMONTE",
+      "name_it": "Timorasso",
+      "name_kana": "ティモラッソ",
+      "grape_photo": "photos/piemonte_02_grape.jpg",
+      "origin": [
+        "中世から伝わる古代品種",
+        "90年代マッサ氏が復活させる"
+      ],
+      "feature": [
+        "希少白。若いうちは柑橘、",
+        "熟成で蜂蜜様の長熟白"
+      ],
+      "local": {
+        "name": "ヴィテッロ・トンナート",
+        "note": "コクのあるソースに骨格が負けない",
+        "photo": "photos/piemonte_02_local.jpg"
+      },
+      "jp": {
+        "name": "天ぷら（白身）",
+        "note": "ミネラルが出汁の旨みと調和する",
+        "photo": "photos/piemonte_02_jp.jpg"
+      }
+    },
+    {
+      "kind": "profile",
+      "wine_type": "red",
+      "eyebrow": "PIEMONTE",
+      "name_it": "Dolcetto",
+      "name_kana": "ドルチェット",
+      "grape_photo": "photos/piemonte_03_grape.jpg",
+      "origin": [
+        "16世紀から記録がある品種",
+        "名は甘い果実に由来する"
+      ],
+      "feature": [
+        "辛口。プラムとアーモンドの",
+        "ほろ苦さ、やわらかい渋み"
+      ],
+      "local": {
+        "name": "バーニャ・カウダ",
+        "note": "ソフトな渋みが油分と合う",
+        "photo": "photos/piemonte_03_local.jpg"
+      },
+      "jp": {
+        "name": "焼き鳥（レバー）",
+        "note": "軽い渋みが煮物系と調和する",
+        "photo": "photos/piemonte_03_jp.jpg"
+      }
+    },
+    {
+      "kind": "profile",
+      "wine_type": "red",
+      "eyebrow": "PIEMONTE",
+      "name_it": "Ruché",
+      "name_kana": "ルケ",
+      "grape_photo": "photos/piemonte_04_grape.jpg",
+      "origin": [
+        "モンフェッラート地区起源",
+        "修道士が広めたと伝わる"
+      ],
+      "feature": [
+        "希少品種。バラの華やかな香りと",
+        "スパイス感、見た目より力強い渋み"
+      ],
+      "local": {
+        "name": "アニョロッティ",
+        "note": "華やかな香りが肉料理を引き立てる",
+        "photo": "photos/piemonte_04_local.jpg"
+      },
+      "jp": {
+        "name": "麻婆豆腐",
+        "note": "スパイス感が山椒と共鳴する",
+        "photo": "photos/piemonte_04_jp.jpg"
+      }
+    }
+  ]
+}
