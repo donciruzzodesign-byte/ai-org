@@ -23,6 +23,8 @@
 各シーンに対応するキーワードで `fetch_broll` を呼ぶ。
 - keyword は英語の具体的なキーワード（例: "Italian vineyard sunset", "red wine pouring glass"）
 - clip_index は 1 始まりの連番（scene_number と同じ番号を使う）
+- 過去の週と同じ動画を使わないため、毎回違うキーワードにする。定番の言い回し（例: "red wine pouring glass"）を使い回さず、今週のテーマ（産地・品種・料理・季節・時間帯・構図）を具体的に織り込む（例: "Barolo hills autumn fog", "Nebbiolo grape harvest hands"）。1本の中でもシーンごとに別のキーワードにする
+- 取得ツールは使用済みクリップを自動で除外するが、「未使用の候補なし」と返ったら、別の角度のキーワードで再試行する
 
 ### ステップ3.5：AI動画クリップの選択的生成
 シーンのうち、ブランド統一感を出したい・実写ストックでは表現しきれないもの（商品ショット、こだわりの構図など）は、`fetch_broll`の代わりに`generate_scene_video`を呼ぶ。それ以外の汎用的な雰囲気カットは`fetch_broll`のままでよい。1シーンにつき`fetch_broll`と`generate_scene_video`はどちらか一方のみ呼ぶ。`generate_scene_video`は対応する`generate_scene_image`（ステップ2）より後に呼ぶこと（元画像が前提のため）。

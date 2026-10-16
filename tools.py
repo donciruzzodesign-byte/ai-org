@@ -1,6 +1,8 @@
 import os
 import re
 import json
+import subprocess
+import sys
 import requests
 from bs4 import BeautifulSoup
 from datetime import datetime, timedelta
@@ -8,6 +10,8 @@ from typing import Optional
 from urllib.parse import quote
 
 from tools_video import analyze_image
+
+ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 TOOL_DEFINITIONS = [
     {
@@ -134,6 +138,51 @@ TOOL_DEFINITIONS = [
                 "category": {"type": "string", "description": "wine または coffee"}
             },
             "required": ["category"]
+        }
+    },
+    {
+        "name": "write_file",
+        "description": (
+            "テキストファイルを新規作成・上書き保存します。winedeckのデッキJSON（"
+            "winedeck/decks/<name>/<name>.json）を作る際などに使います。"
+            "パスはこのプロジェクト（ai-org）直下からの相対パスで指定してください。"
+            "書き込み後は render_winedeck で実際にSVG/PNGを生成できます。"
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "path": {
+                    "type": "string",
+                    "description": "保存先の相対パス（例: winedeck/decks/my_deck/my_deck.json）"
+                },
+                "content": {
+                    "type": "string",
+                    "description": "ファイルに書き込む内容"
+                }
+            },
+            "required": ["path", "content"]
+        }
+    },
+    {
+        "name": "render_winedeck",
+        "description": (
+            "write_file で保存したwinedeckデッキJSONを実際にSVG/PNG画像に変換します。"
+            "デッキJSON作成後は必ずこのツールを呼び出し、画像として完成させてください。"
+            "口だけで『作りました』と言わず、必ずこのツールの実行結果を確認すること。"
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "deck_path": {
+                    "type": "string",
+                    "description": "デッキJSONの相対パス（例: winedeck/decks/my_deck/my_deck.json）"
+                },
+                "outdir": {
+                    "type": "string",
+                    "description": "出力先ディレクトリの相対パス。省略時は output/winedeck/<デッキ名>/ になる。"
+                }
+            },
+            "required": ["deck_path"]
         }
     }
 ]
@@ -639,6 +688,80 @@ def archive_reference_posts(category: str) -> str:
     return f"{len(files)}件を{archive_dir}へアーカイブしました"
 
 
+def _resolve_safe_path(rel_path: str) -> Optional[str]:
+    """ai-org配下に限定してパスを解決する。範囲外・.env等の機微ファイルはNoneを返す。"""
+    abs_path = rel_path if os.path.isabs(rel_path) else os.path.join(ROOT_DIR, rel_path)
+    abs_path = os.path.normpath(abs_path)
+    try:
+        common = os.path.commonpath([abs_path, ROOT_DIR])
+    except ValueError:
+        return None
+    if common != ROOT_DIR:
+        return None
+    basename = os.path.basename(abs_path)
+    if basename == ".env" or basename.endswith(".env"):
+        return None
+    return abs_path
+
+
+def write_file(path: str, content: str) -> str:
+    """テキストファイルを書き込む（ai-org配下限定・.env等は禁止）。"""
+    abs_path = _resolve_safe_path(path)
+    if abs_path is None:
+        return f"書き込み禁止パスです: {path}（ai-org配下の相対パスを指定してください）"
+    os.makedirs(os.path.dirname(abs_path), exist_ok=True)
+    with open(abs_path, "w", encoding="utf-8") as f:
+        f.write(content)
+    rel = os.path.relpath(abs_path, ROOT_DIR)
+    return f"保存しました: {rel}"
+
+
+def render_winedeck(deck_path: str, outdir: str = "") -> str:
+    """winedeckデッキJSONをSVG/PNGへレンダリングする（system cairo環境をvenv経由で自動使用）。"""
+    abs_deck = _resolve_safe_path(deck_path)
+    if abs_deck is None:
+        return f"アクセス禁止パスです: {deck_path}"
+    if not os.path.exists(abs_deck):
+        return f"デッキJSONが見つかりません: {deck_path}（先にwrite_fileで保存してください）"
+
+    if outdir:
+        abs_outdir = _resolve_safe_path(outdir)
+        if abs_outdir is None:
+            return f"アクセス禁止パスです: {outdir}"
+    else:
+        name = os.path.splitext(os.path.basename(abs_deck))[0]
+        abs_outdir = os.path.join(ROOT_DIR, "output", "winedeck", name)
+
+    venv_python = os.path.join(ROOT_DIR, ".render_venv", "bin", "python")
+    python_bin = venv_python if os.path.exists(venv_python) else sys.executable
+    render_script = os.path.join(ROOT_DIR, "winedeck", "render.py")
+    if not os.path.exists(render_script):
+        return "winedeck/render.py が見つかりません"
+
+    env = dict(os.environ)
+    env["DYLD_FALLBACK_LIBRARY_PATH"] = "/opt/homebrew/lib"
+    try:
+        result = subprocess.run(
+            [python_bin, render_script, abs_deck, "--outdir", abs_outdir],
+            cwd=os.path.join(ROOT_DIR, "winedeck"),
+            env=env, capture_output=True, text=True, timeout=180,
+        )
+    except Exception as e:
+        return f"レンダリング実行エラー: {e}"
+
+    rel_outdir = os.path.relpath(abs_outdir, ROOT_DIR)
+    if result.returncode != 0:
+        detail = (result.stderr or result.stdout).strip()[-1500:]
+        if "cairo" in detail.lower():
+            return (
+                "レンダリングエラー: system cairo（PNG書き出しに必要なライブラリ）が未セットアップの"
+                f"可能性があります。オーナーに `brew install cairo pango gdk-pixbuf libffi` と "
+                f"`font-noto-serif-cjk-jp` のセットアップを依頼してください。\n詳細:\n{detail}"
+            )
+        return f"レンダリングエラー:\n{detail}"
+    return f"レンダリング完了（{rel_outdir}/svg, {rel_outdir}/png）\n{result.stdout.strip()}"
+
+
 def execute_tool(name: str, inputs: dict) -> str:
     if name == "web_search":
         return web_search(inputs["query"], inputs.get("region", "jp-jp"))
@@ -656,4 +779,8 @@ def execute_tool(name: str, inputs: dict) -> str:
         return analyze_image(inputs["image_path"], inputs["question"])
     elif name == "scan_reference_posts":
         return scan_reference_posts(inputs["category"])
+    elif name == "write_file":
+        return write_file(inputs["path"], inputs["content"])
+    elif name == "render_winedeck":
+        return render_winedeck(inputs["deck_path"], inputs.get("outdir", ""))
     return f"不明なツール: {name}"

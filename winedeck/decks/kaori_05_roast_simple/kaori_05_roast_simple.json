@@ -1,0 +1,65 @@
+{
+  "name": "kaori_05_roast_simple",
+  "wine_type": "brand",
+  "slides": [
+    {
+      "kind": "cover",
+      "badge": "香りのきほん",
+      "q": ["ワインからコーヒー？", "実は樽のおかげです"],
+      "answer": "ロースト香",
+      "subtitle": "不思議な香りの正体"
+    },
+    {
+      "kind": "icon_grid",
+      "eyebrow": "代表的な香り",
+      "title": "香ばしい香りの正体",
+      "cols": 3,
+      "items": [
+        ["トースト", "香ばしい樽の香り", "../_assets/icons/roast/toast_badge.png"],
+        ["バニラ", "樽熟成の甘い香り", "../_assets/icons/spice/vanilla_badge.png"],
+        ["キャラメル", "樽熟成の甘い香り", "../_assets/icons/roast/caramel.png"],
+        ["コーヒー", "香ばしい樽の香り", "../_assets/icons/roast/coffee_bean.png"],
+        ["カカオ", "香ばしい樽の香り", "../_assets/icons/roast/cacao.png"]
+      ],
+      "closing": "すべてオーク樽の加熱が生む香り"
+    },
+    {
+      "kind": "rows",
+      "eyebrow": "どこから来る？",
+      "title": "香りの出どころ",
+      "rows": [
+        ["由来", "樽の内側を焦がす（トースト）ことで生まれる"]
+      ]
+    },
+    {
+      "kind": "icon_grid",
+      "eyebrow": "代表的なワイン",
+      "title": "代表的なワインでの現れ方",
+      "cols": 2,
+      "items": [
+        ["バローロ系", "じっくり樽熟成する赤ワインに多い", "../_assets/icons/roast/toast_badge.png"],
+        ["キャンティ・クラシコ・リゼルヴァ", "樽熟成の個性が強く出る", "../_assets/icons/roast/coffee_bean.png"]
+      ]
+    },
+    {
+      "kind": "bullets",
+      "eyebrow": "見分け方のコツ",
+      "title": "甘い香ばしさに注目",
+      "items": [
+        ["甘い香ばしさを感じたら", "樽熟成の個性を思い出すと造り方が見えてくる"]
+      ]
+    },
+    {
+      "kind": "summary",
+      "title": "ロースト香 まとめ",
+      "points": [
+        "ロースト香はオーク樽が生む香り",
+        "造り手の樽使いのセンスが光るポイント",
+        "次は樽熟成赤でコーヒー香を探そう"
+      ],
+      "cta": "次の樽熟成赤でコーヒー香を探してみよう",
+      "sub": "次回はなめし革・スモークの香りを深掘り",
+      "icon": "../_assets/icons/roast/coffee_bean.png"
+    }
+  ]
+}

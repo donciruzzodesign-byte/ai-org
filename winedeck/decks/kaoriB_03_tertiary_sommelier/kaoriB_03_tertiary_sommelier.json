@@ -1,0 +1,62 @@
+{
+  "name": "kaoriB_03_tertiary_sommelier",
+  "wine_type": "study",
+  "slides": [
+    {
+      "kind": "cover",
+      "badge": "3層シリーズ③",
+      "q": ["ブケの生成メカニズム", "酸化と還元の違いは？"],
+      "answer": "第三アロマ（ブケ）",
+      "subtitle": "酸化・還元が生む複雑香"
+    },
+    {
+      "kind": "rows",
+      "eyebrow": "定義",
+      "title": "定義",
+      "rows": [
+        ["定義", "樽熟成・瓶熟成の酸化的・還元的反応で生まれる複雑香"]
+      ]
+    },
+    {
+      "kind": "icon_grid",
+      "eyebrow": "樽熟成由来の要素",
+      "title": "樽熟成由来の要素",
+      "cols": 1,
+      "items": [
+        ["バニリン・ユージノール等", "バニラ・スパイス香（スパイス系シリーズと接続）", "../_assets/icons/spice/vanilla_badge.png"]
+      ]
+    },
+    {
+      "kind": "icon_grid",
+      "eyebrow": "瓶熟成由来の要素",
+      "title": "瓶熟成（還元的環境）由来",
+      "cols": 2,
+      "items": [
+        ["なめし革", "瓶熟成の還元的環境由来", "../_assets/icons/leather/leather_badge.png"],
+        ["ジビエ・トリュフ", "瓶熟成の還元的環境由来", "../_assets/icons/ferment/mushroom_badge.png"]
+      ],
+      "closing": "長期熟成の高級赤（バローロ／ブルネッロ）で発達"
+    },
+    {
+      "kind": "bullets",
+      "eyebrow": "試験での評価軸",
+      "title": "試験での評価軸",
+      "items": [
+        ["ブケの複雑性・調和度", "熟成度・ポテンシャルの判断材料"],
+        ["区別すべき点", "過度な酸化や還元欠陥（ブレット等）とは別物"]
+      ]
+    },
+    {
+      "kind": "summary",
+      "title": "第三アロマ まとめ",
+      "points": [
+        "ブケは酸化的・還元的反応が生む複雑香",
+        "樽由来はバニラ・スパイス、瓶由来は革・ジビエ",
+        "過度な酸化や還元欠陥とは明確に区別する"
+      ],
+      "cta": "保存して二次試験のコメント構成テンプレートに",
+      "sub": "次回は実践編、3層を同時に感じてみよう",
+      "icon": "../_assets/icons/leather/leather_badge.png"
+    }
+  ]
+}

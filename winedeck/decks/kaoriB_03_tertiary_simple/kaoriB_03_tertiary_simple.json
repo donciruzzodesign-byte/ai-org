@@ -1,0 +1,63 @@
+{
+  "name": "kaoriB_03_tertiary_simple",
+  "wine_type": "brand",
+  "slides": [
+    {
+      "kind": "cover",
+      "badge": "香りの正体",
+      "q": ["古いワインの複雑な香り", "それには名前がある"],
+      "answer": "第三アロマ",
+      "subtitle": "ブケと呼ばれる香り"
+    },
+    {
+      "kind": "rows",
+      "eyebrow": "第三アロマって何？",
+      "title": "第三アロマって何？",
+      "rows": [
+        ["由来", "樽や瓶の中で時間をかけて熟成する香り"],
+        ["別名", "ブケ（bouquet）とも呼ばれる"]
+      ]
+    },
+    {
+      "kind": "icon_grid",
+      "eyebrow": "具体的にはどんな香り？",
+      "title": "複雑で深みのある香り",
+      "cols": 2,
+      "items": [
+        ["ナッツ", "複雑で深みのある香り", "../_assets/icons/ferment/nuts_badge.png"],
+        ["ドライフルーツ", "複雑で深みのある香り", "../_assets/icons/fruits/plum.png"],
+        ["革", "複雑で深みのある香り", "../_assets/icons/leather/leather_badge.png"],
+        ["きのこ", "複雑で深みのある香り", "../_assets/icons/ferment/mushroom_badge.png"]
+      ],
+      "closing": "はちみつのような香りが出ることも"
+    },
+    {
+      "kind": "rows",
+      "eyebrow": "わかりやすい例",
+      "title": "バローロ・ブルネッロの例",
+      "rows": [
+        ["長期熟成タイプの赤", "何年も寝かせることで香りが豊かになる"]
+      ]
+    },
+    {
+      "kind": "bullets",
+      "eyebrow": "なぜ大事？",
+      "title": "若さと熟成の違いが分かる",
+      "items": [
+        ["この香りが分かると", "若いワインと熟成ワインの違いを見分けられる"]
+      ]
+    },
+    {
+      "kind": "summary",
+      "title": "第三アロマ まとめ",
+      "points": [
+        "ブケは時間をかけて育った香りの証",
+        "ナッツ・革・きのこなど複雑な香り",
+        "熟成赤ワインでこの香りを探してみて"
+      ],
+      "cta": "熟成感のある赤ワインでブケを探してみよう",
+      "sub": "次回は実践編、3層を同時に感じてみよう",
+      "icon": "../_assets/icons/leather/leather_badge.png"
+    }
+  ]
+}

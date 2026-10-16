@@ -1,5 +1,6 @@
 import os
 import json
+import hashlib
 import base64
 import time
 import requests
@@ -141,7 +142,7 @@ def _ensure_dir(path: str) -> None:
     os.makedirs(path, exist_ok=True)
 
 
-VISION_MODEL = "claude-sonnet-4-6"
+VISION_MODEL = "claude-sonnet-5"
 
 _MEDIA_TYPES = {
     ".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg",
@@ -334,6 +335,62 @@ def generate_scene_image(scene_description: str, scene_number: int, output_dir: 
         return f"画像生成エラー (scene {scene_number}): {e}"
 
 
+BROLL_PER_PAGE = 15
+BROLL_MAX_PAGES = 3
+
+
+def _broll_ledger_path(output_dir: str) -> str:
+    # output/YYYY-MM-DD-xxx/ の1つ上（output/）に、全週共通の使用済み台帳を置く
+    return os.path.join(os.path.dirname(os.path.abspath(output_dir)), ".broll_used.json")
+
+
+def _file_md5(path: str) -> str:
+    h = hashlib.md5()
+    with open(path, "rb") as f:
+        for chunk in iter(lambda: f.read(1024 * 1024), b""):
+            h.update(chunk)
+    return h.hexdigest()
+
+
+def _load_broll_ledger(output_dir: str) -> dict:
+    """使用済みB-rollの台帳（Pexels動画ID と ファイルmd5）。
+
+    初回は既存の output/*/broll/*.mp4 のmd5で台帳を初期化する（過去分のIDは不明なため）。
+    """
+    path = _broll_ledger_path(output_dir)
+    try:
+        with open(path, encoding="utf-8") as f:
+            data = json.load(f)
+        return {"ids": set(data.get("ids", [])), "md5": set(data.get("md5", []))}
+    except (OSError, ValueError):
+        pass
+    md5s = set()
+    root = os.path.dirname(os.path.abspath(output_dir))
+    try:
+        for d in os.listdir(root):
+            bdir = os.path.join(root, d, "broll")
+            if not os.path.isdir(bdir):
+                continue
+            for name in os.listdir(bdir):
+                if name.endswith(".mp4"):
+                    try:
+                        md5s.add(_file_md5(os.path.join(bdir, name)))
+                    except OSError:
+                        pass
+    except OSError:
+        pass
+    return {"ids": set(), "md5": md5s}
+
+
+def _save_broll_ledger(output_dir: str, ledger: dict) -> None:
+    path = _broll_ledger_path(output_dir)
+    try:
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump({"ids": sorted(ledger["ids"]), "md5": sorted(ledger["md5"])}, f)
+    except OSError:
+        pass
+
+
 def fetch_broll(keyword: str, clip_index: int, output_dir: str) -> str:
     api_key = os.environ.get("PEXELS_API_KEY")
     if not api_key:
@@ -347,28 +404,55 @@ def fetch_broll(keyword: str, clip_index: int, output_dir: str) -> str:
         return f"スキップ（既存）: {clip_path}"
 
     try:
+        ledger = _load_broll_ledger(output_dir)
         search_url = "https://api.pexels.com/videos/search"
         headers = {"Authorization": api_key}
-        params = {"query": keyword, "per_page": 5, "orientation": "landscape", "size": "large"}
-        resp = requests.get(search_url, headers=headers, params=params, timeout=30)
-        if resp.status_code != 200:
-            return f"Pexels検索エラー: {resp.status_code}"
+        found_any = False
 
-        videos = resp.json().get("videos", [])
-        if not videos:
+        for page in range(1, BROLL_MAX_PAGES + 1):
+            params = {"query": keyword, "per_page": BROLL_PER_PAGE, "page": page,
+                      "orientation": "landscape", "size": "large"}
+            resp = requests.get(search_url, headers=headers, params=params, timeout=30)
+            if resp.status_code != 200:
+                return f"Pexels検索エラー: {resp.status_code}"
+
+            videos = resp.json().get("videos", [])
+            if not videos:
+                break
+            found_any = True
+
+            for video in videos:
+                vid = video.get("id")
+                if vid is not None and vid in ledger["ids"]:
+                    continue  # 過去に使用済み
+
+                hd_files = [
+                    f for f in video["video_files"]
+                    if f.get("quality") in ("hd", "uhd") and f.get("width", 0) >= 1280
+                ]
+                file_url = (hd_files or video["video_files"])[0]["link"]
+
+                clip_resp = requests.get(file_url, timeout=120, stream=True)
+                tmp_path = clip_path + ".part"
+                with open(tmp_path, "wb") as f:
+                    for chunk in clip_resp.iter_content(chunk_size=8192):
+                        f.write(chunk)
+
+                digest = _file_md5(tmp_path)
+                if vid is not None:
+                    ledger["ids"].add(vid)
+                if digest in ledger["md5"]:
+                    os.remove(tmp_path)  # IDが違っても中身が過去クリップと同一
+                    continue
+                ledger["md5"].add(digest)
+                os.replace(tmp_path, clip_path)
+                _save_broll_ledger(output_dir, ledger)
+                return f"B-roll保存: {clip_path} (キーワード: {keyword})"
+
+        _save_broll_ledger(output_dir, ledger)
+        if not found_any:
             return f"B-roll素材が見つかりません: {keyword}"
-
-        hd_files = [
-            f for f in videos[0]["video_files"]
-            if f.get("quality") in ("hd", "uhd") and f.get("width", 0) >= 1280
-        ]
-        file_url = (hd_files or videos[0]["video_files"])[0]["link"]
-
-        clip_resp = requests.get(file_url, timeout=120, stream=True)
-        with open(clip_path, "wb") as f:
-            for chunk in clip_resp.iter_content(chunk_size=8192):
-                f.write(chunk)
-        return f"B-roll保存: {clip_path} (キーワード: {keyword})"
+        return f"B-roll素材が見つかりません（未使用の候補なし・使用済みのみ）: {keyword}。別のキーワードで再試行してください"
     except Exception as e:
         return f"B-roll取得エラー: {e}"
 

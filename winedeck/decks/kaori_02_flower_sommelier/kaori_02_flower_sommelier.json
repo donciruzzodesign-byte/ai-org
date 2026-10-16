@@ -1,0 +1,71 @@
+{
+  "name": "kaori_02_flower_sommelier",
+  "wine_type": "study",
+  "slides": [
+    {
+      "kind": "cover",
+      "badge": "系統別アロマ",
+      "q": ["試験に出る花の香り", "品種とリンクしてる？"],
+      "answer": "花系アロマ",
+      "subtitle": "ネッビオーロとモスカートの香り"
+    },
+    {
+      "kind": "rows",
+      "eyebrow": "位置づけ",
+      "title": "花系アロマの位置づけ",
+      "rows": [
+        ["分類", "第一アロマ（品種由来）"],
+        ["主な香気成分", "モノテルペン類・ノルイソプレノイド類"]
+      ]
+    },
+    {
+      "kind": "icon_grid",
+      "eyebrow": "代表品種とキーワード",
+      "title": "品種別のキーワード",
+      "cols": 3,
+      "items": [
+        ["ネッビオーロ", "スミレ・バラ", "../_assets/icons/flowers/violet.png"],
+        ["モスカート", "オレンジの花・マスカット", "../_assets/icons/flowers/orange_blossom.png"],
+        ["マルヴァジーア", "アカシア", "../_assets/icons/flowers/acacia.png"]
+      ],
+      "closing": "熟成すると紅茶のような枯れた花にも"
+    },
+    {
+      "kind": "icon_grid",
+      "eyebrow": "白vs赤の傾向",
+      "title": "白と赤、花の傾向差",
+      "cols": 3,
+      "items": [
+        ["アカシア", "白", "../_assets/icons/flowers/acacia.png"],
+        ["オレンジの花", "白", "../_assets/icons/flowers/orange_blossom.png"],
+        ["スイカズラ", "白", "../_assets/icons/flowers/honeysuckle.png"],
+        ["スミレ", "赤", "../_assets/icons/flowers/violet.png"],
+        ["バラ", "赤", "../_assets/icons/flowers/rose.png"],
+        ["牡丹", "赤", "../_assets/icons/flowers/peony.png"]
+      ],
+      "closing": "上段は白ワイン系、下段は赤ワイン系の花"
+    },
+    {
+      "kind": "bullets",
+      "eyebrow": "試験での狙われ方",
+      "title": "試験での狙われ方",
+      "items": [
+        ["スミレ表現", "ネッビオーロの典型マーカー表現"],
+        ["出題パターン", "香り表現と産地・品種の紐づけ問題"]
+      ],
+      "closing": "花の香り×品種のセットで暗記するのが近道"
+    },
+    {
+      "kind": "summary",
+      "title": "花系アロマ まとめ",
+      "points": [
+        "ネッビオーロはスミレ・バラが典型表現",
+        "白はアカシア・オレンジの花・スイカズラ中心",
+        "花の香り×品種はセットで暗記する"
+      ],
+      "cta": "保存してテイスティング前の最終確認に",
+      "sub": "次回は植物・ハーブの香りを深掘り",
+      "icon": "../_assets/icons/flowers/violet.png"
+    }
+  ]
+}

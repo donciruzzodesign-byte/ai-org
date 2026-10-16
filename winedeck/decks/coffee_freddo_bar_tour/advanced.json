@@ -1,0 +1,70 @@
+{
+  "name": "freddo_bar_tour_advanced",
+  "wine_type": "brand",
+  "slides": [
+    {
+      "kind": "cover",
+      "badge": "IIAC鑑定士対策",
+      "q": ["温度が下がると", "官能特性はどう変わる？"],
+      "answer": "官能特性の変化",
+      "subtitle": "地域文化と抽出理論で読み解く"
+    },
+    {
+      "kind": "icon_grid",
+      "eyebrow": "REGIONAL PROFILE",
+      "title": "地域別カフェ・フレッド",
+      "cols": 1,
+      "items": [
+        ["シチリア｜Granita di Caffè", "Passito di Pantelleria DOCとの対比構造", "icons/sicilia_granita.png"],
+        ["レッチェ｜Caffè Leccese", "Primitivo di Manduria DOCの果実味と呼応", "icons/lecce_caffe.png"],
+        ["トリノ｜Bicerin(1763〜)", "Barolo DOCGのタンニン構造とカカオが共鳴", "icons/torino_bicerin.png"]
+      ],
+      "closing": "各地のバール文化に根ざす、伝統の一杯。"
+    },
+    {
+      "kind": "bullets",
+      "eyebrow": "COMPARATIVE TASTING",
+      "title": "品種比較で読む対応",
+      "items": [
+        ["シチリア × Passito", "干しぶどう由来の凝縮甘味と焙煎苦味の対話"],
+        ["レッチェ × Primitivo di Manduria", "完熟果実のアルコール感とアーモンドの甘香"],
+        ["トリノ × Barolo", "ネッビオーロ由来の高タンニンとカカオの渋み"]
+      ],
+      "closing": "官能評価の応用トレーニングとして有効。"
+    },
+    {
+      "kind": "bullets",
+      "eyebrow": "SENSORY SCIENCE",
+      "title": "官能特性の変化",
+      "items": [
+        ["温度低下時の変化", "揮発性芳香成分の放散が減少しアロマが閉じる", "icons/temperatura_aroma.png"],
+        ["酸味・甘みの知覚", "感覚閾値が下がり相対的に強調される", "icons/acidity_lemon.png"],
+        ["適性豆の選定", "高地産シングルオリジン（酸主体）が好適", "icons/bright_acidity.png"]
+      ],
+      "closing": "ワインの低温提供と同じ知覚原理。"
+    },
+    {
+      "kind": "flow",
+      "eyebrow": "EXTRACTION THEORY",
+      "title": "Caffè Shakerato 理論",
+      "steps": [
+        ["90〜94℃・9bar・25〜30秒で抽出", "icons/shakerato_step1_espresso.png"],
+        ["氷+砂糖ひとつまみへ熱いまま投入", "icons/shakerato_step2_shaker.png"],
+        ["10〜15秒シェイクし微細泡を形成", "icons/shakerato_step3_shake.png"]
+      ],
+      "closing": "泡の微細気泡がミルクフォームを代替する。"
+    },
+    {
+      "kind": "summary",
+      "title": "鑑定士のための着地点",
+      "points": [
+        "Moscato/Passito × Caffè Shakerato",
+        "酸とアロマティックな甘みが同調",
+        "官能評価の応用例として整理し保存"
+      ],
+      "cta": "保存して鑑定士対策に。",
+      "sub": "次回は地域別グラニータの構成分析。",
+      "icon": "icons/pairing_moscato_espresso.png"
+    }
+  ]
+}

@@ -55,6 +55,15 @@ PAL = {
  "grape":  dict(bg1="#1B1720", bg2="#050406", ink=INK_DARK, sub="#B8AE9E",
                 accent="#C9A24B", gold="#C9A24B", frame="#C9A24B", light=False,
                 motif="none", tag="GRAPE"),
+ # ワインタイプに紐づかない汎用インフォグラフィック用（CUBOCCI STUDIO ブランドカラー）
+ # 2026-10: 「視覚のきほん」参考アカウント準拠に改訂。クリーム×ゴールドのみ、ワインレッドは使わない。
+ "brand":  dict(bg1="#F7F2E4", bg2="#EFE4CB", ink=INK_LIGHT, sub="#8A7A5E",
+                accent="#A6791F", gold="#C9A84C", frame="#C9A84C", light=True,
+                motif="none", tag="CUBOCCI"),
+ # 表紙・締め用のダークグリーン（"brand"の本文クリームと対で使う。cover/summaryスライドでwine_type上書き）
+ "classic": dict(bg1="#2A3B23", bg2="#0F170B", ink=INK_DARK, sub="#C9BCA0",
+                accent="#E3C76B", gold="#C9A84C", frame="#C9A84C", light=False,
+                motif="none", tag="CLASSIC"),
 }
 
 # ブドウ品種でアクセントを微調整（明地の見出し／暗地の差し色・モチーフに）
@@ -119,7 +128,8 @@ def _footer(p, num, total):
             _t(W-M, y, f"{num:02d} / {total:02d}", 19, p["sub"], GOTHIC, anchor="end", spacing="2"))
 
 def _svg(p, uid, body):
-    return (f'<svg xmlns="http://www.w3.org/2000/svg" width="{W}" height="{H}" '
+    return (f'<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" '
+            f'width="{W}" height="{H}" '
             f'viewBox="0 0 {W} {H}">{_defs(p,uid)}{_bg(p,uid)}{body}</svg>')
 
 _UID = [0]
@@ -133,9 +143,34 @@ def _prep(wine_type, grape=None):
     return p
 
 # ===================== スライド・ビルダー =====================
-def cover(wine_type, badge, q, answer, subtitle, grape=None, swipe="スワイプで解説 →"):
-    """表紙。q=質問行のリスト（1〜2行）"""
+def cover(wine_type, badge, q, answer, subtitle, grape=None, swipe="スワイプで解説 →",
+         bottle_photo=None):
+    """表紙。q=質問行のリスト（1〜2行）。
+    bottle_photo=ワインボトル写真のdata URI（任意）。指定時はボトル写真をスライド中央に
+    大きく配置するヒーローレイアウトになる（バッジ・質問は上、答え・副題は下）。
+    未指定時は従来のドロップ/バブル装飾＋テキスト縦積みレイアウト。"""
     p=_prep(wine_type, grape); uid=p["_uid"]; cx=W/2; b=[]
+    if bottle_photo:
+        badge_w=max(150, len(badge)*30+64)
+        b.append(f'<rect x="{cx-badge_w/2}" y="118" width="{badge_w}" height="46" rx="23" fill="none" '
+                 f'stroke="{p["accent"]}" stroke-width="1.4"/>')
+        b.append(_t(cx, 149, badge, 24, p["accent"], GOTHIC, "600", "middle", spacing="3"))
+        qy=232
+        for line in q:
+            b.append(_t(cx, qy, line, 40, p["ink"], MINCHO, "700", "middle", spacing="2")); qy+=52
+        bw, bh = 300, 580
+        by = 350
+        b.append(_img(cx-bw/2, by, bw, bh, bottle_photo, uid, "bottle", rx=16))
+        b.append(f'<rect x="{cx-bw/2}" y="{by}" width="{bw}" height="{bh}" rx="16" fill="none" '
+                 f'stroke="{p["frame"]}" stroke-width="1.4" stroke-opacity="0.65"/>')
+        ans=answer; asz = 64 if len(ans)<=6 else (52 if len(ans)<=9 else 40)
+        ay = by+bh+80
+        b.append(_t(cx, ay, f"= {ans}", asz, p["accent"], MINCHO, "700", "middle", spacing="2"))
+        b.append(_hair(p, cx-190, cx+190, ay+42, op="0.5"))
+        b.append(_t(cx, ay+96, subtitle, 32, p["ink"], MINCHO, "500", "middle", spacing="2"))
+        b.append(_t(cx, H-90, swipe, 24, p["gold"], GOTHIC, "500", "middle", spacing="3"))
+        return _svg(p, uid, "".join(b))
+
     b.append(_drop(cx, 250, 92, f'url(#gd{uid})') if p["motif"]!="bubbles"
              else _bubbles(cx, 210, p["accent"]))
     # バッジ
@@ -181,10 +216,11 @@ def _img(x, y, w, h, href, uid, tag, rx=8):
     """角丸クリップ付き画像。href は data URI（base64）を想定。"""
     if not href:
         return (f'<rect x="{x}" y="{y}" width="{w}" height="{h}" rx="{rx}" '
-                f'fill="#00000022" stroke="#00000033" stroke-width="1"/>')
+                f'fill="#808080" fill-opacity="0.12" stroke="#808080" stroke-opacity="0.35" '
+                f'stroke-width="1.2" stroke-dasharray="4,3"/>')
     cid = f"clip{uid}_{tag}"
     return (f'<clipPath id="{cid}"><rect x="{x}" y="{y}" width="{w}" height="{h}" rx="{rx}"/></clipPath>'
-            f'<image x="{x}" y="{y}" width="{w}" height="{h}" href="{href}" '
+            f'<image x="{x}" y="{y}" width="{w}" height="{h}" href="{href}" xlink:href="{href}" '
             f'preserveAspectRatio="xMidYMid slice" clip-path="url(#{cid})"/>')
 
 def profile_slide(wine_type, eyebrow, name_it, name_kana, grape_photo, origin_lines,
@@ -239,15 +275,33 @@ def profile_slide(wine_type, eyebrow, name_it, name_kana, grape_photo, origin_li
 
 def bullets_slide(wine_type, eyebrow, title, items, num=None, total=9, grape=None,
                   closing=None):
-    """箇条書き（見出し+補足の2行×n）。items=[(head, note), ...]"""
+    """箇条書き（見出し+補足の2行×n）。items=[(head, note), ...] または
+    items=[(head, note, icon), ...]（icon=data URI、任意。無い項目は従来通り丸ポイント）。
+    icon指定時はアイコンを主役級サイズ（96px）で表示し、テキストブロックに対して縦中央揃えにする。"""
     p=_prep(wine_type, grape); uid=p["_uid"]; b=_header(p, eyebrow, title)
     n=len(items); y=460; step=min(140, 780//max(n,1))
-    for head, note in items:
-        b.append(f'<circle cx="{M+8}" cy="{y-10}" r="6" fill="url(#gd{uid})"/>')
-        b.append(_t(M+36, y, head, 34, p["accent"] if p["light"] else p["ink"],
+    has_any_icon = any(len(it) >= 3 and it[2] for it in items)
+    isz = 96 if has_any_icon else 48
+    icon_top = -38 if has_any_icon else -34  # y起点からのアイコン上端オフセット（テキストブロックに対し縦中央寄せ）
+    for idx, it in enumerate(items):
+        head, note = it[0], it[1]
+        icon = it[2] if len(it) >= 3 else None
+        if icon:
+            b.append(_img(M, y+icon_top, isz, isz, icon, uid, f"bl{idx}", rx=14))
+            b.append(f'<rect x="{M}" y="{y+icon_top}" width="{isz}" height="{isz}" rx="14" '
+                     f'fill="none" stroke="{p["frame"]}" stroke-width="1" stroke-opacity="0.5"/>')
+            tx = M + isz + 26
+        elif has_any_icon:
+            # 同スライド内にアイコン項目がある場合はテキスト開始位置を揃える
+            b.append(f'<circle cx="{M+isz/2}" cy="{y-10}" r="9" fill="url(#gd{uid})"/>')
+            tx = M + isz + 26
+        else:
+            b.append(f'<circle cx="{M+8}" cy="{y-10}" r="6" fill="url(#gd{uid})"/>')
+            tx = M + 36
+        b.append(_t(tx, y, head, 34, p["accent"] if p["light"] else p["ink"],
                     MINCHO, "600"))
         if note:
-            b.append(_t(M+36, y+44, note, 27, p["sub"], GOTHIC))
+            b.append(_t(tx, y+44, note, 27, p["sub"], GOTHIC))
         y+=step
     if closing:
         b.append(_hair(p, M, W-M, y-6, op="0.3"))
@@ -273,8 +327,10 @@ def timeline_slide(wine_type, eyebrow, title, events, num=None, total=9, grape=N
     b.append(_footer(p, num, total))
     return _svg(p, uid, "".join(b))
 
-def summary_slide(wine_type, title, points, cta=None, sub=None, num=None, total=9, grape=None):
-    """まとめ（番号付き）+ CTA"""
+def summary_slide(wine_type, title, points, cta=None, sub=None, num=None, total=9, grape=None,
+                  icon=None):
+    """まとめ（番号付き）+ CTA。icon=data URI（任意）。指定時はモチーフの代わりに
+    まとめを象徴するイラストアイコンを表示（motif="none"のbrandタイプでも使える）。"""
     p=_prep(wine_type, grape); uid=p["_uid"]; cx=W/2; b=[]
     b.append(_eyebrow(p, cx, 220, "SUMMARY", "middle"))
     b.append(_t(cx, 312, title, 60, p["ink"], MINCHO, "700", "middle", spacing="2"))
@@ -285,9 +341,481 @@ def summary_slide(wine_type, title, points, cta=None, sub=None, num=None, total=
         b.append(_t(M+84, y, pt, 30, p["ink"], GOTHIC))
         b.append(_hair(p, M, W-M, y+30, op="0.16", w="0.7"))
         y+=step
-    if p["motif"]!="none": b.append(_motif(p, cx, y+24, 60))
-    if cta:  b.append(_t(cx, y+170, cta, 32, p["accent"], MINCHO, "500", "middle", spacing="2"))
-    if sub:  b.append(_t(cx, y+216, sub, 25, p["sub"], GOTHIC, anchor="middle"))
+    cta_y, sub_y = y+170, y+216
+    if icon:
+        isz=180  # スライドの視覚的な主役になるサイズ（従来110pxから拡大）
+        icon_y0 = y+14
+        b.append(_img(cx-isz/2, icon_y0, isz, isz, icon, uid, "sicon", rx=22))
+        b.append(f'<rect x="{cx-isz/2}" y="{icon_y0}" width="{isz}" height="{isz}" rx="22" '
+                 f'fill="none" stroke="{p["frame"]}" stroke-width="1.4" stroke-opacity="0.6"/>')
+        cta_y = icon_y0 + isz + 50
+        sub_y = cta_y + 46
+    elif p["motif"]!="none":
+        b.append(_motif(p, cx, y+24, 60))
+    if cta:  b.append(_t(cx, cta_y, cta, 32, p["accent"], MINCHO, "500", "middle", spacing="2"))
+    if sub:  b.append(_t(cx, sub_y, sub, 25, p["sub"], GOTHIC, anchor="middle"))
+    b.append(_footer(p, num, total))
+    return _svg(p, uid, "".join(b))
+
+def icon_grid_slide(wine_type, eyebrow, title, items, cols=2, num=None, total=9, grape=None,
+                    closing=None):
+    """アイコン（またはナンバー）を各セル上部に大きく配置し、見出し・補足をその下に
+    縦積みする「画像が主役」のグリッド（要素解説・比較カード向け）。
+    items=[(head, note), ...] または items=[(head, note, icon), ...]
+    （icon=data URI、任意。1枚でもiconを含む項目があれば全項目を縦積みレイアウトに揃える。
+    iconが無い項目は代わりに同サイズのナンバーサークルを表示）。
+    note は1行想定（自動折り返し無し）。
+    アイコンサイズの目安：cols=1なら180〜220px、cols=2以上ならカラム幅に応じて120〜160px。"""
+    p=_prep(wine_type, grape); uid=p["_uid"]; b=_header(p, eyebrow, title)
+    n=len(items); rows=(n+cols-1)//cols
+    top, bottom = 380, H-180
+    row_h = (bottom-top)//max(rows,1); col_w = (W-2*M)//cols
+    has_any_icon = any(len(it) >= 3 and it[2] for it in items)
+    badge_ink = INK_LIGHT
+
+    if has_any_icon:
+        # 縦積みレイアウト：アイコン/ナンバーが上、見出し・補足がその下
+        reserve = 88  # アイコン下端〜行末（見出し+補足+余白）に確保する高さ
+        if cols == 1:
+            isz = max(150, min(220, row_h - reserve))
+        else:
+            isz = max(110, min(160, col_w - 40, row_h - reserve))
+        for idx, it in enumerate(items):
+            head, note = it[0], it[1]
+            icon = it[2] if len(it) >= 3 else None
+            col, row = idx % cols, idx // cols
+            cell_x, cell_y = M+col*col_w, top+row*row_h
+            cell_cx = cell_x + col_w/2
+            icon_x = cell_cx - isz/2
+            if icon:
+                b.append(_img(icon_x, cell_y, isz, isz, icon, uid, f"icg{idx}", rx=16))
+                b.append(f'<rect x="{icon_x}" y="{cell_y}" width="{isz}" height="{isz}" rx="16" '
+                         f'fill="none" stroke="{p["frame"]}" stroke-width="1.2" stroke-opacity="0.55"/>')
+            else:
+                b.append(f'<circle cx="{cell_cx}" cy="{cell_y+isz/2}" r="{isz/2}" fill="url(#gd{uid})"/>')
+                b.append(_t(cell_cx, cell_y+isz/2+16, f"{idx+1:02d}", isz*0.32, badge_ink,
+                            MINCHO, "700", "middle"))
+            text_y = cell_y + isz + 44
+            b.append(_t(cell_cx, text_y, head, 29, p["accent"] if p["light"] else p["ink"],
+                        MINCHO, "600", "middle"))
+            if note:
+                b.append(_t(cell_cx, text_y+33, note, 22, p["sub"], GOTHIC, anchor="middle"))
+        for r in range(rows-1):
+            sep_y = top + (r+1)*row_h - 16
+            b.append(_hair(p, M, W-M, sep_y, op="0.18", w="0.7"))
+    else:
+        # アイコンを一切使わない場合は従来通りの横並び（ナンバーバッジ+見出し・補足）
+        for idx, it in enumerate(items):
+            head, note = it[0], it[1]
+            col, row = idx % cols, idx // cols
+            cx, cy = M+col*col_w, top+row*row_h
+            b.append(f'<circle cx="{cx+30}" cy="{cy+30}" r="26" fill="url(#gd{uid})"/>')
+            b.append(_t(cx+30, cy+39, f"{idx+1:02d}", 23, badge_ink, MINCHO, "700", "middle"))
+            tx = cx + 74
+            b.append(_t(tx, cy+22, head, 27, p["accent"] if p["light"] else p["ink"], MINCHO, "600"))
+            if note:
+                b.append(_t(tx, cy+56, note, 21, p["sub"], GOTHIC))
+    if closing:
+        b.append(_hair(p, M, W-M, bottom+10, op="0.3"))
+        b.append(_t(M, bottom+52, closing, 30, p["accent"], MINCHO, "600"))
+    b.append(_footer(p, num, total))
+    return _svg(p, uid, "".join(b))
+
+def flow_slide(wine_type, eyebrow, title, steps, num=None, total=9, grape=None, closing=None):
+    """矢印つきの縦型工程フロー。steps=[str, ...] または
+    steps=[str または [str, icon], ...]（icon=data URI、任意。各1行想定）。
+    iconがある場合はアイコンが主役級サイズ（目安80〜110px）になるようボックス高さも拡大する。"""
+    p=_prep(wine_type, grape); uid=p["_uid"]; b=_header(p, eyebrow, title)
+    has_any_icon = any(isinstance(raw, (list, tuple)) and len(raw) > 1 and raw[1] for raw in steps)
+    n=len(steps); y=470; span=780
+    step=min(170 if has_any_icon else 150, span//max(n,1))
+    bh = min(130, step-24) if has_any_icon else 64
+    isz = max(80, min(110, bh-24))
+    for i, raw in enumerate(steps):
+        if isinstance(raw, (list, tuple)):
+            s, icon = raw[0], (raw[1] if len(raw) > 1 else None)
+        else:
+            s, icon = raw, None
+        b.append(f'<rect x="{M}" y="{y}" width="{W-2*M}" height="{bh}" rx="12" fill="none" '
+                 f'stroke="{p["frame"]}" stroke-width="1.2" stroke-opacity="0.6"/>')
+        if icon:
+            b.append(_img(M+14, y+(bh-isz)/2, isz, isz, icon, uid, f"fl{i}", rx=12))
+            tx = M + 14 + isz + 22
+        else:
+            tx = M + 28
+        b.append(_t(tx, y+bh/2+9, s, 29, p["ink"], MINCHO, "600"))
+        b.append(_t(W-M-24, y+bh/2+8, f"{i+1:02d}", 22, p["gold"], GOTHIC, "600", anchor="end"))
+        if i < n-1:
+            b.append(_t(W/2, y+bh+(step-bh)/2+8, "▼", 22, p["gold"], GOTHIC, "400", "middle"))
+        y += step
+    if closing:
+        b.append(_hair(p, M, W-M, y+6, op="0.3"))
+        b.append(_t(M, y+56, closing, 30, p["accent"], MINCHO, "600"))
+    b.append(_footer(p, num, total))
+    return _svg(p, uid, "".join(b))
+
+def ranking_slide(wine_type, eyebrow, title, items, num=None, total=9, grape=None, closing=None):
+    """番号付きランキングリスト。items=[(rank, head, note), ...] または
+    items=[(rank, head, note, icon), ...]（rankは"1"等の文字列、icon=data URI・任意）"""
+    p=_prep(wine_type, grape); uid=p["_uid"]; b=_header(p, eyebrow, title)
+    n=len(items)
+    has_any_icon = any(len(it) >= 4 and it[3] for it in items)
+    if has_any_icon:
+        y=460; step=min(230, 800//max(n,1)); isz=112
+        for idx, it in enumerate(items):
+            rank, head, note = it[0], it[1], it[2]
+            icon = it[3] if len(it) >= 4 else None
+            if icon:
+                b.append(_img(M, y, isz, isz, icon, uid, f"rk{idx}", rx=14))
+                b.append(f'<rect x="{M}" y="{y}" width="{isz}" height="{isz}" rx="14" '
+                         f'fill="none" stroke="{p["frame"]}" stroke-width="1.2" stroke-opacity="0.55"/>')
+                tx = M + isz + 24
+            else:
+                tx = M
+            b.append(f'<circle cx="{M+24}" cy="{y-4}" r="21" fill="url(#gd{uid})"/>')
+            b.append(_t(M+24, y+4, str(rank), 21, INK_LIGHT, MINCHO, "700", "middle"))
+            ty = y + isz/2 - 16
+            b.append(_t(tx, ty, head, 30, p["accent"] if p["light"] else p["ink"], MINCHO, "600"))
+            if note:
+                b.append(_t(tx, ty+34, note, 21, p["sub"], GOTHIC))
+            b.append(_hair(p, M, W-M, y+isz+24, op="0.16", w="0.7"))
+            y += step
+    else:
+        y=470; step=min(140, 760//max(n,1))
+        for idx, it in enumerate(items):
+            rank, head, note = it[0], it[1], it[2]
+            b.append(_t(M+6, y, str(rank), 40, p["gold"], MINCHO, "700"))
+            tx = M + 90
+            b.append(_t(tx, y, head, 32, p["accent"] if p["light"] else p["ink"], MINCHO, "600"))
+            if note:
+                b.append(_t(tx, y+34, note, 22, p["sub"], GOTHIC))
+            b.append(_hair(p, M, W-M, y+50, op="0.16", w="0.7"))
+            y += step
+    if closing:
+        b.append(_t(M, y+40, closing, 30, p["accent"], MINCHO, "600"))
+    b.append(_footer(p, num, total))
+    return _svg(p, uid, "".join(b))
+
+def compare_slide(wine_type, eyebrow, title, left, right, num=None, total=9, grape=None,
+                  closing=None):
+    """二択比較ボックス（北vs南、伝統的vs現代的など対比構造向け）。
+    left / right = {"label":.., "sublabel":.. (任意), "body":[str,...]（1〜4行想定）,
+                    "tag":.. (任意・下部の縁取りピル), "photo": data URI（任意）}。
+    左右で縁取りピルの色を変え（gold/accent）視覚的に対比を強調する。"""
+    p=_prep(wine_type, grape); uid=p["_uid"]; b=_header(p, eyebrow, title)
+    top = 380; gap = 48
+    col_w = (W - 2*M - gap) // 2
+    bottom = H - 200
+    b.append(f'<line x1="{W/2}" y1="{top}" x2="{W/2}" y2="{bottom}" stroke="{p["gold"]}" '
+             f'stroke-opacity="0.25" stroke-width="1"/>')
+    tag_colors = [p["gold"], p["accent"]]
+    for i, side in enumerate([left, right]):
+        x = M if i == 0 else M + col_w + gap
+        y = top
+        if side.get("photo"):
+            ph = 200
+            b.append(_img(x, y, col_w, ph, side["photo"], uid, f"cmp{i}", rx=8))
+            b.append(f'<rect x="{x}" y="{y}" width="{col_w}" height="{ph}" rx="8" fill="none" '
+                     f'stroke="{p["frame"]}" stroke-width="1" stroke-opacity="0.5"/>')
+            y += ph + 30
+        b.append(_t(x, y, side["label"], 32, p["accent"] if p["light"] else p["ink"], MINCHO, "700"))
+        y += 34
+        if side.get("sublabel"):
+            b.append(_t(x, y, side["sublabel"], 20, p["sub"], GOTHIC, "500"))
+            y += 30
+        y += 14
+        b.append(_hair(p, x, x+col_w, y, op="0.3"))
+        y += 34
+        for line in side.get("body", [])[:4]:
+            b.append(_t(x, y, line, 23, p["ink"], GOTHIC))
+            y += 32
+        if side.get("tag"):
+            tagtext = side["tag"]
+            tw = min(col_w, max(90, len(tagtext)*24+40))
+            tag_y = bottom - 60
+            col = tag_colors[i]
+            b.append(f'<rect x="{x}" y="{tag_y}" width="{tw}" height="44" rx="22" fill="none" '
+                     f'stroke="{col}" stroke-width="1.4"/>')
+            b.append(_t(x+tw/2, tag_y+29, tagtext, 20, col, GOTHIC, "600", "middle", spacing="1"))
+    if closing:
+        b.append(_hair(p, M, W-M, bottom+10, op="0.3"))
+        b.append(_t(M, bottom+52, closing, 30, p["accent"], MINCHO, "600"))
+    b.append(_footer(p, num, total))
+    return _svg(p, uid, "".join(b))
+
+def sequence_slide(wine_type, eyebrow, title, nodes, headline=None, num=None, total=9,
+                   grape=None, closing=None):
+    """アイコン＋矢印の横並び工程チェーン（樽→瓶熟成のようなタイムライン向け）。
+    nodes=[{"icon": data URI（任意）, "label": str（\\nで2行まで）}, ...]（2〜6個想定）。
+    headline=チェーン上部に大きく出す数値・要約（例："最低熟成期間 3年2ヶ月"、任意）。"""
+    p=_prep(wine_type, grape); uid=p["_uid"]; b=_header(p, eyebrow, title)
+    top = 380
+    if headline:
+        b.append(_t(W/2, top+50, headline, 44, p["accent"], MINCHO, "700", "middle", spacing="1"))
+        row_y = top + 130
+    else:
+        row_y = top + 60
+    n = len(nodes); arrow_w = 44
+    avail = W - 2*M - (n-1)*arrow_w
+    isz = max(70, min(140, avail // n - 20))
+    cell_w = avail // n
+    x = M
+    for i, node in enumerate(nodes):
+        icon = node.get("icon"); label = node.get("label", "")
+        cx = x + cell_w/2
+        cy = row_y + isz/2
+        if icon:
+            icon_x = cx - isz/2
+            b.append(_img(icon_x, row_y, isz, isz, icon, uid, f"sq{i}", rx=14))
+            b.append(f'<rect x="{icon_x}" y="{row_y}" width="{isz}" height="{isz}" rx="14" '
+                     f'fill="none" stroke="{p["frame"]}" stroke-width="1.2" stroke-opacity="0.55"/>')
+        else:
+            b.append(f'<circle cx="{cx}" cy="{cy}" r="{isz/2}" fill="url(#gd{uid})"/>')
+            b.append(_t(cx, cy+isz*0.12, f"{i+1:02d}", isz*0.32, INK_LIGHT, MINCHO, "700", "middle"))
+        lines = label.split("\n")
+        ly = row_y + isz + 36
+        for li, line in enumerate(lines[:2]):
+            b.append(_t(cx, ly+li*26, line, 22, p["ink"], GOTHIC, "600", "middle"))
+        if i < n-1:
+            ax = x + cell_w + arrow_w/2
+            b.append(_t(ax, cy+8, "→", 30, p["gold"], GOTHIC, "400", "middle"))
+        x += cell_w + arrow_w
+    bottom_y = row_y + isz + 36 + 26*2 + 24
+    if closing:
+        b.append(_hair(p, M, W-M, bottom_y, op="0.3"))
+        b.append(_t(M, bottom_y+50, closing, 30, p["accent"], MINCHO, "600"))
+    b.append(_footer(p, num, total))
+    return _svg(p, uid, "".join(b))
+
+def _scroll_flourish(cx, y, w, color, flip=False):
+    """タイトル上下の簡易装飾罫線（唐草風の小さな弧＋центральひし形）。"""
+    hw = w/2
+    yy = H-y if flip else y
+    return (f'<path d="M{cx-hw},{yy} Q{cx-hw*0.5},{yy-14} {cx},{yy} '
+            f'Q{cx+hw*0.5},{yy-14} {cx+hw},{yy}" fill="none" stroke="{color}" '
+            f'stroke-width="1.2" stroke-opacity="0.55"/>'
+            f'<rect x="{cx-6}" y="{yy-6}" width="12" height="12" fill="{color}" '
+            f'fill-opacity="0.7" transform="rotate(45 {cx} {yy})"/>')
+
+def myth_slide(wine_type, title_main, title_neg, title_pos, center_photo, boxes,
+               closing=None, num=None, total=9, grape=None):
+    """中央に大きな縦長ヒーロー写真、その左右に番号付きボックスを2段×2列で配置する
+    「誤解を解く」型インフォグラフィック（タンニン／酸味のようなテーマ解説向け）。
+    title_main・title_neg・title_pos → 見出しは f"{title_main}——『{title_neg}』ではなく、{title_pos}"。
+    center_photo = data URI（任意・縦長トリミング推奨）。
+    boxes = 4個の {"num":1-4, "heading":str,
+                   "layout":"vs"（2項目を左右比較） または "list"（1〜4項目を縦積み）,
+                   "items":[{"label":str,"note":str（任意・\\nで複数行）,"icon":data URI（任意）}, ...]}。
+    closing = 最下部の1行まとめ（任意）。"""
+    p=_prep(wine_type, grape); uid=p["_uid"]; cx=W/2; b=[]
+    b.append(_scroll_flourish(cx, 56, 420, p["gold"]))
+    title = f"{title_main}——『{title_neg}』ではなく、{title_pos}"
+    if len(title) <= 16: tsz = 46
+    elif len(title) <= 22: tsz = 38
+    elif len(title) <= 28: tsz = 32
+    else: tsz = 26
+    b.append(_t(cx, 118, title, tsz, p["ink"], MINCHO, "700", "middle", spacing="0.5"))
+    b.append(_hair(p, cx-260, cx+260, 150, op="0.5"))
+
+    top, bottom = 210, H-150
+    total_h = bottom - top; row_gap = 36
+    row_h = (total_h - row_gap) / 2
+    left_w, center_w, right_w, col_gap = 310, 220, 310, 24
+    left_x = M; center_x = left_x + left_w + col_gap; right_x = center_x + center_w + col_gap
+
+    b.append(_img(center_x, top, center_w, total_h, center_photo, uid, "hero", rx=14))
+    b.append(f'<rect x="{center_x}" y="{top}" width="{center_w}" height="{total_h}" rx="14" '
+             f'fill="none" stroke="{p["frame"]}" stroke-width="1.2" stroke-opacity="0.6"/>')
+
+    positions = [(left_x, top), (right_x, top), (left_x, top+row_h+row_gap), (right_x, top+row_h+row_gap)]
+    box_w = left_w
+    for box, (bx, by) in zip(boxes, positions):
+        heading = f'{box["num"]}｜{box["heading"]}'
+        pw = min(box_w, len(heading)*20+40)
+        b.append(f'<rect x="{bx}" y="{by}" width="{pw}" height="38" rx="8" fill="none" '
+                 f'stroke="{p["accent"]}" stroke-width="1.3"/>')
+        b.append(_t(bx+pw/2, by+25, heading, 19, p["accent"], GOTHIC, "700", "middle", spacing="1"))
+        b.append(f'<rect x="{bx}" y="{by+52}" width="{box_w}" height="{row_h-52}" rx="8" '
+                 f'fill="none" stroke="{p["frame"]}" stroke-width="1" stroke-opacity="0.4"/>')
+        cy0 = by + 52
+        items = box.get("items", [])
+        layout = box.get("layout", "list")
+        if layout == "vs" and len(items) >= 2:
+            inner_h = row_h - 52
+            half_h = inner_h/2
+            icx = bx + box_w/2
+            for j, it in enumerate(items[:2]):
+                iy0 = cy0 + j*half_h
+                icon = it.get("icon")
+                label = it["label"]
+                if len(label) > 12:
+                    mid = (len(label)+1)//2
+                    label_lines = [label[:mid], label[mid:]]
+                else:
+                    label_lines = [label]
+                note_lines = it.get("note", "").split("\n") if it.get("note") else []
+                isz = 52
+                content_h = (isz+26 if icon else 22) + len(label_lines)*22 + \
+                            (24+len(note_lines[:2])*19 if note_lines else 0)
+                start_y = iy0 + max(6, (half_h-content_h)/2)
+                if icon:
+                    b.append(_img(icx-isz/2, start_y, isz, isz, icon, uid, f"my{box['num']}_{j}", rx=10))
+                    ly = start_y + isz + 26
+                else:
+                    ly = start_y + 22
+                for k, line in enumerate(label_lines):
+                    b.append(_t(icx, ly+k*22, line, 20, p["ink"], MINCHO, "600", "middle"))
+                note_y = ly + (len(label_lines)-1)*22 + 24
+                for k, line in enumerate(note_lines[:2]):
+                    b.append(_t(icx, note_y+k*19, line, 15, p["sub"], GOTHIC, anchor="middle"))
+            mid_y = cy0 + half_h
+            b.append(f'<line x1="{bx+10}" y1="{mid_y}" x2="{icx-18}" y2="{mid_y}" '
+                     f'stroke="{p["gold"]}" stroke-opacity="0.4" stroke-width="1"/>')
+            b.append(f'<line x1="{icx+18}" y1="{mid_y}" x2="{bx+box_w-10}" y2="{mid_y}" '
+                     f'stroke="{p["gold"]}" stroke-opacity="0.4" stroke-width="1"/>')
+            b.append(f'<circle cx="{icx}" cy="{mid_y}" r="16" fill="url(#gd{uid})"/>')
+            b.append(_t(icx, mid_y+5, "VS", 14, INK_LIGHT, GOTHIC, "700", "middle"))
+        elif layout == "list" and len(items) == 1:
+            it = items[0]; icon = it.get("icon"); icx = bx+box_w/2
+            label = it.get("label", "")
+            note_lines = it.get("note", "").split("\n")[:2] if it.get("note") else []
+            isz = 90
+            avail_h = row_h - 52
+            content_h = (isz+30 if icon else 0) + (24 if label else 0) + len(note_lines)*20
+            start_y = cy0 + max(8, (avail_h-content_h)/2)
+            if icon:
+                b.append(_img(icx-isz/2, start_y, isz, isz, icon, uid, f"my{box['num']}_0", rx=14))
+                ly = start_y + isz + 30
+            else:
+                ly = start_y + 20
+            if label:
+                b.append(_t(icx, ly, label, 17, p["ink"], MINCHO, "700", "middle"))
+                ly += 24
+            for k, line in enumerate(note_lines):
+                b.append(_t(icx, ly+k*20, line, 15, p["sub"], GOTHIC, anchor="middle"))
+        else:
+            n = len(items); irow = (row_h-52)/max(n,1)
+            icx = bx + box_w/2
+            for j, it in enumerate(items):
+                row_y0 = cy0 + j*irow
+                icon = it.get("icon")
+                isz = min(44, irow-44)
+                block_h = isz + 10 + 24
+                start_y = row_y0 + max(4, (irow-block_h)/2)
+                b.append(_img(icx-isz/2, start_y, isz, isz, icon, uid, f"my{box['num']}_{j}", rx=8))
+                ly = start_y + isz + 22
+                b.append(_t(icx, ly, it["label"], 20, p["ink"], MINCHO, "600", "middle"))
+
+    if closing:
+        b.append(_hair(p, cx-320, cx+320, bottom+34, op="0.4"))
+        b.append(_t(cx, bottom+68, closing, 22, p["accent"], MINCHO, "600", "middle"))
+    b.append(_scroll_flourish(cx, H-40, 360, p["gold"], flip=False))
+    return _svg(p, uid, "".join(b))
+
+def region_map_slide(wine_type, eyebrow, title, map_photo, pins, closing=None,
+                     num=None, total=9, grape=None, map_aspect=1.0, legend_cols=4):
+    """地図写真（上段・番号ドットのみ）＋ 地域一覧の凡例グリッド（下段・番号＋写真＋ラベル）
+    という2段構成のヒーロー画像（ワインペアリングシリーズの導入・表紙向け）。
+    番号が多い（10件超）場合に地図上へ直接写真を乗せると密集地帯で重なるため、
+    地図には位置確認用の小さな番号ドットだけを置き、詳細は下の凡例へ分離する。
+    map_photo = 地図写真のdata URI。
+    map_aspect = 地図画像の 幅/高さ（例: 正方形なら1.0）。枠内に全体が収まるよう
+    contain-fit で配置し、はみ出し・トリミングを防ぐ。pinの座標はこの実表示領域基準。
+    pins = [{"label":str, "x":0.0-1.0, "y":0.0-1.0（地図画像内の相対位置、左上原点）,
+             "photo": data URI（任意）}, ...]。
+    legend_cols = 凡例グリッドの列数（既定4）。"""
+    p=_prep(wine_type, grape); uid=p["_uid"]
+    b=_header(p, eyebrow, title, y_eb=140, y_ti=230, y_hr=280)
+    box_x, box_y = M, 310
+    box_w, box_h = W - 2*M, 330
+    # contain-fit：枠内に地図全体が収まるよう実表示矩形を計算
+    if box_w / box_h > map_aspect:
+        map_h = box_h; map_w = map_h * map_aspect
+    else:
+        map_w = box_w; map_h = map_w / map_aspect
+    map_x = box_x + (box_w - map_w) / 2
+    map_y = box_y + (box_h - map_h) / 2
+    cid_map = f"clipmapbox{uid}"
+    b.append(f'<clipPath id="{cid_map}"><rect x="{map_x}" y="{map_y}" width="{map_w}" height="{map_h}"/></clipPath>')
+    b.append(f'<image x="{map_x}" y="{map_y}" width="{map_w}" height="{map_h}" '
+             f'href="{map_photo}" xlink:href="{map_photo}" preserveAspectRatio="xMidYMid meet" '
+             f'clip-path="url(#{cid_map})"/>')
+
+    n = len(pins)
+    for idx, pin in enumerate(pins):
+        px = map_x + max(0.0, min(1.0, pin["x"])) * map_w
+        py = map_y + max(0.0, min(1.0, pin["y"])) * map_h
+        b.append(f'<circle cx="{px}" cy="{py}" r="11" fill="url(#gd{uid})" '
+                 f'stroke="{p["bg1"]}" stroke-width="1.5"/>')
+        b.append(_t(px, py+4, str(idx+1), 12, INK_LIGHT, GOTHIC, "700", "middle"))
+
+    # 凡例グリッド（番号・写真サムネイル（大）・州名＋料理名）
+    legend_top = box_y + box_h + 30
+    legend_bottom = H - (150 if closing else 110)
+    cols = max(1, legend_cols)
+    rows = (n + cols - 1) // cols
+    cell_w = box_w / cols
+    cell_h = (legend_bottom - legend_top) / max(rows, 1)
+    isz = min(cell_h - 16, cell_w * 0.42, 96)
+    for idx, pin in enumerate(pins):
+        col, row = idx % cols, idx // cols
+        cx0 = box_x + col*cell_w
+        cy0 = legend_top + row*cell_h
+        icx, icy = cx0 + isz/2 + 4, cy0 + cell_h/2
+        photo = pin.get("photo")
+        if photo:
+            cid = f"legmap{uid}_{idx}"
+            b.append(f'<clipPath id="{cid}"><circle cx="{icx}" cy="{icy}" r="{isz/2}"/></clipPath>')
+            b.append(f'<image x="{icx-isz/2}" y="{icy-isz/2}" width="{isz}" height="{isz}" '
+                     f'href="{photo}" xlink:href="{photo}" preserveAspectRatio="xMidYMid slice" '
+                     f'clip-path="url(#{cid})"/>')
+            b.append(f'<circle cx="{icx}" cy="{icy}" r="{isz/2}" fill="none" '
+                     f'stroke="{p["gold"]}" stroke-width="1.4"/>')
+        else:
+            b.append(f'<circle cx="{icx}" cy="{icy}" r="{isz/2}" fill="#808080" fill-opacity="0.15" '
+                     f'stroke="#808080" stroke-opacity="0.4" stroke-width="1.2" stroke-dasharray="3,3"/>')
+        badge_r = 12
+        b.append(f'<circle cx="{cx0+isz-2}" cy="{cy0+cell_h/2-isz/2+2}" r="{badge_r}" fill="url(#gd{uid})" '
+                 f'stroke="{p["bg1"]}" stroke-width="1.5"/>')
+        b.append(_t(cx0+isz-2, cy0+cell_h/2-isz/2+6, str(idx+1), 13, INK_LIGHT, GOTHIC, "700", "middle"))
+        tx = cx0 + isz + 18
+        avail_chars = max(4, (cell_w - isz - 22) / 9.5)
+        label = pin["label"]
+        dish = pin.get("dish", "")
+        if dish:
+            lsz = 17 if len(label) <= avail_chars*0.62 else (15 if len(label) <= avail_chars*0.78 else 13)
+            b.append(_t(tx, icy-6, label, lsz, p["ink"], GOTHIC, "700"))
+            dsz = 13 if len(dish) <= avail_chars*0.75 else (11 if len(dish) <= avail_chars else 9.5)
+            b.append(_t(tx, icy+15, dish, dsz, p["sub"], GOTHIC, "500"))
+        else:
+            lsz = 17 if len(label) <= avail_chars*0.62 else (15 if len(label) <= avail_chars*0.78 else 13)
+            b.append(_t(tx, icy+5, label, lsz, p["ink"], GOTHIC, "600"))
+
+    if closing:
+        b.append(_hair(p, M, W-M, legend_bottom+18, op="0.3"))
+        b.append(_t(W/2, legend_bottom+48, closing, 22, p["accent"], MINCHO, "600", "middle"))
+    b.append(_footer(p, num, total))
+    return _svg(p, uid, "".join(b))
+
+def quadrant_slide(wine_type, eyebrow, title, x_axis, y_axis, points, num=None, total=9, grape=None):
+    """2軸4象限マトリクス。x_axis=(左ラベル,右ラベル) y_axis=(下ラベル,上ラベル)
+    points=[(label, x, y), ...]  x,y は 0.0〜1.0（左下原点）"""
+    p=_prep(wine_type, grape); uid=p["_uid"]; b=_header(p, eyebrow, title)
+    px0, py0, pw, ph = M+40, 480, W-2*M-80, 600
+    cx, cy = px0+pw/2, py0+ph/2
+    b.append(f'<line x1="{px0}" y1="{cy}" x2="{px0+pw}" y2="{cy}" stroke="{p["gold"]}" '
+             f'stroke-opacity="0.45" stroke-width="1.2"/>')
+    b.append(f'<line x1="{cx}" y1="{py0}" x2="{cx}" y2="{py0+ph}" stroke="{p["gold"]}" '
+             f'stroke-opacity="0.45" stroke-width="1.2"/>')
+    b.append(_t(px0, cy-14, x_axis[0], 22, p["sub"], GOTHIC, "500"))
+    b.append(_t(px0+pw, cy-14, x_axis[1], 22, p["sub"], GOTHIC, "500", anchor="end"))
+    b.append(_t(cx, py0-16, y_axis[1], 22, p["sub"], GOTHIC, "500", "middle"))
+    b.append(_t(cx, py0+ph+34, y_axis[0], 22, p["sub"], GOTHIC, "500", "middle"))
+    for label, x, y in points:
+        px = px0 + max(0.0, min(1.0, x))*pw
+        pyv = py0 + ph - max(0.0, min(1.0, y))*ph
+        b.append(f'<circle cx="{px}" cy="{pyv}" r="9" fill="url(#gd{uid})"/>')
+        b.append(_t(px, pyv-18, label, 24, p["ink"], MINCHO, "600", "middle"))
     b.append(_footer(p, num, total))
     return _svg(p, uid, "".join(b))
 

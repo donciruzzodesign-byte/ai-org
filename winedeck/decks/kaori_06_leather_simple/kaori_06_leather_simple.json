@@ -1,0 +1,64 @@
+{
+  "name": "kaori_06_leather_simple",
+  "wine_type": "brand",
+  "slides": [
+    {
+      "kind": "cover",
+      "badge": "香りのきほん",
+      "q": ["革や煙の香りしたら", "高級ワインのサイン"],
+      "answer": "なめし革香",
+      "subtitle": "熟成ワインの魅力です"
+    },
+    {
+      "kind": "icon_grid",
+      "eyebrow": "代表的な香り",
+      "title": "熟成が生む複雑な香り",
+      "cols": 3,
+      "items": [
+        ["なめし革", "熟成が生む複雑な香り", "../_assets/icons/leather/leather_badge.png"],
+        ["古い本", "熟成が生む複雑な香り", "../_assets/icons/leather/old_book.png"],
+        ["焚き火・煙", "熟成が生む複雑な香り", "../_assets/icons/leather/smoke.png"]
+      ],
+      "closing": "新しいワインには出ない時間の香り"
+    },
+    {
+      "kind": "rows",
+      "eyebrow": "どこから来る？",
+      "title": "香りの出どころ",
+      "rows": [
+        ["由来", "長期熟成によって生まれる複雑な香り"],
+        ["特徴", "新しいワインには出ない、時間が育てた個性"]
+      ]
+    },
+    {
+      "kind": "icon_grid",
+      "eyebrow": "代表的なワイン",
+      "title": "代表的なワイン",
+      "cols": 2,
+      "items": [
+        ["バローロ", "長期熟成タイプの高級赤ワイン", "../_assets/icons/leather/leather_badge.png"],
+        ["ブルネッロ・ディ・モンタルチーノ", "長期熟成タイプの高級赤ワイン", "../_assets/icons/leather/old_book.png"]
+      ]
+    },
+    {
+      "kind": "bullets",
+      "eyebrow": "感じ方のコツ",
+      "title": "最初はクセが強くても",
+      "items": [
+        ["最初は「クセが強い」と感じても", "熟成ワイン好きにはたまらない魅力的な香り"]
+      ]
+    },
+    {
+      "kind": "summary",
+      "title": "なめし革香 まとめ",
+      "points": [
+        "なめし革・スモーク香は熟成が生む個性",
+        "バローロ・ブルネッロなど長期熟成赤に多い",
+        "出会えたら熟成の贅沢な個性を楽しんで"
+      ],
+      "cta": "長期熟成の高級赤でこの香りを探してみよう",
+      "sub": "次回は動物香を深掘り",
+      "icon": "../_assets/icons/leather/leather_badge.png"
+    }
+  ]
+}

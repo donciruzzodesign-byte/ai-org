@@ -1,0 +1,64 @@
+{
+  "name": "kaori_07_animal_simple",
+  "wine_type": "brand",
+  "slides": [
+    {
+      "kind": "cover",
+      "badge": "香りのきほん",
+      "q": ["動物みたいな香りしたら", "実はこんな意味が"],
+      "answer": "動物香",
+      "subtitle": "ワインの個性のひとつ"
+    },
+    {
+      "kind": "icon_grid",
+      "eyebrow": "代表的な香り",
+      "title": "動物を感じる香り",
+      "cols": 3,
+      "items": [
+        ["ジビエ", "獣肉のような香り", "../_assets/icons/animal/antler.png"],
+        ["麝香（ムスク）", "独特な香り", "../_assets/icons/animal/musk.png"],
+        ["干した肉", "独特な香り", "../_assets/icons/animal/jerky.png"]
+      ],
+      "closing": "熟成や品種の個性として現れる"
+    },
+    {
+      "kind": "rows",
+      "eyebrow": "どこから来る？",
+      "title": "香りの出どころ",
+      "rows": [
+        ["由来", "熟成の過程や品種・造り方の個性として現れる"]
+      ]
+    },
+    {
+      "kind": "icon_grid",
+      "eyebrow": "代表的なワイン",
+      "title": "代表的なワイン",
+      "cols": 2,
+      "items": [
+        ["バローロ", "濃厚でパワフルな長期熟成赤", "../_assets/icons/animal/antler.png"],
+        ["ブルネッロ", "濃厚でパワフルな長期熟成赤", "../_assets/icons/animal/jerky.png"]
+      ]
+    },
+    {
+      "kind": "bullets",
+      "eyebrow": "感じ方のコツ",
+      "title": "慣れると魅力に気づく",
+      "items": [
+        ["強すぎると感じたら", "熟成が進んでいる証拠かも"],
+        ["少しずつ慣れていくと", "魅力に気づける香り"]
+      ]
+    },
+    {
+      "kind": "summary",
+      "title": "動物香 まとめ",
+      "points": [
+        "動物香はワインの個性と熟成の深み",
+        "バローロ・ブルネッロなど力強い赤に多い",
+        "力強い赤に出会ったらこの香りを探して"
+      ],
+      "cta": "保存して次のワイン会で話題にしてみて",
+      "sub": "次回からシリーズB「香りの正体」3層へ",
+      "icon": "../_assets/icons/animal/antler.png"
+    }
+  ]
+}

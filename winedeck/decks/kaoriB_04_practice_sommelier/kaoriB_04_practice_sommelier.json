@@ -1,0 +1,63 @@
+{
+  "name": "kaoriB_04_practice_sommelier",
+  "wine_type": "study",
+  "slides": [
+    {
+      "kind": "cover",
+      "badge": "3層シリーズ④",
+      "q": ["第一・第二・第三アロマ", "同時に分解説明できる？"],
+      "answer": "3層の実践編",
+      "subtitle": "同一グラスの3つのアロマ"
+    },
+    {
+      "kind": "icon_grid",
+      "eyebrow": "おさらい：3層構造",
+      "title": "おさらい：3層構造",
+      "cols": 3,
+      "items": [
+        ["第一アロマ", "品種由来", "../_assets/icons/aroma3/big/grape_bunch.png"],
+        ["第二アロマ", "発酵・醸造由来", "../_assets/icons/aroma3/big/barrel_ferment.png"],
+        ["第三アロマ", "熟成由来（ブケ）", "../_assets/icons/aroma3/big/barrel_aged.png"]
+      ],
+      "closing": "同一グラスに3つの時代が重層的に存在"
+    },
+    {
+      "kind": "bullets",
+      "eyebrow": "なぜ分解が難しいか",
+      "title": "なぜ分解が難しいか",
+      "items": [
+        ["各アロマは複合的に知覚される", "訓練なしでは一体感として捉えがち"]
+      ]
+    },
+    {
+      "kind": "bullets",
+      "eyebrow": "分解のための実践テクニック",
+      "title": "分解のための実践テクニック",
+      "items": [
+        ["スワリング前後の比較", "静置時は低揮発性、スワリング後は高揮発性成分"],
+        ["温度変化での比較", "低温は第一アロマ、温度上昇で第二・第三が開く"]
+      ]
+    },
+    {
+      "kind": "rows",
+      "eyebrow": "テイスティングコメントへの応用",
+      "title": "コメントへの応用",
+      "rows": [
+        ["手順", "静置→スワリング→再静置の順で変化を記述"]
+      ],
+      "closing": "香りの変化を言語化できるかが上級者との差"
+    },
+    {
+      "kind": "summary",
+      "title": "3層の実践編 まとめ",
+      "points": [
+        "3層を同時に別々に嗅ぎ分けるのが目標",
+        "スワリングと温度変化で香りの出方が変わる",
+        "香りの変化を言語化できるかが上級者の差"
+      ],
+      "cta": "保存して二次試験の実践練習に",
+      "sub": "香りのきほんシリーズもあわせてチェック",
+      "icon": "../_assets/icons/aroma3/big/barrel_aged.png"
+    }
+  ]
+}

@@ -1,0 +1,69 @@
+{
+  "name": "kaori_02_flower_simple",
+  "wine_type": "brand",
+  "slides": [
+    {
+      "kind": "cover",
+      "badge": "香りのきほん",
+      "q": ["ワインから花の香り？", "実はこんな意味が"],
+      "answer": "花の香り",
+      "subtitle": "品種を当てる手がかり"
+    },
+    {
+      "kind": "icon_grid",
+      "eyebrow": "これって何の香り？",
+      "title": "代表的な花の香り",
+      "cols": 2,
+      "items": [
+        ["スミレ", "赤ワインに多い", "../_assets/icons/flowers/violet.png"],
+        ["バラ", "赤ワインに多い", "../_assets/icons/flowers/rose.png"],
+        ["アカシア", "白ワインに多い", "../_assets/icons/flowers/acacia.png"],
+        ["オレンジの花", "白ワインに多い", "../_assets/icons/flowers/orange_blossom.png"]
+      ],
+      "closing": "白は柑橘系、赤はスミレ・バラが多い"
+    },
+    {
+      "kind": "rows",
+      "eyebrow": "どこから来るの？",
+      "title": "花の香りの正体",
+      "rows": [
+        ["由来", "ブドウの品種そのものが持つ香り成分"],
+        ["違い", "発酵や熟成でつく香りとは別の個性"]
+      ],
+      "closing": "花の香りは品種そのもののサイン"
+    },
+    {
+      "kind": "icon_grid",
+      "eyebrow": "代表的な品種",
+      "title": "品種と花の組み合わせ",
+      "cols": 2,
+      "items": [
+        ["ネッビオーロ", "バラ・スミレの香り", "../_assets/icons/flowers/rose.png"],
+        ["モスカート", "オレンジの花の甘い香り", "../_assets/icons/flowers/orange_blossom.png"]
+      ],
+      "closing": "品種ごとに得意な花の香りがある"
+    },
+    {
+      "kind": "bullets",
+      "eyebrow": "見分け方のコツ",
+      "title": "香りで品種を推理する",
+      "items": [
+        ["甘い花か青みのある花か", "品種のヒントになる"],
+        ["乾いた花の香り", "熟成が進んでいるサインかも"]
+      ],
+      "closing": "花の香りを言葉にする練習をしてみよう"
+    },
+    {
+      "kind": "summary",
+      "title": "花の香り まとめ",
+      "points": [
+        "花の香りはブドウ品種そのものの個性",
+        "赤はスミレ・バラ、白はアカシア・柑橘花",
+        "次の1杯で花の名前を探してみよう"
+      ],
+      "cta": "見つけた花をコメントで教えてね",
+      "sub": "次回は植物・ハーブの香りを深掘り",
+      "icon": "../_assets/icons/flowers/rose.png"
+    }
+  ]
+}

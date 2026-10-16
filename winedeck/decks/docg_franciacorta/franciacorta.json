@@ -1,0 +1,124 @@
+{
+  "name": "franciacorta",
+  "wine_type": "spark",
+  "grape": "franciacorta",
+  "slides": [
+    {
+      "kind": "cover",
+      "badge": "投稿⑳ イタリアDOCG",
+      "q": ["イタリアの", "シャンパーニュ"],
+      "answer": "フランチャコルタ",
+      "subtitle": "Franciacorta DOCG",
+      "bottle_photo": "photos/cover_bottle.jpg"
+    },
+    {
+      "kind": "myth",
+      "title_main": "フランチャコルタ",
+      "title_neg": "ただの泡",
+      "title_pos": "瓶内二次発酵の匠技",
+      "center_photo": "photos/myth_hero.jpg",
+      "boxes": [
+        {
+          "num": 1,
+          "heading": "製法のちがい",
+          "layout": "vs",
+          "items": [
+            {"label": "メトード・クラッシコ", "note": "瓶内で二次発酵。\nきめ細かい泡と複雑な香り"},
+            {"label": "メトード・シャルマ", "note": "タンク内で二次発酵。\nフレッシュで大きめの泡"}
+          ]
+        },
+        {
+          "num": 2,
+          "heading": "使用品種",
+          "layout": "list",
+          "items": [
+            {"label": "シャルドネ"},
+            {"label": "ピノ・ネーロ", "icon": "photos/myth_pinot_nero.jpg"},
+            {"label": "ピノ・ビアンコ"},
+            {"label": "エルバマット"}
+          ]
+        },
+        {
+          "num": 3,
+          "heading": "スタイルのちがい",
+          "layout": "vs",
+          "items": [
+            {"label": "サテン", "note": "白ブドウのみ。\n絹のようになめらかな泡", "icon": "photos/myth_saten.jpg"},
+            {"label": "ロゼ", "note": "ピノ・ネーロ由来の\n華やかな色と香り", "icon": "photos/myth_rose.jpg"}
+          ]
+        },
+        {
+          "num": 4,
+          "heading": "食事との相性",
+          "layout": "list",
+          "items": [
+            {"label": "牡蠣などの高級食材と好相性", "note": "繊細な泡が甲殻類・貝類の\n旨みを引き立てる", "icon": "photos/myth_pairing.jpg"}
+          ]
+        }
+      ],
+      "closing": "フランチャコルタは、シャンパーニュと同じ瓶内二次発酵で造るイタリア唯一のDOCG"
+    },
+    {
+      "kind": "rows",
+      "eyebrow": "DATA",
+      "title": "基礎データ",
+      "rows": [
+        ["DOCG認定", "1995年（伊初のスプマンテDOCG）"],
+        ["生産地", "ブレシア県、イゼオ湖南岸"],
+        ["品種構成", "シャルドネ中心＋ピノ・ネーロ／ビアンコ／エルバマット"],
+        ["製法", "メトード・クラッシコ（瓶内二次発酵）"],
+        ["熟成規定", "非ミレジマート／ミレジマート／リゼルヴァの3段階"]
+      ],
+      "closing": "地名がそのままDOCG名になる唯一の特例"
+    },
+    {
+      "kind": "sequence",
+      "eyebrow": "AGING",
+      "title": "熟成期間の3段階",
+      "headline": "リゼルヴァは60ヶ月以上",
+      "nodes": [
+        {"label": "ノン・ミレジマート\n18ヶ月以上"},
+        {"label": "ミレジマート\n30ヶ月以上"},
+        {"label": "リゼルヴァ\n60ヶ月以上"}
+      ],
+      "closing": "熟成が長いほど、複雑さと泡のきめ細かさが増す"
+    },
+    {
+      "kind": "timeline",
+      "eyebrow": "HISTORY",
+      "title": "イタリア泡の頂点への歩み",
+      "events": [
+        ["1961年", "グイド・ベルルッキが瓶内二次発酵の泡を初醸造"],
+        ["1967年", "「ピノ・ディ・フランチャコルタ」としてDOC認定"],
+        ["1990年", "「フランチャコルタ」に改名、製法を瓶内二次発酵に限定"],
+        ["1995年", "DOCGへ昇格。イタリア初のスプマンテDOCGに"]
+      ],
+      "closing": "一人の生産者の挑戦が、イタリア最高峰の泡を生んだ"
+    },
+    {
+      "kind": "ranking",
+      "eyebrow": "PAIRING",
+      "title": "フランチャコルタに合う料理",
+      "items": [
+        ["1", "牡蠣（オイスター）", "一致：繊細な泡が牡蠣の塩味と共鳴", "photos/pairing_oyster.jpg"],
+        ["2", "カルパッチョ", "一致：シャープな酸が生の食材と合う", "photos/pairing_carpaccio.jpg"],
+        ["3", "リゾット", "対比：クリーミーな一皿を泡が切る", "photos/pairing_risotto.jpg"]
+      ],
+      "closing": "お祝いの席全般に合わせられる、イタリアの祝杯"
+    },
+    {
+      "kind": "summary",
+      "title": "フランチャコルタ まとめ",
+      "points": [
+        "産地：ブレシア県、イゼオ湖南岸",
+        "製法：メトード・クラッシコ（瓶内二次発酵）",
+        "品種：シャルドネ中心の4品種",
+        "熟成：非ミレジマート18ヶ月〜リゼルヴァ60ヶ月",
+        "ペアリング：牡蠣・カルパッチョ・リゾット"
+      ],
+      "cta": "保存してお祝いの一本選びに",
+      "sub": "イタリアのシャンパーニュと呼ばれる理由",
+      "icon": "photos/summary_icon.jpg"
+    }
+  ]
+}

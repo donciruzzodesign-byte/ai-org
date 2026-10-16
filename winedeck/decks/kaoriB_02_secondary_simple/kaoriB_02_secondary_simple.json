@@ -1,0 +1,60 @@
+{
+  "name": "kaoriB_02_secondary_simple",
+  "wine_type": "brand",
+  "slides": [
+    {
+      "kind": "cover",
+      "badge": "香りの正体",
+      "q": ["パンやヨーグルトの香り", "実は発酵のサイン"],
+      "answer": "第二アロマ",
+      "subtitle": "発酵が生み出す香り"
+    },
+    {
+      "kind": "rows",
+      "eyebrow": "第二アロマって何？",
+      "title": "第二アロマって何？",
+      "rows": [
+        ["由来", "酵母が糖をアルコールに変える発酵で生まれる香り"]
+      ]
+    },
+    {
+      "kind": "icon_grid",
+      "eyebrow": "具体的にはどんな香り？",
+      "title": "発酵を感じる香り",
+      "cols": 2,
+      "items": [
+        ["パン", "泡ものワインで分かりやすい", "../_assets/icons/ferment/bread_badge.png"],
+        ["酵母・ヨーグルト", "泡ものワインで分かりやすい", "../_assets/icons/ferment/yeast_badge.png"]
+      ],
+      "closing": "バナナのような香りが出ることも"
+    },
+    {
+      "kind": "rows",
+      "eyebrow": "わかりやすい例",
+      "title": "フランチャコルタの例",
+      "rows": [
+        ["瓶内二次発酵スパークリング", "フランチャコルタなどは香りがとても豊か"]
+      ]
+    },
+    {
+      "kind": "bullets",
+      "eyebrow": "なぜ大事？",
+      "title": "造り方が見えてくる",
+      "items": [
+        ["この香りが分かると", "ワインがどう造られたか想像できるように"]
+      ]
+    },
+    {
+      "kind": "summary",
+      "title": "第二アロマ まとめ",
+      "points": [
+        "第二アロマは発酵の過程で生まれる香り",
+        "パン・ヨーグルト・バナナのような香り",
+        "スパークリングで特に分かりやすい"
+      ],
+      "cta": "次のスパークリングでパンや酵母の香りを探して",
+      "sub": "次回は第三アロマ（熟成由来）を深掘り",
+      "icon": "../_assets/icons/ferment/bread_badge.png"
+    }
+  ]
+}

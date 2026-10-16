@@ -10,6 +10,9 @@ __pycache__/
 *.pyc
 .pytest_cache/
 
+# winedeck PNGレンダリング用ローカルvenv（cairosvg用、マシン依存のため非コミット）
+.render_venv/
+
 # 動画素材（生成物・容量大）
 output/
 

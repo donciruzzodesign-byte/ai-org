@@ -744,3 +744,49 @@ def test_video_tool_definitions_free_excludes_generate_scene_video():
     assert "fetch_broll" in names
     assert "generate_scene_image" in names
     assert len(VIDEO_TOOL_DEFINITIONS_FREE) == len(VIDEO_TOOL_DEFINITIONS) - 1
+
+
+def _pexels_search(*ids):
+    resp = MagicMock()
+    resp.status_code = 200
+    resp.json.return_value = {"videos": [
+        {"id": i, "video_files": [{"link": f"https://example.com/{i}.mp4", "quality": "hd", "width": 1280}]}
+        for i in ids
+    ]}
+    return resp
+
+
+def _clip(data):
+    r = MagicMock()
+    r.iter_content = MagicMock(return_value=[data])
+    return r
+
+
+def test_fetch_broll_skips_clip_used_in_earlier_week(monkeypatch, tmp_path):
+    monkeypatch.setenv("PEXELS_API_KEY", "test-key")
+    week1, week2 = tmp_path / "2026-10-06-wine", tmp_path / "2026-10-13-wine"
+
+    with patch("tools_video.requests.get", side_effect=[_pexels_search(1, 2), _clip(b"clip-1")]):
+        fetch_broll("vineyard", 1, str(week1))
+    # 翌週：同じキーワードで同じ検索結果が返っても、使用済みID=1は飛ばして2を取る
+    with patch("tools_video.requests.get", side_effect=[_pexels_search(1, 2), _clip(b"clip-2")]) as g:
+        result = fetch_broll("vineyard", 1, str(week2))
+
+    assert "B-roll保存" in result
+    assert (week2 / "broll" / "broll_01.mp4").read_bytes() == b"clip-2"
+    assert g.call_count == 2  # 検索1回 + ダウンロード1回（ID=1は再DLしない）
+
+
+def test_fetch_broll_skips_same_content_with_different_id(monkeypatch, tmp_path):
+    monkeypatch.setenv("PEXELS_API_KEY", "test-key")
+    old = tmp_path / "2026-09-01-wine" / "broll"
+    old.mkdir(parents=True)
+    (old / "broll_01.mp4").write_bytes(b"same-bytes")  # 台帳なし：既存ファイルのmd5で初期化される
+
+    new_dir = tmp_path / "2026-09-08-wine"
+    with patch("tools_video.requests.get",
+               side_effect=[_pexels_search(10, 11), _clip(b"same-bytes"), _clip(b"fresh")]):
+        result = fetch_broll("vineyard", 1, str(new_dir))
+
+    assert "B-roll保存" in result
+    assert (new_dir / "broll" / "broll_01.mp4").read_bytes() == b"fresh"

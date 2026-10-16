@@ -1,0 +1,70 @@
+{
+  "name": "freddo_bar_tour_beginner",
+  "wine_type": "brand",
+  "slides": [
+    {
+      "kind": "cover",
+      "badge": "夏のバール案内",
+      "q": ["イタリアの夏、バールで", "何を飲むべき？"],
+      "answer": "カフェ・フレッド",
+      "subtitle": "地域で変わる、夏の一杯"
+    },
+    {
+      "kind": "icon_grid",
+      "eyebrow": "REGIONAL PICK",
+      "title": "地域別 冷たい一杯",
+      "cols": 1,
+      "items": [
+        ["シチリア｜グラニータ", "濃厚な苦みとブリオッシュの甘さ、パッシートのよう", "icons/sicilia_granita.png"],
+        ["レッチェ｜アーモンドコーヒー", "アーモンドミルクの甘い香り、プリミティーヴォ的", "icons/lecce_caffe.png"],
+        ["トリノ｜ビチェリン", "チョコ×コーヒー×クリーム、バローロのタンニン", "icons/torino_bicerin.png"]
+      ],
+      "closing": "地域が変われば、コーヒーも変わる。"
+    },
+    {
+      "kind": "bullets",
+      "eyebrow": "WINE PAIRING",
+      "title": "ワインに例えると",
+      "items": [
+        ["シチリア × パッシート", "凝縮した甘みと苦みが響き合う"],
+        ["レッチェ × プリミティーヴォ", "完熟果実のニュアンスが重なる"],
+        ["トリノ × バローロ", "タンニンとカカオの渋みが呼応する"]
+      ],
+      "closing": "ワイン好きほど、ハマる飲み方。"
+    },
+    {
+      "kind": "bullets",
+      "eyebrow": "冷たいコーヒーの秘密",
+      "title": "冷やすと、こう変わる",
+      "items": [
+        ["香りは閉じる", "冷えると立ちのぼる香りが控えめに", "icons/temperatura_aroma.png"],
+        ["酸味が前に出る", "温度が下がるほど酸を強く感じる", "icons/acidity_lemon.png"],
+        ["だから明るい酸が映える", "エチオピアなど酸のあるコーヒーが好相性", "icons/bright_acidity.png"]
+      ],
+      "closing": "ワインを冷やすと香りが閉じるのと同じ現象。"
+    },
+    {
+      "kind": "flow",
+      "eyebrow": "HOW TO MAKE",
+      "title": "おうちでシャケラート",
+      "steps": [
+        ["エスプレッソを30ml抽出する", "icons/shakerato_step1_espresso.png"],
+        ["氷と砂糖ひとつまみを用意", "icons/shakerato_step2_shaker.png"],
+        ["熱いまま10〜15秒シェイク", "icons/shakerato_step3_shake.png"]
+      ],
+      "closing": "泡がミルクフォームの代わりに。"
+    },
+    {
+      "kind": "summary",
+      "title": "この夏の一杯に",
+      "points": [
+        "モスカート × カフェ・シャケラート",
+        "酸とフルーティな甘みが溶け合う",
+        "シチリアの夜を思い出す組み合わせ"
+      ],
+      "cta": "保存して、今年の夏バールへ。",
+      "sub": "次回は地域別グラニータ特集。",
+      "icon": "icons/pairing_moscato_espresso.png"
+    }
+  ]
+}

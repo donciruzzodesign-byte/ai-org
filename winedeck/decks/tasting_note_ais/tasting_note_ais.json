@@ -1,0 +1,70 @@
+{
+  "name": "tasting_note_ais",
+  "wine_type": "grape",
+  "slides": [
+    {
+      "kind": "cover",
+      "badge": "AIS式メソッド",
+      "q": ["本格派のための", "伊式テイスティング"],
+      "answer": "AIS式ノート",
+      "subtitle": "視覚・嗅覚・味覚で記録"
+    },
+    {
+      "kind": "rows",
+      "eyebrow": "ESAME VISIVO",
+      "title": "視覚的検査",
+      "rows": [
+        ["Limpidezza 清澄度", "濁り〜やや濁り〜澄んだ"],
+        ["Colore 色調", "品種・熟成度で変化する"],
+        ["Consistenza 粘性", "さらさら〜とろみが強い"]
+      ],
+      "closing": "グラスを傾けて涙のつき方も見る"
+    },
+    {
+      "kind": "rows",
+      "eyebrow": "ESAME OLFATTIVO",
+      "title": "嗅覚的検査",
+      "rows": [
+        ["Intensità 強さ", "弱い〜非常に強い"],
+        ["Complessità 複雑性", "単純〜非常に複雑"],
+        ["Qualità 質", "並〜優れた香り"],
+        ["Descrittori 系統", "果実・花・ハーブ・スパイス"]
+      ],
+      "closing": "香りの系統を書き出すと上達が早い"
+    },
+    {
+      "kind": "rows",
+      "eyebrow": "ESAME GUSTO-OLFATTIVO",
+      "title": "味覚・嗅覚的検査",
+      "rows": [
+        ["Morbidezza まろやかさ", "糖・アルコール由来の柔らかさ"],
+        ["Durezze 硬さ", "酸味・タンニンの強さ"],
+        ["Sapidità 塩味感", "ミネラル感の強さ"],
+        ["Persistenza 余韻", "秒数で計測（PAI）"]
+      ],
+      "closing": "まろやかさと硬さのせめぎ合いを見る"
+    },
+    {
+      "kind": "bullets",
+      "eyebrow": "ESAME CONCLUSIVO",
+      "title": "総合評価とペアリング",
+      "items": [
+        ["Equilibrio バランス", "まろやかさと硬さの調和"],
+        ["Stato evolutivo 熟成段階", "若い〜熟成〜衰退期"],
+        ["Abbinamento ペアリング", "対比理論で相性を見る"]
+      ],
+      "closing": "メルカディーニ理論で対比を考える"
+    },
+    {
+      "kind": "summary",
+      "title": "AIS方式 まとめ",
+      "points": [
+        "視覚→嗅覚→味覚→総合評価の順で書く",
+        "イタリア語の専門用語で記録する",
+        "ペアリングは対比理論で考える"
+      ],
+      "cta": "保存してイタリア仕込みの記録を",
+      "sub": "全3パターンまとめて保存推奨"
+    }
+  ]
+}

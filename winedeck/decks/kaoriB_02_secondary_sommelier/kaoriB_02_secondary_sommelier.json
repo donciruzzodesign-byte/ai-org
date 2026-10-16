@@ -1,0 +1,61 @@
+{
+  "name": "kaoriB_02_secondary_sommelier",
+  "wine_type": "study",
+  "slides": [
+    {
+      "kind": "cover",
+      "badge": "3層シリーズ②",
+      "q": ["シュール・リーやMLF", "香りへの影響は？"],
+      "answer": "第二アロマ",
+      "subtitle": "発酵・醸造が生む香り"
+    },
+    {
+      "kind": "rows",
+      "eyebrow": "定義",
+      "title": "定義",
+      "rows": [
+        ["定義", "発酵中に酵母が生成するエステル類・高級アルコール由来"]
+      ]
+    },
+    {
+      "kind": "rows",
+      "eyebrow": "主要な香り要素",
+      "title": "主要な香り要素",
+      "rows": [
+        ["エステル類（酢酸イソアミル等）", "バナナ・洋梨様の香り"],
+        ["ダイアセチル（MLF由来）", "乳製品様のバター香"]
+      ]
+    },
+    {
+      "kind": "icon_grid",
+      "eyebrow": "シュール・リー／瓶内二次発酵",
+      "title": "シュール・リーの効果",
+      "cols": 2,
+      "items": [
+        ["シュール・リー", "パン・ビスケット・酵母香が強化", "../_assets/icons/ferment/bread_badge.png"],
+        ["瓶内二次発酵", "フランチャコルタDOCGが好例", "../_assets/icons/ferment/yeast_badge.png"]
+      ]
+    },
+    {
+      "kind": "bullets",
+      "eyebrow": "試験頻出ポイント",
+      "title": "試験頻出ポイント",
+      "items": [
+        ["「パン・ビスケット」表現", "トラディショナル方式のマーカー表現"],
+        ["MLFの有無", "バター香の有無も識別ポイント"]
+      ]
+    },
+    {
+      "kind": "summary",
+      "title": "第二アロマ まとめ",
+      "points": [
+        "エステル類はバナナ・洋梨様の香り",
+        "ダイアセチルはバター香（MLF由来）",
+        "シュール・リーでパン・酵母香が強化"
+      ],
+      "cta": "保存してスパークリングワイン分野の対策に",
+      "sub": "次回は第三アロマ（熟成由来）を深掘り",
+      "icon": "../_assets/icons/ferment/bread_badge.png"
+    }
+  ]
+}

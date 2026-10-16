@@ -1,0 +1,68 @@
+{
+  "name": "kaori_03_herb_simple",
+  "wine_type": "brand",
+  "slides": [
+    {
+      "kind": "cover",
+      "badge": "香りのきほん",
+      "q": ["青臭い？それ実は", "ワインの個性です"],
+      "answer": "植物・ハーブ香",
+      "subtitle": "ブドウ品種のサインかも"
+    },
+    {
+      "kind": "icon_grid",
+      "eyebrow": "代表的な香り",
+      "title": "青さとハーブの香り",
+      "cols": 3,
+      "items": [
+        ["ピーマン", "青さの代表格", "../_assets/icons/herbs/bell_pepper.png"],
+        ["青草", "青さの代表格", "../_assets/icons/herbs/grass.png"],
+        ["トマトの葉", "青さの代表格", "../_assets/icons/herbs/tomato_leaf.png"],
+        ["ミント", "爽やかハーブ", "../_assets/icons/herbs/mint.png"],
+        ["ローズマリー", "爽やかハーブ", "../_assets/icons/herbs/rosemary.png"],
+        ["バジル", "爽やかハーブ", "../_assets/icons/herbs/basil.png"]
+      ],
+      "closing": "青さとハーブ、2つのグループがある"
+    },
+    {
+      "kind": "icon_grid",
+      "eyebrow": "どんな品種に出る？",
+      "title": "代表品種との結びつき",
+      "cols": 2,
+      "items": [
+        ["カベルネ・フラン", "青さが出やすい代表品種", "../_assets/icons/herbs/bell_pepper.png"],
+        ["ヴェルメンティーノ", "ハーブ系の爽やかさが個性", "../_assets/icons/herbs/basil.png"]
+      ]
+    },
+    {
+      "kind": "bullets",
+      "eyebrow": "良い意味？悪い意味？",
+      "title": "青さの評価は両面ある",
+      "items": [
+        ["適度な青さ", "品種の個性として評価される"],
+        ["強すぎる青さ", "ブドウが未熟だったサインかも"]
+      ]
+    },
+    {
+      "kind": "bullets",
+      "eyebrow": "感じ方のコツ",
+      "title": "最初のひと嗅ぎで探す",
+      "items": [
+        ["グラスに鼻を入れた瞬間", "青さ・ハーブ感を探すと品種のヒントに"]
+      ],
+      "closing": "青さ・ハーブ感は品種を見分ける大事な手がかり"
+    },
+    {
+      "kind": "summary",
+      "title": "植物・ハーブ香 まとめ",
+      "points": [
+        "青さ・ハーブ感は品種を見分ける手がかり",
+        "カベルネ・フランは青さの代表品種",
+        "ヴェルメンティーノはハーブの爽やかさが個性"
+      ],
+      "cta": "次のイタリア白でハーブ感を探してみよう",
+      "sub": "次回はスパイスの香りを深掘り",
+      "icon": "../_assets/icons/herbs/basil.png"
+    }
+  ]
+}

@@ -60,7 +60,7 @@ def _load_env():
 
 _load_env()
 client = anthropic.Anthropic()
-MODEL = "claude-sonnet-4-6"
+MODEL = "claude-sonnet-5"
 
 
 def load_agent(name: str) -> str:
@@ -168,7 +168,11 @@ def run_agent(agent_name: str, prompt: str, label: str, max_continuations: int =
             for block in response.content:
                 if block.type == "tool_use":
                     print(f"  🔍 {label} ツール実行: {block.name}({str(list(block.input.values())[0])[:40] if block.input else ''}...)")
-                    result = execute_tool(block.name, block.input)
+                    try:
+                        result = execute_tool(block.name, block.input)
+                    except Exception as e:
+                        result = f"ツール実行エラー（{block.name}）: {e}"
+                        print(f"  ⚠️ {result}")
                     tool_results.append({
                         "type": "tool_result",
                         "tool_use_id": block.id,

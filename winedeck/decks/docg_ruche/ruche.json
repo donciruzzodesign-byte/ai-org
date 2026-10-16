@@ -1,0 +1,105 @@
+{
+  "name": "ruche",
+  "wine_type": "red",
+  "grape": "ruché",
+  "slides": [
+    {
+      "kind": "cover",
+      "badge": "投稿⑰ イタリアDOCG",
+      "q": ["知名度はほぼゼロ", "飲めば忘れない"],
+      "answer": "謎のワイン ルケ",
+      "subtitle": "Ruché di Castagnole Monferrato",
+      "bottle_photo": "photos/cover_bottle.jpg"
+    },
+    {
+      "kind": "icon_grid",
+      "eyebrow": "AROMA",
+      "title": "ルケを語る4つの顔",
+      "cols": 2,
+      "items": [
+        ["フローラル", "バラ・スミレ・ゼラニウムの香り", "photos/aroma_floral.jpg"],
+        ["スパイシー", "白コショウと東洋のスパイス", "photos/aroma_spicy.jpg"],
+        ["フルーティ", "チェリーと野イチゴの果実感", "photos/aroma_fruity.jpg"],
+        ["テロワール", "石灰岩質と強い日照が生む個性", "photos/aroma_terroir.jpg"]
+      ],
+      "closing": "香りは甘く、味わいは辛口。その落差がルケの罠"
+    },
+    {
+      "kind": "timeline",
+      "eyebrow": "HISTORY",
+      "title": "消えた品種、復活の物語",
+      "events": [
+        ["中世〜18C", "起源不明の「謎のワイン」"],
+        ["1960年代", "司祭ドン・カウダが忘れられた畑を発見"],
+        ["1987年", "DOC認定、7コムーネが規定される"],
+        ["2010年", "DOCG昇格、年産約100万本"],
+        ["2016年", "DNA解析で交配起源が判明"]
+      ],
+      "closing": "一人の司祭が絶滅から救ったピエモンテの秘宝"
+    },
+    {
+      "kind": "rows",
+      "eyebrow": "DATA",
+      "title": "ルケDOCG基礎データ",
+      "rows": [
+        ["栽培面積", "約205ha（2023年）"],
+        ["生産地", "7コムーネ限定"],
+        ["主品種比率", "ルケ90%以上"],
+        ["最低アルコール", "12.5% vol."],
+        ["DOCG取得", "2010年"],
+        ["土壌", "石灰岩質・粘土質・砂質"]
+      ],
+      "closing": "香りの遺産：バラ・スミレ・白コショウ・お香"
+    },
+    {
+      "kind": "flow",
+      "eyebrow": "TERROIR",
+      "title": "香りを生むテロワールの力",
+      "steps": [
+        ["石灰岩質と粘土質の土壌", "photos/terroir_soil.jpg"],
+        ["強い日照と昼夜の温度差", "photos/terroir_sun.jpg"],
+        ["品種固有の芳香テルペン", "photos/terroir_terpene.jpg"],
+        ["90%以上の単一品種規定", "photos/terroir_single.jpg"],
+        ["世界唯一の香りプロファイル", "photos/terroir_aroma.jpg"]
+      ]
+    },
+    {
+      "kind": "ranking",
+      "eyebrow": "PAIRING",
+      "title": "ルケに合わせたい料理",
+      "items": [
+        ["1", "ハーブチキン", "一致：ハーブ香が共鳴する", "photos/pairing_herbchicken.jpg"],
+        ["2", "鴨のロースト", "対比：渋みが脂を洗い流す", "photos/pairing_duck.jpg"],
+        ["3", "ストラッキーノ", "対比：華やかな香りとミルクの甘み", "photos/pairing_stracchino.jpg"]
+      ],
+      "closing": "一致か対比か、ルケはどちらも使いこなす"
+    },
+    {
+      "kind": "icon_grid",
+      "eyebrow": "EXAM",
+      "title": "ソムリエ試験ポイント",
+      "cols": 2,
+      "items": [
+        ["産地", "アスティ県、7コムーネ限定", "photos/exam_region.jpg"],
+        ["品種構成", "ルケ90%以上＋バルベーラ等10%", "photos/exam_variety.jpg"],
+        ["年号", "DOC1987年／DOCG2010年", "photos/exam_vintage.jpg"],
+        ["規定数値", "最低12.5%、収量9.0t/ha", "photos/exam_regulation.jpg"]
+      ],
+      "closing": "覚えることが少ないのに差がつく品種"
+    },
+    {
+      "kind": "summary",
+      "title": "ルケDOCG まとめ",
+      "points": [
+        "産地：アスティ県7コムーネ限定",
+        "香り：バラ・白コショウの遺伝",
+        "味わい：甘い香り、辛口の味",
+        "物語：司祭が救いDOCG2010年昇格",
+        "ペアリング：ハーブチキンほか"
+      ],
+      "cta": "保存してワイン選びに",
+      "sub": "次回はバルバレスコと比較",
+      "icon": "photos/summary_icon.jpg"
+    }
+  ]
+}

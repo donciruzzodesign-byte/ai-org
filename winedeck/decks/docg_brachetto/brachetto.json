@@ -1,0 +1,112 @@
+{
+  "name": "brachetto",
+  "wine_type": "rose",
+  "grape": "brachetto",
+  "slides": [
+    {
+      "kind": "cover",
+      "badge": "投稿⑱ イタリアDOCG",
+      "q": ["ピンク色に泡立つ", "甘口の赤ワイン"],
+      "answer": "ブラケット・ダックイ",
+      "subtitle": "Brachetto d'Acqui DOCG",
+      "bottle_photo": "photos/cover_bottle.jpg"
+    },
+    {
+      "kind": "icon_grid",
+      "eyebrow": "AROMA",
+      "title": "ブラケットを語る4つの香り",
+      "cols": 2,
+      "items": [
+        ["バラ", "華やかなローズの香り", "photos/aroma_rose.jpg"],
+        ["ストロベリー", "フレッシュな果実感", "photos/aroma_strawberry.jpg"],
+        ["ラズベリー", "甘酸っぱい赤い果実", "photos/aroma_raspberry.jpg"],
+        ["チェリー", "ジューシーな余韻", "photos/aroma_cherry.jpg"]
+      ],
+      "closing": "赤ワインなのに、香りはまるで花畑"
+    },
+    {
+      "kind": "compare",
+      "eyebrow": "STYLE",
+      "title": "微発泡と完全発泡、2つの顔",
+      "left": {
+        "label": "フリザンテ",
+        "sublabel": "Frizzante（微発泡）",
+        "body": ["やさしい泡立ち", "カジュアルに楽しめる", "気軽に開けられる一本"],
+        "tag": "日常の一杯",
+        "photo": "photos/compare_frizzante.jpg"
+      },
+      "right": {
+        "label": "スプマンテ",
+        "sublabel": "Spumante（完全発泡）",
+        "body": ["しっかりした泡立ち", "記念日にふさわしい華やかさ", "シャンパンのように開ける"],
+        "tag": "特別な日に",
+        "photo": "photos/compare_spumante.jpg"
+      },
+      "closing": "同じ品種でも、泡の強さで表情を変える"
+    },
+    {
+      "kind": "sequence",
+      "eyebrow": "MAKING",
+      "title": "低アルコールの秘密、醸造工程",
+      "headline": "アルコール度数 約5.5%前後",
+      "nodes": [
+        {"label": "収穫", "icon": "photos/seq_harvest.jpg"},
+        {"label": "発酵を\n早めに停止"},
+        {"label": "シャルマ式で\n二次発酵"},
+        {"label": "瓶詰め", "icon": "photos/seq_bottle.jpg"}
+      ],
+      "closing": "糖分を残して発酵を止めるから、甘くて軽い"
+    },
+    {
+      "kind": "timeline",
+      "eyebrow": "HISTORY",
+      "title": "ピエモンテ、香る赤の歴史",
+      "events": [
+        ["古代", "ギリシャ起源説がある土着品種"],
+        ["19世紀", "貴族が愛した希少な甘口赤"],
+        ["1969年", "DOC「ブラケット・ダックイ」認定"],
+        ["80〜90年代", "ロマンティックワインとして再評価"],
+        ["1996年", "DOCGへ昇格"]
+      ],
+      "closing": "小さな赤い花のような品種が、DOCGにまで登った"
+    },
+    {
+      "kind": "ranking",
+      "eyebrow": "PAIRING",
+      "title": "合わせたいデザート",
+      "items": [
+        ["1", "いちごのデザート", "一致：果実の香りが共鳴する", "photos/pairing_strawberry.jpg"],
+        ["2", "チョコレートケーキ", "対比：カカオの苦味と甘さが調和", "photos/pairing_chocolate.jpg"],
+        ["3", "フレッシュフルーツ", "一致：軽やかな甘さと合う", "photos/pairing_freshfruit.jpg"]
+      ],
+      "closing": "デザートワインとして、食後に主役になれる一本"
+    },
+    {
+      "kind": "icon_grid",
+      "eyebrow": "EXAM",
+      "title": "ソムリエ試験ポイント",
+      "cols": 2,
+      "items": [
+        ["産地", "アスティ／アレッサンドリア両県", "photos/exam_region.jpg"],
+        ["品種構成", "ブラケット100%", "photos/exam_variety.jpg"],
+        ["認定年", "DOC1969年／DOCG1996年", "photos/exam_year.jpg"],
+        ["スタイル", "微発泡・完全発泡の甘口赤", "photos/exam_style.jpg"]
+      ],
+      "closing": "DOCGの中でも数少ない甘口の赤"
+    },
+    {
+      "kind": "summary",
+      "title": "ブラケット・ダックイ まとめ",
+      "points": [
+        "産地：アスティ／アレッサンドリア県",
+        "香り：バラ・ストロベリー・ラズベリー",
+        "味わい：低アルコールの甘口微発泡",
+        "物語：1969年DOC→1996年DOCG",
+        "ペアリング：いちご・チョコ・フルーツ"
+      ],
+      "cta": "保存してデートワイン選びに",
+      "sub": "バレンタインや記念日にもぴったり",
+      "icon": "photos/summary_icon.jpg"
+    }
+  ]
+}

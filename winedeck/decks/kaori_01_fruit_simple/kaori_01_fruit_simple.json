@@ -1,0 +1,76 @@
+{
+  "name": "kaori_01_fruit_simple",
+  "wine_type": "brand",
+  "slides": [
+    {
+      "kind": "cover",
+      "wine_type": "classic",
+      "badge": "香りのきほん",
+      "q": ["赤い果実？黒い果実？", "それともトロピカル？"],
+      "answer": "果実の香り",
+      "subtitle": "実は3種類に分かれます"
+    },
+    {
+      "kind": "icon_grid",
+      "eyebrow": "白ワイン",
+      "title": "白ワインの果実香",
+      "cols": 2,
+      "items": [
+        ["青リンゴ", "さわやか系", "../_assets/icons/fruits/apple_green.png"],
+        ["レモン", "さわやか系", "../_assets/icons/fruits/lemon.png"],
+        ["グレープフルーツ", "さわやか系", "../_assets/icons/fruits/grapefruit.png"],
+        ["パイナップル", "熟した系", "../_assets/icons/fruits/pineapple.png"],
+        ["マンゴー", "熟した系", "../_assets/icons/fruits/mango.png"]
+      ],
+      "closing": "白は香りで熟度が分かりやすい"
+    },
+    {
+      "kind": "icon_grid",
+      "eyebrow": "赤ワイン①",
+      "title": "赤い果実のサイン",
+      "cols": 3,
+      "items": [
+        ["チェリー", "軽やか", "../_assets/icons/fruits/cherry.png"],
+        ["ラズベリー", "軽やか", "../_assets/icons/fruits/raspberry.png"],
+        ["ザクロ", "軽やか", "../_assets/icons/fruits/pomegranate.png"]
+      ],
+      "closing": "色が薄いワインに出やすい"
+    },
+    {
+      "kind": "icon_grid",
+      "eyebrow": "赤ワイン②",
+      "title": "黒い果実のサイン",
+      "cols": 3,
+      "items": [
+        ["カシス", "濃厚", "../_assets/icons/fruits/cassis.png"],
+        ["プラム", "濃厚", "../_assets/icons/fruits/plum.png"],
+        ["ブラックベリー", "濃厚", "../_assets/icons/fruits/blackberry.png"]
+      ],
+      "closing": "色が濃いワインに出やすい"
+    },
+    {
+      "kind": "icon_grid",
+      "eyebrow": "TIPS",
+      "title": "覚え方のコツ",
+      "cols": 2,
+      "items": [
+        ["色の薄いワイン", "赤い果実の香りが出やすい", "../_assets/icons/misc/glass_light.png"],
+        ["色の濃いワイン", "黒い果実の香りが出やすい", "../_assets/icons/misc/glass_dark.png"]
+      ],
+      "closing": "色と香りはワインを読み解くヒント"
+    },
+    {
+      "kind": "summary",
+      "wine_type": "classic",
+      "title": "果実の香り まとめ",
+      "points": [
+        "白は柑橘・トロピカルで熟度が分かる",
+        "赤は色の濃淡で果実の系統が変わる",
+        "次の1杯で赤黒当てっこしてみよう"
+      ],
+      "cta": "次の1杯で赤黒を当ててみよう",
+      "sub": "次回は花の香りを深掘り",
+      "icon": "../_assets/icons/fruits/cherry.png"
+    }
+  ]
+}

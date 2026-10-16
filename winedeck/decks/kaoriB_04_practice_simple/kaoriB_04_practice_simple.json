@@ -1,0 +1,62 @@
+{
+  "name": "kaoriB_04_practice_simple",
+  "wine_type": "brand",
+  "slides": [
+    {
+      "kind": "cover",
+      "badge": "香りの正体",
+      "q": ["1杯のワインに", "3つの時代が同時に？"],
+      "answer": "3層が同時に",
+      "subtitle": "1杯の中の3つの物語"
+    },
+    {
+      "kind": "icon_grid",
+      "eyebrow": "おさらい：3つの香り",
+      "title": "おさらい：3つの香り",
+      "cols": 3,
+      "items": [
+        ["品種の香り", "花・果実など", "../_assets/icons/aroma3/big/grape_bunch.png"],
+        ["発酵の香り", "パン・ヨーグルトなど", "../_assets/icons/aroma3/big/barrel_ferment.png"],
+        ["熟成の香り", "ナッツ・革など", "../_assets/icons/aroma3/big/barrel_aged.png"]
+      ],
+      "closing": "おさらい：3つの香りの正体"
+    },
+    {
+      "kind": "rows",
+      "eyebrow": "なぜ同時に感じにくいの？",
+      "title": "混ざり合って感じにくい",
+      "rows": [
+        ["理由", "3つが混ざり合い、一つの香りに感じやすい"]
+      ]
+    },
+    {
+      "kind": "bullets",
+      "eyebrow": "簡単な体験方法",
+      "title": "振る前と後で比べる",
+      "items": [
+        ["グラスを振る前", "控えめな香り"],
+        ["グラスを振った後", "香りが開いて3層が見えやすくなる"]
+      ]
+    },
+    {
+      "kind": "rows",
+      "eyebrow": "実際にやってみよう",
+      "title": "実際にやってみよう",
+      "rows": [
+        ["手順", "静かに嗅ぐ→グラスを揺らす→再度嗅いで変化を感じる"]
+      ]
+    },
+    {
+      "kind": "summary",
+      "title": "香りの正体 まとめ",
+      "points": [
+        "3層を意識するとワインがもっと楽しくなる",
+        "振る前と後で香りを比べてみよう",
+        "品種・発酵・熟成、3つの物語を感じて"
+      ],
+      "cta": "次の1杯で振る前と後を比べてみて",
+      "sub": "香りのきほんシリーズもあわせてチェック",
+      "icon": "../_assets/icons/aroma3/big/grape_bunch.png"
+    }
+  ]
+}

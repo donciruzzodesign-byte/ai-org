@@ -1,0 +1,66 @@
+{
+  "name": "kaori_04_spice_simple",
+  "wine_type": "brand",
+  "slides": [
+    {
+      "kind": "cover",
+      "badge": "香りのきほん",
+      "q": ["ワインからシナモン？", "それオーク樽のサイン"],
+      "answer": "スパイスの香り",
+      "subtitle": "ワインがまとう理由とは"
+    },
+    {
+      "kind": "icon_grid",
+      "eyebrow": "代表的な香り",
+      "title": "代表的なスパイスの香り",
+      "cols": 2,
+      "items": [
+        ["シナモン", "樽由来の甘いスパイス", "../_assets/icons/spice/cinnamon.png"],
+        ["クローブ", "樽由来の甘いスパイス", "../_assets/icons/spice/clove.png"],
+        ["バニラ", "樽由来の甘い香り", "../_assets/icons/spice/vanilla_badge.png"],
+        ["黒胡椒", "品種由来のスパイス", "../_assets/icons/spice/black_pepper.png"]
+      ],
+      "closing": "甘いスパイスは樽、ピリッとしたのは品種"
+    },
+    {
+      "kind": "rows",
+      "eyebrow": "どこから来る？",
+      "title": "香りの出どころ",
+      "rows": [
+        ["バニラ・シナモン", "オーク樽で寝かせることでつく香り"],
+        ["黒胡椒", "ブドウ品種そのものから来る香り"]
+      ]
+    },
+    {
+      "kind": "icon_grid",
+      "eyebrow": "代表的なワイン",
+      "title": "代表的なワインでの現れ方",
+      "cols": 2,
+      "items": [
+        ["バローロ系リゼルヴァ", "オーク由来のスパイス感が特徴", "../_assets/icons/spice/cinnamon.png"],
+        ["シラーズ系", "黒胡椒の香りが特徴的", "../_assets/icons/spice/black_pepper.png"]
+      ]
+    },
+    {
+      "kind": "bullets",
+      "eyebrow": "見分け方",
+      "title": "甘いかピリッとしたか",
+      "items": [
+        ["甘いスパイス", "オーク樽由来"],
+        ["ピリッとしたスパイス", "品種そのもの由来"]
+      ]
+    },
+    {
+      "kind": "summary",
+      "title": "スパイスの香り まとめ",
+      "points": [
+        "スパイスは樽と品種どちらかのサイン",
+        "甘いバニラ・シナモンは樽由来",
+        "ピリッとした黒胡椒は品種由来"
+      ],
+      "cta": "次の樽熟成ワインでスパイスを探そう",
+      "sub": "次回はロースト・香ばしい香りを深掘り",
+      "icon": "../_assets/icons/spice/cinnamon.png"
+    }
+  ]
+}

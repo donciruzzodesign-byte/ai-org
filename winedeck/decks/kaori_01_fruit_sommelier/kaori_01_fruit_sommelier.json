@@ -1,0 +1,66 @@
+{
+  "name": "kaori_01_fruit_sommelier",
+  "wine_type": "study",
+  "slides": [
+    {
+      "kind": "cover",
+      "badge": "系統別アロマ",
+      "q": ["赤い果実と黒い果実", "ワインの何を見る？"],
+      "answer": "果実系アロマ",
+      "subtitle": "色調と果実香の相関を解説"
+    },
+    {
+      "kind": "icon_grid",
+      "eyebrow": "分類",
+      "title": "果実香の分類",
+      "cols": 2,
+      "items": [
+        ["白ワイン", "柑橘系・白系果実・トロピカル系", "../_assets/icons/fruits/grapefruit.png"],
+        ["赤ワイン", "赤い果実・黒い果実・ドライフルーツ系", "../_assets/icons/fruits/blackberry.png"]
+      ]
+    },
+    {
+      "kind": "rows",
+      "eyebrow": "相関の原則",
+      "title": "色調と果実香の関係",
+      "rows": [
+        ["原則", "アントシアニン濃度と果実香に相関"],
+        ["淡い色調", "赤い果実系の傾向"],
+        ["濃い色調", "黒い果実系の傾向"]
+      ],
+      "closing": "色調は果実香を予測する手がかり"
+    },
+    {
+      "kind": "icon_grid",
+      "eyebrow": "産地・気候",
+      "title": "気候との関係",
+      "cols": 2,
+      "items": [
+        ["温暖産地", "黒系・トロピカル果実", "../_assets/icons/fruits/mango.png"],
+        ["冷涼産地", "酸のある赤系・柑橘系", "../_assets/icons/fruits/lemon.png"]
+      ]
+    },
+    {
+      "kind": "bullets",
+      "eyebrow": "試験頻出",
+      "title": "試験での狙われ方",
+      "items": [
+        ["ドライフルーツ表現", "熟成・過熟のマーカー表現"],
+        ["頻出品種", "ネロ・ダーヴォラ、プリミティーヴォ"]
+      ],
+      "closing": "色調→果実香→気候の順で繋げて覚える"
+    },
+    {
+      "kind": "summary",
+      "title": "果実系アロマ まとめ",
+      "points": [
+        "淡い色調は赤い果実、濃いと黒い果実",
+        "温暖産地は黒系、冷涼産地は赤系が傾向",
+        "ドライフルーツ表現は熟成のマーカー"
+      ],
+      "cta": "保存して模試前の復習に",
+      "sub": "次回は花の香りを深掘り",
+      "icon": "../_assets/icons/fruits/cherry.png"
+    }
+  ]
+}

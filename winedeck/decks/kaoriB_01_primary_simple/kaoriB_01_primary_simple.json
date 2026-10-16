@@ -1,0 +1,60 @@
+{
+  "name": "kaoriB_01_primary_simple",
+  "wine_type": "brand",
+  "slides": [
+    {
+      "kind": "cover",
+      "badge": "香りの正体",
+      "q": ["ブドウの時点で香りは", "もう決まってる？"],
+      "answer": "第一アロマ",
+      "subtitle": "品種そのものの香り"
+    },
+    {
+      "kind": "rows",
+      "eyebrow": "第一アロマって何？",
+      "title": "第一アロマって何？",
+      "rows": [
+        ["由来", "ワインになる前のブドウ果汁が持つ香り"]
+      ]
+    },
+    {
+      "kind": "icon_grid",
+      "eyebrow": "具体的にはどんな香り？",
+      "title": "品種ごとに違う香り",
+      "cols": 2,
+      "items": [
+        ["甘い花の香り", "マスカットのような香り", "../_assets/icons/flowers/orange_blossom.png"],
+        ["青い香り", "ピーマンのような香り", "../_assets/icons/herbs/bell_pepper.png"]
+      ],
+      "closing": "品種ごとに香りの個性が違う"
+    },
+    {
+      "kind": "rows",
+      "eyebrow": "わかりやすい例",
+      "title": "モスカート種の例",
+      "rows": [
+        ["モスカート種", "ブドウそのままのような甘い香りがする"]
+      ]
+    },
+    {
+      "kind": "bullets",
+      "eyebrow": "なぜ大事？",
+      "title": "品種を当てられるようになる",
+      "items": [
+        ["この香りを知っておくと", "「これは何の品種かも？」と当てられるように"]
+      ]
+    },
+    {
+      "kind": "summary",
+      "title": "第一アロマ まとめ",
+      "points": [
+        "第一アロマは品種を見抜く最初のヒント",
+        "モスカートは甘い花の香りが目印",
+        "ブドウそのものの個性を感じてみよう"
+      ],
+      "cta": "次にモスカートやネッビオーロで探してみて",
+      "sub": "次回は第二アロマ（発酵由来）を深掘り",
+      "icon": "../_assets/icons/aroma3/big/grape_bunch.png"
+    }
+  ]
+}

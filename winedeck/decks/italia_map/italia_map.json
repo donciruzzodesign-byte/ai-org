@@ -1,0 +1,35 @@
+{
+  "name": "italia_map",
+  "wine_type": "brand",
+  "slides": [
+    {
+      "kind": "region_map",
+      "eyebrow": "ITALIA",
+      "title": "20州の郷土料理とワイン",
+      "map_photo": "photos/イタリア地図.png",
+      "pins": [
+        {"label": "ヴァッレ・ダオスタ", "dish": "フォンデュタ", "x": 0.16, "y": 0.10, "photo": "photos/valle_daosta_dish.jpg"},
+        {"label": "ピエモンテ", "dish": "アニョロッティ・デル・プリン", "x": 0.20, "y": 0.20, "photo": "photos/piemonte_dish.jpg"},
+        {"label": "リグーリア", "dish": "トロフィエ・アル・ペスト", "x": 0.20, "y": 0.30, "photo": "photos/liguria_dish.jpg"},
+        {"label": "ロンバルディア", "dish": "リゾット・アッラ・ミラネーゼ", "x": 0.34, "y": 0.15, "photo": "photos/lombardia_dish.jpg"},
+        {"label": "トレンティーノ", "dish": "カネデルリ", "x": 0.46, "y": 0.06, "photo": "photos/trentino_dish.jpg"},
+        {"label": "ヴェネト", "dish": "バッカラー・アッラ・ヴィチェンティーナ", "x": 0.44, "y": 0.23, "photo": "photos/veneto_dish.jpg"},
+        {"label": "フリウリ", "dish": "フリコ", "x": 0.56, "y": 0.13, "photo": "photos/friuli_dish.jpg"},
+        {"label": "エミリア・ロマーニャ", "dish": "トルテッリーニ・イン・ブロード", "x": 0.43, "y": 0.32, "photo": "photos/emilia_romagna_dish.jpg"},
+        {"label": "トスカーナ", "dish": "パッパ・アル・ポモドーロ", "x": 0.32, "y": 0.40, "photo": "photos/toscana_dish.jpg"},
+        {"label": "ウンブリア", "dish": "ストランゴッツィ", "x": 0.44, "y": 0.47, "photo": "photos/umbria_dish.jpg"},
+        {"label": "マルケ", "dish": "オリーヴェ・アスコラーナ", "x": 0.50, "y": 0.43, "photo": "photos/marche_dish.jpg"},
+        {"label": "ラツィオ", "dish": "スパゲッティ・カルボナーラ", "x": 0.40, "y": 0.54, "photo": "photos/lazio_dish.jpg"},
+        {"label": "アブルッツォ", "dish": "アロースティチーニ", "x": 0.50, "y": 0.52, "photo": "photos/abruzzo_dish.jpg"},
+        {"label": "モリーゼ", "dish": "パンパネッラ", "x": 0.54, "y": 0.57, "photo": "photos/molise_dish.jpg"},
+        {"label": "カンパーニャ", "dish": "ピッツァ・ナポレターナ", "x": 0.44, "y": 0.60, "photo": "photos/campania_dish.jpg"},
+        {"label": "プーリア", "dish": "オレキエッテ", "x": 0.80, "y": 0.58, "photo": "photos/puglia_dish.jpg"},
+        {"label": "バジリカータ", "dish": "ラファナータ・ルカーナ", "x": 0.65, "y": 0.66, "photo": "photos/basilicata_dish.jpg"},
+        {"label": "カラブリア", "dish": "フィレヤ・コン・ンドゥイヤ", "x": 0.60, "y": 0.78, "photo": "photos/calabria_dish.jpg"},
+        {"label": "シチリア", "dish": "パスタ・アッラ・ノルマ", "x": 0.54, "y": 0.87, "photo": "photos/sicilia_dish.jpg"},
+        {"label": "サルデーニャ", "dish": "クルルジョーネス", "x": 0.24, "y": 0.65, "photo": "photos/sardegna_dish.jpg"}
+      ],
+      "closing": "州ごとの郷土料理から、ワインペアリングを学ぶ"
+    }
+  ]
+}

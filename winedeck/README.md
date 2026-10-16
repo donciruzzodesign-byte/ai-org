@@ -65,10 +65,13 @@ wd.export(slides, "./out", "barolo")     # PNGも要る場合
 ```
 
 ## ワインタイプ（背景キー）
-`white / red / spark / rose / orange / sweet / study / grape`
-- 明地（white, spark, rose, orange, sweet）＝文字は濃色
+`white / red / spark / rose / orange / sweet / study / grape / brand`
+- 明地（white, spark, rose, orange, sweet, brand）＝文字は濃色
 - 暗地（red, study, grape）＝文字はクリーム
 - `study`＝学び・格付け・歴史（ネイビー）、`grape`＝品種・構造（チャコール黒）
+- `brand`＝ワインタイプに紐づかない汎用インフォグラフィック用。CUBOCCI STUDIOの正式ブランドカラー
+  （クリーム背景 #F5F0E8・ワインレッド #6B1A2A・ゴールド #C9A84C）を直接使う。詳細は
+  `docs/brand_style_guide.md` 参照。
 
 ## 品種アクセント
 `grape="sangiovese"` のように指定すると、`GRAPE_ACCENT`（winedeck.py内）の色で
@@ -85,11 +88,33 @@ wd.export(slides, "./out", "barolo")     # PNGも要る場合
 |------|----------------|
 | cover | badge, q[1〜2行], answer, subtitle, (grape, swipe) |
 | rows | eyebrow, title, rows[[label,value]...], (closing) |
-| bullets | eyebrow, title, items[[head,note]...], (closing) |
+| bullets | eyebrow, title, items[[head,note]または[head,note,icon]...], (closing) |
 | timeline | eyebrow, title, events[[year,event]...], (closing) |
-| summary | title, points[...], (cta, sub) |
-- 各スライドで `wine_type` / `grape` を指定すればデッキ既定を上書き。
+| summary | title, points[...], (cta, sub, icon) |
+| icon_grid | eyebrow, title, items[[head,note]または[head,note,icon]...], (cols=2, closing) — 見出し+補足のグリッド。iconがあれば番号バッジの代わりにアイコン画像、無ければ従来通り番号バッジ。要素解説・比較カード向け |
+| flow | eyebrow, title, steps[str または [str,icon]...], (closing) — 矢印つきの縦型工程フロー |
+| ranking | eyebrow, title, items[[rank,head,note]または[rank,head,note,icon]...], (closing) — 番号付きランキングリスト |
+| quadrant | eyebrow, title, x_axis[左,右], y_axis[下,上], points[[label,x,y]...] — 2軸4象限マトリクス（x,yは0.0〜1.0） |
+- 各スライドで `wine_type` / `grape` を指定すればデッキ既定を上書き。汎用インフォグラフィックは `wine_type: "brand"` を推奨。
 - `num`/`total` は並び順から自動採番（cover はフッター無し）。
+
+### アイコン埋め込み（icon_grid / bullets / flow / ranking / summary）
+各データポイントにイラスト/アイコン（AI生成のフラットイラスト調など）を添えられる。
+「画像が主役、テキストは補足」の密度感（参考にしたワイン系インフォグラフィックはセルの3〜4割を
+イラストが占める）に近づけるため、iconを指定すると各型とも**大きく**表示される。
+- `icon` に渡すのは画像ファイルへの**相対パス**（spec JSONからの相対、`profile` の `photo` と同じ仕組み）。
+  `render.py` が自動で data URI に変換する（存在しないパスは `[warn]` を出し、アイコン無し扱いにフォールバック）。
+- `icon_grid`：icon を指定した項目はセル上部にアイコンを大きく配置し、見出し・補足はその下に縦積み表示
+  （目安：`cols=1`なら180〜220px、`cols=2`以上なら120〜160px）。無指定の項目は同サイズのナンバーサークル。
+  1枚の中に1つでもiconがあれば全項目がこの縦積みレイアウトに揃う（元の横並び番号バッジは、全項目icon無しの時だけ使われる）。
+- `bullets`：icon を指定した項目はテキストブロックに対して縦中央揃えの大きめアイコン（96px）を表示。
+- `flow`：`steps` の要素を `[本文, "icons/xxx.png"]` の配列にするとボックス内にアイコン（目安80〜110px、
+  ボックス高さも自動拡大）を表示。文字列のままなら従来通り。
+- `ranking`：icon を指定した項目は番号の代わりにアイコン画像を表示。無指定の項目は従来通り番号バッジ。
+- `summary`：スライド全体に1つだけ `icon` を指定可能（180px、`motif` を持たない `wine_type: "brand"` でも使える）。
+  スライドの視覚的な主役になるサイズで、CTA/subの位置は自動で下にずれる。
+- 元となるアイコン画像は1024×1024程度の解像度を推奨（縮小表示のみで使うため画質劣化なし）。
+- 1枚の中でicon有り/無しを混在させても崩れない設計だが、見た目の一貫性のため同一スライド内では揃えるのが基本。
 
 ## 制約と運用ルール（要遵守）
 1. **日本語の自動折り返しは無い**。長文は呼び出し側で改行・分割する。`render.py` は

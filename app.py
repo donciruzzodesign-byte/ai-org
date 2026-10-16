@@ -15,7 +15,7 @@ def _load_env():
 
 _load_env()
 client = anthropic.Anthropic()
-MODEL = "claude-sonnet-4-6"
+MODEL = "claude-sonnet-5"
 
 AGENTS = {
     "1": ("ceo",       "CEO",        "全体指揮・タスク調整"),
@@ -27,9 +27,11 @@ AGENTS = {
 }
 
 TOOL_LABEL = {
-    "web_search":    "🔍 Web検索",
-    "search_papers": "📄 論文検索",
-    "fetch_page":    "📖 ページ取得",
+    "web_search":      "🔍 Web検索",
+    "search_papers":   "📄 論文検索",
+    "fetch_page":      "📖 ページ取得",
+    "write_file":      "💾 ファイル保存",
+    "render_winedeck": "🎨 スライド生成",
 }
 
 
@@ -95,9 +97,14 @@ def chat(agent_id: str, label: str) -> bool:
                 tool_results = []
                 for block in response.content:
                     if block.type == "tool_use":
-                        query_preview = str(list(block.input.values())[0])[:50]
+                        values = list(block.input.values())
+                        query_preview = str(values[0])[:50] if values else "(引数なし)"
                         print(f"\n{TOOL_LABEL.get(block.name, block.name)}: {query_preview}...")
-                        result = execute_tool(block.name, block.input)
+                        try:
+                            result = execute_tool(block.name, block.input)
+                        except Exception as e:
+                            result = f"ツール実行エラー（{block.name}）: {e}"
+                            print(f"⚠️ {result}")
                         tool_results.append({
                             "type": "tool_result",
                             "tool_use_id": block.id,
