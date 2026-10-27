@@ -556,14 +556,14 @@ def save_timeline(timeline: dict, output_dir: str) -> str:
             "## シーン構成",
         ]
         for s in scenes:
-            lines.append(f"- シーン{s['id']} ({s['in_sec']}s〜{s['out_sec']}s): {s.get('caption', '')}")
+            lines.append(f"- シーン{s.get('id', '?')} ({s.get('in_sec', 0)}s〜{s.get('out_sec', 0)}s): {s.get('caption', '')}")
             if s.get("notes"):
                 lines.append(f"  ※ {s['notes']}")
 
         if highlights:
             lines += ["", "## Instagram Reels ハイライト（縦型クロップ推奨）"]
             for h in highlights:
-                lines.append(f"- {h['in_sec']}s〜{h['out_sec']}s: {h.get('reason', '')}")
+                lines.append(f"- {h.get('in_sec', 0)}s〜{h.get('out_sec', 0)}s: {h.get('reason', '')}")
 
         with open(guide_path, "w", encoding="utf-8") as f:
             f.write("\n".join(lines) + "\n")
