@@ -31,3 +31,32 @@ def test_cli_explicit_outdir_overrides_default(tmp_path):
     )
     assert result.returncode == 0, result.stderr
     assert os.path.exists(os.path.join(str(outdir), "svg", "barolo_01.svg"))
+
+
+def _render_diag_decks(tmp_path):
+    outs = {}
+    for name in ("diag_taste_type", "diag_activation_level"):
+        spec = os.path.join(WINEDECK_DIR, "decks", name, f"{name}.json")
+        outdir = tmp_path / name
+        result = subprocess.run(
+            [sys.executable, RENDER_PATH, spec, "--outdir", str(outdir), "--svg-only"],
+            capture_output=True, text=True,
+        )
+        assert result.returncode == 0, result.stderr
+        assert "[warn]" not in result.stderr, result.stderr
+        outs[name] = outdir / "svg"
+    return outs
+
+
+def test_diagnosis_decks_render_without_length_warnings(tmp_path):
+    outs = _render_diag_decks(tmp_path)
+    for svg_dir in outs.values():
+        assert len(os.listdir(svg_dir)) == 11
+
+
+def test_quiz_and_result_slides_draw_markers_and_next_step(tmp_path):
+    outs = _render_diag_decks(tmp_path)
+    quiz = (outs["diag_taste_type"] / "diag_taste_type_02.svg").read_text(encoding="utf-8")
+    assert "<polygon" in quiz and "<rect" in quiz  # triangle/diamond/square markers
+    result = (outs["diag_activation_level"] / "diag_activation_level_07.svg").read_text(encoding="utf-8")
+    assert "Lv.1" in result and "NEXT STEP" in result

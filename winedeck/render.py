@@ -59,6 +59,8 @@ LIMITS = {
     "axis": 12, "point_label": 10,                # quadrant
     "cmp_label": 13, "cmp_sub": 18, "cmp_body": 22, "cmp_tag": 14,  # compare
     "seq_label": 10, "headline": 16,              # sequence
+    "quiz_q": 17, "quiz_head": 21, "quiz_sub": 28,  # quiz
+    "res_name": 12, "res_line": 20, "res_step": 20,  # result
 }
 
 _SPEC_DIR = None  # build() 実行中にセットする、photo相対パス解決用
@@ -112,7 +114,8 @@ def build(spec, spec_dir=None):
             slides.append(wd.cover(wt, badge=s["badge"], q=s["q"], answer=s["answer"],
                                    subtitle=s.get("subtitle",""), grape=grape,
                                    swipe=s.get("swipe", "スワイプで解説 →"),
-                                   bottle_photo=_data_uri(s.get("bottle_photo"))))
+                                   bottle_photo=_data_uri(s.get("bottle_photo")),
+                                   prefix=s.get("prefix", "= ")))
         elif kind == "rows":
             _check_len("title", s["title"], LIMITS["title"])
             for _, v in s["rows"]: _check_len("value", v, LIMITS["value"])
@@ -252,6 +255,22 @@ def build(spec, spec_dir=None):
             slides.append(wd.myth_slide(wt, s["title_main"], s["title_neg"], s["title_pos"],
                           _data_uri(s.get("center_photo")), boxes, closing=s.get("closing"),
                           num=i, total=total, grape=grape))
+        elif kind == "quiz":
+            qs = [s["question"]] if isinstance(s["question"], str) else s["question"]
+            for q in qs: _check_len("quiz_q", q, LIMITS["quiz_q"])
+            for o in s["options"]:
+                _check_len("quiz_head", o[1], LIMITS["quiz_head"])
+                if len(o) >= 3: _check_len("quiz_sub", o[2], LIMITS["quiz_sub"])
+            slides.append(wd.quiz_slide(wt, s["eyebrow"], s["question"],
+                          [tuple(o) for o in s["options"]], note=s.get("note"),
+                          num=i, total=total, grape=grape))
+        elif kind == "result":
+            _check_len("res_name", s["name"], LIMITS["res_name"])
+            for ln in s["lines"]: _check_len("res_line", ln, LIMITS["res_line"])
+            for ln in s["step"]: _check_len("res_step", ln, LIMITS["res_step"])
+            slides.append(wd.result_slide(wt, s["eyebrow"], s["marker"], s["name"],
+                          s["lines"], s["step"], cta=s.get("cta"),
+                          step_label=s.get("step_label", "次の一歩"), grape=grape))
         elif kind == "quadrant":
             for lbl, _, _ in s["points"]: _check_len("point_label", lbl, LIMITS["point_label"])
             for lbl in list(s["x_axis"]) + list(s["y_axis"]):
@@ -271,6 +290,8 @@ def main():
     ap.add_argument("--date", default=datetime.date.today().isoformat(),
                     help="--outdir省略時の週次フォルダの日付（YYYY-MM-DD、既定: 実行日）")
     ap.add_argument("--svg-only", action="store_true")
+    ap.add_argument("--png-width", type=int, default=540,
+                    help="PNGの幅px（既定540=プレビュー。投稿用は1080、高さは4:5で自動）")
     args = ap.parse_args()
     outdir = args.outdir if args.outdir is not None else resolve_outdir(args.date)
     with open(args.spec, encoding="utf-8") as f:
@@ -283,7 +304,7 @@ def main():
                 f.write(s)
         print(f"wrote {len(slides)} SVG to {outdir}/svg")
     else:
-        n = wd.export(slides, outdir, name)
+        n = wd.export(slides, outdir, name, png_width=args.png_width)
         print(f"wrote {n} slides (svg+png) to {outdir}")
 
 if __name__ == "__main__":

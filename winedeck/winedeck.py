@@ -144,11 +144,12 @@ def _prep(wine_type, grape=None):
 
 # ===================== スライド・ビルダー =====================
 def cover(wine_type, badge, q, answer, subtitle, grape=None, swipe="スワイプで解説 →",
-         bottle_photo=None):
+         bottle_photo=None, prefix="= "):
     """表紙。q=質問行のリスト（1〜2行）。
     bottle_photo=ワインボトル写真のdata URI（任意）。指定時はボトル写真をスライド中央に
     大きく配置するヒーローレイアウトになる（バッジ・質問は上、答え・副題は下）。
-    未指定時は従来のドロップ/バブル装飾＋テキスト縦積みレイアウト。"""
+    未指定時は従来のドロップ/バブル装飾＋テキスト縦積みレイアウト。
+    prefix=答えの前に付ける記号（既定 "= "。診断タイトルなど不要な場合は ""）。"""
     p=_prep(wine_type, grape); uid=p["_uid"]; cx=W/2; b=[]
     if bottle_photo:
         badge_w=max(150, len(badge)*30+64)
@@ -165,7 +166,7 @@ def cover(wine_type, badge, q, answer, subtitle, grape=None, swipe="スワイプ
                  f'stroke="{p["frame"]}" stroke-width="1.4" stroke-opacity="0.65"/>')
         ans=answer; asz = 64 if len(ans)<=6 else (52 if len(ans)<=9 else 40)
         ay = by+bh+80
-        b.append(_t(cx, ay, f"= {ans}", asz, p["accent"], MINCHO, "700", "middle", spacing="2"))
+        b.append(_t(cx, ay, f"{prefix}{ans}", asz, p["accent"], MINCHO, "700", "middle", spacing="2"))
         b.append(_hair(p, cx-190, cx+190, ay+42, op="0.5"))
         b.append(_t(cx, ay+96, subtitle, 32, p["ink"], MINCHO, "500", "middle", spacing="2"))
         b.append(_t(cx, H-90, swipe, 24, p["gold"], GOTHIC, "500", "middle", spacing="3"))
@@ -184,7 +185,7 @@ def cover(wine_type, badge, q, answer, subtitle, grape=None, swipe="スワイプ
         b.append(_t(cx, qy, line, 52, p["ink"], MINCHO, "700", "middle", spacing="2")); qy+=66
     # 答え
     ans=answer; asz = 84 if len(ans)<=6 else (64 if len(ans)<=9 else 46)
-    b.append(_t(cx, 800, f"= {ans}", asz, p["accent"], MINCHO, "700", "middle", spacing="2"))
+    b.append(_t(cx, 800, f"{prefix}{ans}", asz, p["accent"], MINCHO, "700", "middle", spacing="2"))
     b.append(_hair(p, cx-190, cx+190, 860, op="0.5"))
     b.append(_t(cx, 930, subtitle, 40, p["ink"], MINCHO, "500", "middle", spacing="3"))
     b.append(_t(cx, H-150, swipe, 26, p["gold"], GOTHIC, "500", "middle", spacing="3"))
@@ -819,8 +820,89 @@ def quadrant_slide(wine_type, eyebrow, title, x_axis, y_axis, points, num=None, 
     b.append(_footer(p, num, total))
     return _svg(p, uid, "".join(b))
 
+# ===================== 診断（クイズ）用 =====================
+def _marker(p, cx, cy, kind, r=36):
+    """選択肢マーカー。kind=circle/triangle/square/diamond は図形、
+    それ以外の文字列（"A" "Lv.2" など）は丸囲みの文字として描く。"""
+    k=r/36.0; a=p["accent"]
+    b=[f'<circle cx="{cx}" cy="{cy}" r="{r}" fill="none" stroke="{p["gold"]}" stroke-width="1.6"/>']
+    if kind=="circle":
+        b.append(f'<circle cx="{cx}" cy="{cy}" r="{14*k:.1f}" fill="{a}"/>')
+    elif kind=="triangle":
+        pts=f"{cx},{cy-17*k:.1f} {cx+16*k:.1f},{cy+12*k:.1f} {cx-16*k:.1f},{cy+12*k:.1f}"
+        b.append(f'<polygon points="{pts}" fill="{a}"/>')
+    elif kind=="square":
+        b.append(f'<rect x="{cx-13*k:.1f}" y="{cy-13*k:.1f}" width="{26*k:.1f}" height="{26*k:.1f}" fill="{a}"/>')
+    elif kind=="diamond":
+        pts=f"{cx},{cy-18*k:.1f} {cx+18*k:.1f},{cy} {cx},{cy+18*k:.1f} {cx-18*k:.1f},{cy}"
+        b.append(f'<polygon points="{pts}" fill="{a}"/>')
+    else:
+        size=(34 if len(kind)<=1 else 22)*k
+        b.append(_t(cx, cy+size*0.36, kind, size, a, MINCHO, "700", "middle"))
+    return "".join(b)
+
+def quiz_slide(wine_type, eyebrow, question, options, note=None, num=None, total=9, grape=None):
+    """診断の設問（または集計）スライド。question=1行の文字列 or 行のリスト（最大2行）。
+    options=[(marker, head) または (marker, head, sub), ...]（3〜4個）。
+    marker は _marker 参照。note=カード下の補足1行（任意）。"""
+    p=_prep(wine_type, grape); uid=p["_uid"]; b=[_eyebrow(p, M, 200, eyebrow)]
+    lines=[question] if isinstance(question,str) else list(question)
+    y=292
+    for ln in lines:
+        b.append(_t(M, y, ln, 52, p["ink"], MINCHO, "700", spacing="2")); y+=70
+    hr_y=y-28
+    b.append(_hair(p, M, W-M, hr_y, op="0.45", w="1.2"))
+    n=len(options); gap=22; top=hr_y+50
+    bottom=H-150-(64 if note else 0)
+    ch=min(170, (bottom-top-(n-1)*gap)/n)
+    fill, fop = ("#FFFFFF","0.55") if p["light"] else ("#FFFFFF","0.06")
+    for i, opt in enumerate(options):
+        mk, head = opt[0], opt[1]
+        sub = opt[2] if len(opt)>=3 else None
+        cy0=top+i*(ch+gap); mid=cy0+ch/2
+        b.append(f'<rect x="{M}" y="{cy0:.1f}" width="{W-2*M}" height="{ch:.1f}" rx="18" '
+                 f'fill="{fill}" fill-opacity="{fop}" stroke="{p["frame"]}" '
+                 f'stroke-opacity="0.55" stroke-width="1.4"/>')
+        b.append(_marker(p, M+66, round(mid,1), mk))
+        tx=M+130
+        if sub:
+            b.append(_t(tx, mid-2, head, 34, p["accent"] if p["light"] else p["ink"], MINCHO, "600"))
+            b.append(_t(tx, mid+40, sub, 25, p["sub"], GOTHIC))
+        else:
+            b.append(_t(tx, mid+12, head, 34, p["ink"], MINCHO, "600"))
+    if note:
+        b.append(_t(W/2, bottom+44, note, 24, p["sub"], GOTHIC, anchor="middle", spacing="1"))
+    b.append(_footer(p, num, total))
+    return _svg(p, uid, "".join(b))
+
+def result_slide(wine_type, eyebrow, marker, name, lines, step, cta=None,
+                 step_label="次の一歩", grape=None):
+    """診断の結果スライド（暗地=classic推奨）。marker=図形名 or 短い文字、name=結果名、
+    lines=説明（2〜4行）、step=次の一歩（1〜3行）、cta=最下部の一言。"""
+    p=_prep(wine_type, grape); uid=p["_uid"]; cx=W/2; b=[]
+    b.append(_eyebrow(p, cx, 190, eyebrow, "middle"))
+    b.append(_marker(p, cx, 322, marker, r=62))
+    nsz=72 if len(name)<=9 else 58
+    b.append(_t(cx, 478, name, nsz, p["accent"], MINCHO, "700", "middle", spacing="2"))
+    b.append(_hair(p, cx-190, cx+190, 528, op="0.5"))
+    y=600
+    for ln in lines:
+        b.append(_t(cx, y, ln, 33, p["ink"], GOTHIC, anchor="middle")); y+=52
+    box_y=y+28; bh=104+len(step)*54
+    b.append(f'<rect x="{M}" y="{box_y}" width="{W-2*M}" height="{bh}" rx="20" '
+             f'fill="{p["gold"]}" fill-opacity="0.09" stroke="{p["gold"]}" '
+             f'stroke-opacity="0.8" stroke-width="1.4"/>')
+    b.append(_t(cx, box_y+52, f"NEXT STEP ・ {step_label}", 22, p["gold"], GOTHIC, "600",
+                "middle", spacing="4"))
+    sy=box_y+112
+    for ln in step:
+        b.append(_t(cx, sy, ln, 36, p["ink"], MINCHO, "600", "middle", spacing="1")); sy+=54
+    if cta:
+        b.append(_t(cx, H-110, cta, 26, p["gold"], GOTHIC, "500", "middle", spacing="3"))
+    return _svg(p, uid, "".join(b))
+
 # ===================== 書き出し =====================
-def export(slides, outdir, name):
+def export(slides, outdir, name, png_width=540):
     import cairosvg
     os.makedirs(f"{outdir}/svg", exist_ok=True)
     os.makedirs(f"{outdir}/png", exist_ok=True)
@@ -828,5 +910,5 @@ def export(slides, outdir, name):
         sp=f"{outdir}/svg/{name}_{i:02d}.svg"
         with open(sp,"w",encoding="utf-8") as f: f.write(s)
         cairosvg.svg2png(url=sp, write_to=f"{outdir}/png/{name}_{i:02d}.png",
-                         output_width=540, output_height=675)
+                         output_width=png_width, output_height=round(png_width*H/W))
     return len(slides)
