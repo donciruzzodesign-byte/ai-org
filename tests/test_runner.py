@@ -505,3 +505,44 @@ def test_coffee_friday_task_injects_reference_posts_when_present(mock_log, mock_
     assert "scan_reference_posts" in prompt
     assert "category='coffee'" in prompt
     mock_archive.assert_called_once_with("coffee")
+
+
+def _scheduled_names():
+    import schedule
+    return {j.job_func.func.__name__ for j in schedule.get_jobs()}
+
+
+def test_register_schedules_stops_coffee_and_video_by_default():
+    import schedule
+    import runner
+    schedule.clear()
+    runner.register_schedules()
+    names = _scheduled_names()
+    schedule.clear()
+    assert not [n for n in names if n.startswith("coffee_")]
+    assert "tuesday_video_task" not in names
+    assert {"monday_task", "tuesday_task", "friday_task", "tuesday_note_task", "tuesday_express_task"} <= names
+
+
+def test_register_schedules_can_reenable_coffee_and_video():
+    import schedule
+    import runner
+    schedule.clear()
+    runner.register_schedules(coffee_enabled=True, video_enabled=True)
+    names = _scheduled_names()
+    schedule.clear()
+    assert "tuesday_video_task" in names
+    assert {"coffee_monday_task", "coffee_regional_task", "coffee_tuesday_task",
+            "coffee_friday_task", "coffee_tuesday_video_task",
+            "coffee_tuesday_express_task", "coffee_tuesday_note_task"} <= names
+
+
+def test_coffee_video_stays_off_when_only_video_enabled():
+    import schedule
+    import runner
+    schedule.clear()
+    runner.register_schedules(video_enabled=True)
+    names = _scheduled_names()
+    schedule.clear()
+    assert "tuesday_video_task" in names
+    assert "coffee_tuesday_video_task" not in names

@@ -591,7 +591,8 @@ def coffee_tuesday_note_task():
         _report_failure("火曜：note記事作成（コーヒー）", e)
 
 
-def main():
+def register_schedules(coffee_enabled: bool = False, video_enabled: bool = False) -> None:
+    """週次タスクを登録する。コーヒー全般と動画素材生成は既定で停止（環境変数で再開）。"""
     schedule.every().monday.at("09:00").do(monday_task)
     schedule.every().monday.at("09:30").do(regional_wines_task)
     schedule.every().tuesday.at("09:00").do(tuesday_task)
@@ -599,25 +600,33 @@ def main():
     schedule.every().wednesday.at("09:00").do(wednesday_task)
     schedule.every().friday.at("09:00").do(friday_task)
     schedule.every().sunday.at("20:00").do(sunday_task)
-    schedule.every().monday.at("10:00").do(coffee_monday_task)
-    schedule.every().monday.at("10:30").do(coffee_regional_task)
-    schedule.every().tuesday.at("10:00").do(coffee_tuesday_task)
-    schedule.every().friday.at("10:00").do(coffee_friday_task)
-    schedule.every().tuesday.at("11:00").do(tuesday_video_task)
-    schedule.every().tuesday.at("12:00").do(coffee_tuesday_video_task)
     schedule.every().tuesday.at("09:30").do(tuesday_express_task)
-    schedule.every().tuesday.at("10:30").do(coffee_tuesday_express_task)
     schedule.every().tuesday.at("13:00").do(tuesday_note_task)
-    schedule.every().tuesday.at("13:30").do(coffee_tuesday_note_task)
+    if video_enabled:
+        schedule.every().tuesday.at("11:00").do(tuesday_video_task)
+    if coffee_enabled:
+        schedule.every().monday.at("10:00").do(coffee_monday_task)
+        schedule.every().monday.at("10:30").do(coffee_regional_task)
+        schedule.every().tuesday.at("10:00").do(coffee_tuesday_task)
+        schedule.every().friday.at("10:00").do(coffee_friday_task)
+        schedule.every().tuesday.at("10:30").do(coffee_tuesday_express_task)
+        schedule.every().tuesday.at("13:30").do(coffee_tuesday_note_task)
+        if video_enabled:
+            schedule.every().tuesday.at("12:00").do(coffee_tuesday_video_task)
+
+
+def main():
+    coffee_enabled = os.environ.get("COFFEE_ENABLED") == "1"
+    video_enabled = os.environ.get("VIDEO_ENABLED") == "1"
+    register_schedules(coffee_enabled, video_enabled)
 
     print("=" * 50)
     print("AI組織 週次スケジューラー起動中")
     print("月09:00 テーマ決定 / 月09:30 州別ワイン紹介 / 火09:00 台本")
     print("水08:45 Instagram Insights同期 / 水09:00 レビュー通知 / 金09:00 SNS投稿文 / 日20:00 反応分析")
-    print("月10:00 コーヒーテーマ / 月10:30 地域別コーヒー / 火10:00 コーヒー台本 / 金10:00 コーヒーSNS")
-    print("火 11:00 ワイン動画素材 / 火 12:00 コーヒー動画素材")
-    print("火 09:30 ワインExpress素材 / 火 10:30 コーヒーExpress素材")
-    print("火 13:00 ワインnote記事 / 火 13:30 コーヒーnote記事")
+    print("火 09:30 ワインExpress素材 / 火 13:00 ワインnote記事")
+    print("火 11:00 ワイン動画素材: " + ("有効" if video_enabled else "停止中（VIDEO_ENABLED=1で再開）"))
+    print("コーヒー全般: " + ("有効" if coffee_enabled else "停止中（AI会社へ移行。COFFEE_ENABLED=1で再開）"))
     print("停止するには Ctrl+C")
     print("=" * 50)
 

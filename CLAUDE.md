@@ -28,6 +28,8 @@ ELEVENLABS_API_KEY=...      # ナレーション（現在は無効化中・有�
 ELEVENLABS_VOICE_ID=...     # ElevenLabs ボイスID
 HF_API_KEY=...               # 任意（Higgsfield AI動画クリップ生成に必須）
 HF_API_SECRET=...            # 任意（同上）
+COFFEE_ENABLED=1             # 任意（コーヒーの自動実行を再開する場合のみ。未設定＝停止）
+VIDEO_ENABLED=1              # 任意（動画素材生成の自動実行を再開する場合のみ。未設定＝停止）
 META_ACCESS_TOKEN=...        # 任意（Instagram Insights自動連携に必須）
 META_IG_USER_ID=...          # 任意（同上）
 GOOGLE_SERVICE_ACCOUNT_JSON=... # 任意（同上：Sheets書き込み用サービスアカウントキーのパス）
@@ -69,19 +71,19 @@ INSTAGRAM_SHEET_ID=...       # 任意（同上：対象スプレッドシートI
 |------|------|--------|-------------|
 | 月 | 09:00 | 今週テーマ決定 | sommelier |
 | 月 | 09:30 | 州別おすすめワイン紹介 | sommelier |
-| 月 | 10:00 | コーヒーテーマ決定 | barista |
-| 月 | 10:30 | 地域別コーヒー紹介 | barista |
+| 月 | 10:00 | コーヒーテーマ決定（**停止中**・AI会社へ移行） | barista |
+| 月 | 10:30 | 地域別コーヒー紹介（**停止中**） | barista |
 | 火 | 09:00 | 動画台本作成 | creator |
-| 火 | 10:00 | コーヒー動画台本作成 | creator |
-| 火 | 11:00 | ワイン動画素材生成（画像・B-roll・AEスクリプト） | video |
-| 火 | 12:00 | コーヒー動画素材生成 | video |
+| 火 | 10:00 | コーヒー動画台本作成（**停止中**） | creator |
+| 火 | 11:00 | ワイン動画素材生成（画像・B-roll・AEスクリプト）（**停止中**・`VIDEO_ENABLED=1`で再開） | video |
+| 火 | 12:00 | コーヒー動画素材生成（**停止中**） | video |
 | 火 | 13:00 | ワインnote記事原稿生成 | creator |
-| 火 | 13:30 | コーヒーnote記事原稿生成 | creator |
+| 火 | 13:30 | コーヒーnote記事原稿生成（**停止中**） | creator |
 | 水 | 08:45 | Instagram Insights同期 | — |
 | 水 | 09:00 | レビュー通知（手動確認） | — |
 | 木 | — | AE で auto_edit.jsx 実行 → 仕上げ（オーナー手動） | — |
 | 金 | 09:00 | SNS投稿文＋商品リスト | marketer |
-| 金 | 10:00 | コーヒーSNS投稿文＋商品リスト | marketer |
+| 金 | 10:00 | コーヒーSNS投稿文＋商品リスト（**停止中**） | marketer |
 | 土 | — | 動画公開＋SNS投稿（オーナー手動） | — |
 | 日 | 20:00 | 反応分析レポート | marketer |
 
