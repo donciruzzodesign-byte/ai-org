@@ -28,6 +28,7 @@ ELEVENLABS_API_KEY=...      # ナレーション（現在は無効化中・有�
 ELEVENLABS_VOICE_ID=...     # ElevenLabs ボイスID
 HF_API_KEY=...               # 任意（Higgsfield AI動画クリップ生成に必須）
 HF_API_SECRET=...            # 任意（同上）
+WINE_VAULT_PATH=...         # 任意（ワイン台帳(Obsidian保管庫)のパス。未設定なら台帳なしで従来どおり動く）
 COFFEE_ENABLED=1             # 任意（コーヒーの自動実行を再開する場合のみ。未設定＝停止）
 VIDEO_ENABLED=1              # 任意（動画素材生成の自動実行を再開する場合のみ。未設定＝停止）
 META_ACCESS_TOKEN=...        # 任意（Instagram Insights自動連携に必須）
