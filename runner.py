@@ -12,6 +12,7 @@ from tools import (
 from tools_video import VIDEO_TOOL_DEFINITIONS, VIDEO_TOOL_DEFINITIONS_FREE, execute_video_tool, consume_paid_video_flag
 from tools_express import generate_weekly_assets, parse_creator_metadata
 from tools_instagram import sync_instagram_insights
+import vault
 
 _RETRY_DELAYS = [15, 30, 60]
 _NON_RETRYABLE_STATUS_CODES = {400, 401, 403, 404, 422}
@@ -143,6 +144,15 @@ def run_agent(agent_name: str, prompt: str, label: str, max_continuations: int =
                     + "同じ産地・品種・切り口・商品の重複を避けて新しい提案をしてください:\n"
                     + recent_themes
                 )
+            if category == "ワイン":
+                ledger = vault.ledger_summary(vault.vault_path())
+                if ledger:
+                    prompt = (
+                        prompt
+                        + "\n\n【台帳】保管庫に記録済みの直近のテーマです。"
+                        + "切り口が近いものを避けてください:\n"
+                        + ledger
+                    )
 
     messages = [{"role": "user", "content": prompt}]
     accumulated = ""
@@ -209,6 +219,9 @@ def run_agent(agent_name: str, prompt: str, label: str, max_continuations: int =
     else:
         notion_result = save_to_notion(f"{label} ({now.strftime('%Y-%m-%d')})", final_text, status=status, theme=theme)
     print(f"   📝 Notion: {notion_result}")
+    if category == "ワイン" and theme:
+        vault.append_row(vault.vault_path(), "投稿テーマ.md",
+                         [label, "週次", theme, now.strftime("%Y-%m-%d"), "Notion", status])
     return final_text
 
 

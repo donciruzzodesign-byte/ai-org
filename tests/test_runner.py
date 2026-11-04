@@ -546,3 +546,38 @@ def test_coffee_video_stays_off_when_only_video_enabled():
     schedule.clear()
     assert "tuesday_video_task" in names
     assert "coffee_tuesday_video_task" not in names
+
+
+def _run_wine_agent(runner, mock_extra=None):
+    resp = _text_response("完成した台本です。", "end_turn")
+    with patch.object(runner.client.messages, "stream", return_value=_stream_cm(resp)) as mock_stream, \
+         patch.object(runner, "save_to_notion", return_value="ok"), \
+         patch.object(runner, "save_log"), \
+         patch.object(runner, "extract_theme", return_value="バローロの熟成"), \
+         patch.object(runner, "notion_recent_themes", return_value=""), \
+         patch.object(runner, "notion_find_wip", return_value="途中の制作物はありません"):
+        runner.run_agent("creator", "台本を書いて", "火曜：ワイン動画台本作成")
+    return mock_stream.call_args.kwargs["messages"][0]["content"]
+
+
+def test_run_agent_adds_ledger_summary_for_wine(tmp_path, monkeypatch):
+    import runner, vault
+    monkeypatch.setenv("WINE_VAULT_PATH", str(tmp_path))
+    vault.append_row(str(tmp_path), "投稿テーマ.md", ["アマローネ", "週次", "陰干し", "d", "x", "u"])
+    vault.append_row(str(tmp_path), "投稿テーマ.md", ["バルバレスコ", "週次", "ネッビオーロ", "d", "x", "u"])
+    prompt = _run_wine_agent(runner)
+    assert "【台帳】" in prompt and "アマローネ" in prompt and "バルバレスコ" in prompt
+
+
+def test_run_agent_no_ledger_without_vault(monkeypatch):
+    import runner
+    monkeypatch.delenv("WINE_VAULT_PATH", raising=False)
+    assert "【台帳】" not in _run_wine_agent(runner)
+
+
+def test_run_agent_appends_theme_to_ledger(tmp_path, monkeypatch):
+    import runner, vault
+    monkeypatch.setenv("WINE_VAULT_PATH", str(tmp_path))
+    _run_wine_agent(runner)
+    rows = vault.read_rows(str(tmp_path), "投稿テーマ.md")
+    assert len(rows) == 1 and rows[0][0] == "火曜：ワイン動画台本作成" and rows[0][2] == "バローロの熟成"
