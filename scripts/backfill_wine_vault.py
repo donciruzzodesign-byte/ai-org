@@ -9,6 +9,7 @@ import argparse
 import os
 import re
 import sys
+import unicodedata
 from datetime import datetime
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
@@ -48,12 +49,13 @@ def _subdirs(path: str) -> list:
 def _plan(archive: str) -> list:
     """(台帳キー, 名称, 種類, フォルダパス) の一覧を返す。"""
     items = []
-    for name in _subdirs(archive):
-        path = os.path.join(archive, name)
+    for raw in _subdirs(archive):
+        path = os.path.join(archive, raw)
+        name = unicodedata.normalize("NFC", raw)  # macOSは濁点などを分解形で持つため
         if "20州の旅" in name:
-            items += [("州別", c, "州", os.path.join(path, c)) for c in _subdirs(path)]
+            items += [("州別", unicodedata.normalize("NFC", c), "州", os.path.join(path, c)) for c in _subdirs(path)]
         elif name == "リール素材":
-            items += [("シリーズ", c, "リール", os.path.join(path, c)) for c in _subdirs(path)]
+            items += [("シリーズ", unicodedata.normalize("NFC", c), "リール", os.path.join(path, c)) for c in _subdirs(path)]
         elif name in CAROUSEL_NAMES:
             items.append(("シリーズ", name, "カルーセル/資料", path))
         elif name in GIFT_NAMES:
@@ -73,12 +75,12 @@ def backfill(archive: str, vault: str, dry_run: bool = False) -> dict:
     counts = {"講座の回": 0, "州別": 0, "シリーズ": 0, "配布物": 0, "空": 0, "未分類": 0}
     seen = {k: _existing(vault, k) for k in LEDGER_OF}
     for key, name, kind, path in _plan(archive):
-        if key == "未分類":
-            counts["未分類"] += 1
-            continue
         n = _count_files(path)
         if n == 0:
             counts["空"] += 1
+            continue
+        if key == "未分類":
+            counts["未分類"] += 1
             continue
         if (name, path) in seen[key]:
             continue
