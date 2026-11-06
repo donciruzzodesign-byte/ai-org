@@ -222,6 +222,12 @@ def run_agent(agent_name: str, prompt: str, label: str, max_continuations: int =
     if category == "ワイン" and theme:
         vault.append_row(vault.vault_path(), "投稿テーマ.md",
                          [label, "週次", theme, now.strftime("%Y-%m-%d"), "Notion", status])
+        if vault.vault_path():
+            try:
+                from scripts.build_wine_graph import build as build_wine_graph
+                build_wine_graph(vault.vault_path())
+            except Exception as e:  # グラフ更新の失敗で週次実行を止めない
+                print(f"   ⚠️ グラフ更新に失敗: {e}")
     return final_text
 
 
