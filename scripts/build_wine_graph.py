@@ -8,6 +8,7 @@ import os
 import re
 import sys
 import unicodedata
+from urllib.parse import quote
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 
@@ -108,7 +109,7 @@ def build(vault: str) -> dict:
         lines += [f"- 品種: [[{v}]]" for v in sorted(d["varieties"])]
         lines += [f"- 投稿: [[{p}]]" for p in d["posts"]]
         if s in folders:
-            lines += ["", f"資料フォルダ: `{folders[s]}`"]
+            lines += ["", f"資料フォルダ: [Finderで開く](file://{quote(folders[s])})", f"`{folders[s]}`"]
         _write(os.path.join(root, "州", s + ".md"), lines)
     for v, d in varieties.items():
         lines = ["#品種", "", f"# {v}", ""]

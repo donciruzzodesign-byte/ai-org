@@ -27,6 +27,7 @@ def test_build_links_state_variety_post(tmp_path):
     state = (g / "州" / "ピエモンテ.md").read_text(encoding="utf-8")
     assert "[[イタリア20州]]" in state and "[[ネッビオーロ]]" in state
     assert "[[2026-11-04 ピエモンテ州のネッビオーロ]]" in state and "/x/9・Piemonte" in state
+    assert "[Finderで開く](file:///x/9%E3%83%BBPiemonte)" in state
     assert "[[ピエモンテ]]" in (g / "品種" / "ネッビオーロ.md").read_text(encoding="utf-8")
     assert (g / "投稿" / "2026-11-04 ピエモンテ州のネッビオーロ.md").exists()
 
