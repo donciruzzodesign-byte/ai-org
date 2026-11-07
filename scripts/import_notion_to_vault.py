@@ -54,7 +54,11 @@ def rich_text_md(rich: list) -> str:
 
 
 def blocks_md(blocks: list, depth: int = 0) -> str:
-    """children を取得済みのブロック一覧をMarkdownにする。"""
+    """children を取得済みのブロック一覧をMarkdownにする。本文中の `[[` は、リンクにならないよう無効化する。"""
+    return _blocks_md(blocks, depth).replace("[[", "\\[\\[")
+
+
+def _blocks_md(blocks: list, depth: int = 0) -> str:
     lines = []
     ind = "  " * depth
     n = 0
@@ -63,7 +67,7 @@ def blocks_md(blocks: list, depth: int = 0) -> str:
         d = b.get(t, {})
         n = n + 1 if t == "numbered_list_item" else 0
         text = rich_text_md(d.get("rich_text"))
-        kids = blocks_md(b.get("children", []), depth + 1) if b.get("children") and t not in ("table", "column_list", "column") else ""
+        kids = _blocks_md(b.get("children", []), depth + 1) if b.get("children") and t not in ("table", "column_list", "column") else ""
         if t == "paragraph":
             lines.append(f"{ind}{text}")
         elif t in ("heading_1", "heading_2", "heading_3"):
@@ -93,13 +97,13 @@ def blocks_md(blocks: list, depth: int = 0) -> str:
                 lines.append("|" + "---|" * w)
                 lines += ["| " + " | ".join(r) + " |" for r in rows[1:]]
         elif t in ("column_list", "column"):
-            lines.append(blocks_md(b.get("children", []), depth))
+            lines.append(_blocks_md(b.get("children", []), depth))
         elif t in ("image", "file", "pdf", "video", "bookmark", "embed", "link_preview"):
             url = d.get("url") or (d.get("file") or d.get("external") or {}).get("url", "")
             cap = rich_text_md(d.get("caption")) or t
             lines.append(f"[{cap}]({url})" if url else f"({t})")
         elif t == "child_page":
-            lines.append(f"- [[{d.get('title', '')}]]")
+            lines.append(f"- 📄 {d.get('title', '')}")
         elif t == "equation":
             lines.append(f"$${d.get('expression', '')}$$")
         if kids:

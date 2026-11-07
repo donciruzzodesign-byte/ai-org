@@ -30,8 +30,9 @@ def test_blocks_to_markdown_headings_lists_nested_todo_table():
     assert "| a | b |\n|---|---|\n| 1 | 2 |" in md
 
 
-def test_child_page_becomes_wikilink():
-    assert m.blocks_md([{"type": "child_page", "child_page": {"title": "子ページ"}}]) == "- [[子ページ]]"
+def test_child_page_is_plain_text_and_literal_double_brackets_are_escaped():
+    assert m.blocks_md([{"type": "child_page", "child_page": {"title": "子ページ"}}]) == "- 📄 子ページ"
+    assert "[[" not in m.blocks_md([blk("paragraph", "台本 [[テロップ]] です")])
 
 
 def test_jst_date_and_safe_name():
