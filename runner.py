@@ -305,6 +305,19 @@ def instagram_insights_task():
         _report_failure("Instagram Insights同期", e)
 
 
+def notion_import_task():
+    """Notionの制作物をObsidian保管庫へ差分取り込みする。保管庫が未設定ならスキップ。"""
+    try:
+        vault_dir = vault.vault_path()
+        if not vault_dir:
+            print("  ⏭️ Notion取り込み: WINE_VAULT_PATH 未設定のためスキップ")
+            return
+        from scripts.import_notion_to_vault import sync
+        print(f"  📥 Notion取り込み: {sync(vault_dir, lambda m: print('   ' + m))}")
+    except Exception as e:
+        _report_failure("Notion→Obsidian取り込み", e)
+
+
 def wednesday_task():
     try:
         message = "台本が完成しました。Notion で確認してください。収録は明日（木曜）の予定です。"
@@ -619,6 +632,7 @@ def register_schedules(coffee_enabled: bool = False, video_enabled: bool = False
     schedule.every().wednesday.at("09:00").do(wednesday_task)
     schedule.every().friday.at("09:00").do(friday_task)
     schedule.every().sunday.at("20:00").do(sunday_task)
+    schedule.every().sunday.at("21:00").do(notion_import_task)
     schedule.every().tuesday.at("09:30").do(tuesday_express_task)
     schedule.every().tuesday.at("13:00").do(tuesday_note_task)
     if video_enabled:
@@ -643,7 +657,7 @@ def main():
     print("AI組織 週次スケジューラー起動中")
     print("月09:00 テーマ決定 / 月09:30 州別ワイン紹介 / 火09:00 台本")
     print("水08:45 Instagram Insights同期 / 水09:00 レビュー通知 / 金09:00 SNS投稿文 / 日20:00 反応分析")
-    print("火 09:30 ワインExpress素材 / 火 13:00 ワインnote記事")
+    print("火 09:30 ワインExpress素材 / 火 13:00 ワインnote記事 / 日21:00 NotionをObsidianへ取り込み")
     print("火 11:00 ワイン動画素材: " + ("有効" if video_enabled else "停止中（VIDEO_ENABLED=1で再開）"))
     print("コーヒー全般: " + ("有効" if coffee_enabled else "停止中（AI会社へ移行。COFFEE_ENABLED=1で再開）"))
     print("停止するには Ctrl+C")

@@ -87,6 +87,7 @@ INSTAGRAM_SHEET_ID=...       # 任意（同上：対象スプレッドシートI
 | 金 | 10:00 | コーヒーSNS投稿文＋商品リスト（**停止中**） | marketer |
 | 土 | — | 動画公開＋SNS投稿（オーナー手動） | — |
 | 日 | 20:00 | 反応分析レポート | marketer |
+| 日 | 21:00 | Notion（コンテンツ生成物・保管ファイル・ソムリエ学習ノート）→Obsidian保管庫へ差分取り込み | —（`scripts/import_notion_to_vault.py`） |
 
 ## 主要コマンド
 

@@ -581,3 +581,15 @@ def test_run_agent_appends_theme_to_ledger(tmp_path, monkeypatch):
     _run_wine_agent(runner)
     rows = vault.read_rows(str(tmp_path), "投稿テーマ.md")
     assert len(rows) == 1 and rows[0][0] == "火曜：ワイン動画台本作成" and rows[0][2] == "バローロの熟成"
+
+
+def test_notion_import_task_skips_without_vault_and_reports_failure(monkeypatch):
+    import runner
+    monkeypatch.delenv("WINE_VAULT_PATH", raising=False)
+    with patch("scripts.import_notion_to_vault.sync") as mock_sync:
+        runner.notion_import_task()
+        mock_sync.assert_not_called()
+    monkeypatch.setenv("WINE_VAULT_PATH", "/tmp")
+    with patch("scripts.import_notion_to_vault.sync", side_effect=Exception("x")), patch("runner._report_failure") as rep:
+        runner.notion_import_task()
+        rep.assert_called_once()

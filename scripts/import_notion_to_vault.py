@@ -7,7 +7,7 @@
 類似・重複は 07_類似・重複/ に「グループ」メモを作り、各メモからリンクする。
 取り込んだメモは先頭の自動生成マーカーで見分け、実行のたびに作り直す(手書きのメモは触らない)。
 
-使い方: python3 scripts/import_notion_to_vault.py [--vault パス] [--save-cache f.json | --load-cache f.json]
+使い方: python3 scripts/import_notion_to_vault.py [--vault パス] [--load-cache f.json]  (通常は差分だけ読み直す)
 """
 import argparse
 import hashlib
@@ -354,7 +354,7 @@ class Notion:
             cur = r["next_cursor"]
 
 
-def _record(page: dict, source: str, body: str) -> dict:
+def _record(page: dict, source: str, body: str, children: list = None) -> dict:
     props = {}
     for k, v in page["properties"].items():
         if v["type"] != "title":
@@ -362,48 +362,73 @@ def _record(page: dict, source: str, body: str) -> dict:
             if val not in (None, "", []):
                 props[k] = val
     return {"id": page["id"], "source": source, "title": page_title(page), "created": jst_date(page["created_time"]),
-            "edited": jst_date(page["last_edited_time"]), "props": props, "body": body}
+            "edited": jst_date(page["last_edited_time"]), "edited_at": page["last_edited_time"], "props": props, "body": body,
+            "children": children or []}
 
 
-def fetch_all(log=print) -> list:
-    n = Notion()
-    pages = []
+def fetch_all(log=print, cache: list = None, notion=None) -> list:
+    """Notionから全ページを取得する。cache(前回の結果)があれば、更新日時が変わっていないページは読み直さない。"""
+    n = notion or Notion()
+    old = {p["id"]: p for p in cache or []}
+    pages, reused = [], 0
     for source, db in (("生成物", os.environ["NOTION_DATABASE_ID"]), ("学習", STUDY_DB_ID)):
         rows = n.query_all(db)
-        log(f"{source}: {len(rows)}件を読み込み中")
-        for i, row in enumerate(rows, 1):
-            pages.append(_record(row, source, blocks_md(n.blocks(row["id"]))))
-            if i % 25 == 0:
-                log(f"  {source} {i}/{len(rows)}")
-    # 保管ファイル: ページ直下から子ページを再帰でたどる
-    queue, seen = [(ARCHIVE_PAGE_ID, "")], set()
+        log(f"{source}: {len(rows)}件を確認中")
+        for row in rows:
+            prev = old.get(row["id"])
+            if prev and prev.get("edited_at") == row["last_edited_time"] and prev["source"] == source:
+                pages.append(prev)
+                reused += 1
+            else:
+                pages.append(_record(row, source, blocks_md(n.blocks(row["id"]))))
+    # 保管ファイル: ページ直下から子ページを再帰でたどる(直下は常に読み直して新しい子ページを拾う)
+    queue, seen = [ARCHIVE_PAGE_ID], set()
     while queue:
-        pid, _ = queue.pop(0)
-        kids = []
-        blocks = n.blocks(pid, kids)
-        if pid != ARCHIVE_PAGE_ID:
+        pid = queue.pop(0)
+        if pid == ARCHIVE_PAGE_ID:
+            kids = []
+            n.blocks(pid, kids)
+        else:
             page = n.req("GET", f"pages/{pid}")
-            pages.append(_record(page, "保管", blocks_md(blocks)))
-            if len([p for p in pages if p["source"] == "保管"]) % 25 == 0:
-                log(f"  保管 {len([p for p in pages if p['source'] == '保管'])}件")
-        for cid, ctitle in kids:
+            prev = old.get(pid)
+            if prev and prev.get("edited_at") == page["last_edited_time"] and prev["source"] == "保管":
+                pages.append(prev)
+                kids = [tuple(k) for k in prev["children"]]
+                reused += 1
+            else:
+                kids = []
+                body = blocks_md(n.blocks(pid, kids))
+                pages.append(_record(page, "保管", body, [list(k) for k in kids]))
+        for cid, _title in kids:
             if cid not in seen:
                 seen.add(cid)
-                queue.append((cid, ctitle))
-    log(f"保管: {len([p for p in pages if p['source'] == '保管'])}件")
+                queue.append(cid)
+    log(f"取得完了: {len(pages)}件(読み直さず再利用 {reused}件)")
     return pages
+
+
+def sync(vault: str, log=print, notion=None) -> dict:
+    """前回の取得結果(保管庫内の .notion_cache.json)を使って差分だけ読み直し、メモを作り直す。"""
+    cache_path = os.path.join(vault, ".notion_cache.json")
+    cache = None
+    if os.path.exists(cache_path):
+        try:
+            cache = json.load(open(cache_path, encoding="utf-8"))
+        except ValueError:
+            cache = None
+    pages = fetch_all(log, cache, notion)
+    json.dump(pages, open(cache_path, "w", encoding="utf-8"), ensure_ascii=False)
+    return build_notes(pages, vault)
 
 
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("--vault", default=DEFAULT_VAULT)
-    ap.add_argument("--save-cache")
     ap.add_argument("--load-cache")
     a = ap.parse_args()
     if a.load_cache:
         pages = json.load(open(a.load_cache, encoding="utf-8"))
     else:
-        pages = fetch_all(lambda m: print(m, flush=True))
-        if a.save_cache:
-            json.dump(pages, open(a.save_cache, "w", encoding="utf-8"), ensure_ascii=False)
+        print(sync(a.vault, lambda m: print(m, flush=True)))
+        sys.exit(0)
     print(build_notes(pages, a.vault))

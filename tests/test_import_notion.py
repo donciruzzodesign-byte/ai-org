@@ -86,3 +86,48 @@ def test_build_notes_rerun_replaces_generated_but_keeps_handwritten(tmp_path):
     hand.write_text("自分のメモ", encoding="utf-8")
     m.build_notes([_page(2, "生成物", "B", "本文" * 10)], str(v))
     assert hand.exists() and not (v / "06_Notion" / "コンテンツ生成物" / "2026-11-01 A.md").exists()
+
+
+class FakeNotion:
+    """通信しないNotion。呼ばれたblocks取得を数える。"""
+    def __init__(self, rows, study, archive_kids, pages):
+        self.rows, self.study, self.kids, self.pages = rows, study, archive_kids, pages
+        self.block_calls = []
+
+    def query_all(self, db):
+        return self.rows if db == "DB" else self.study
+
+    def blocks(self, bid, child_pages=None):
+        self.block_calls.append(bid)
+        if bid == m.ARCHIVE_PAGE_ID and child_pages is not None:
+            child_pages += self.kids
+        return [blk("paragraph", f"本文{bid}")]
+
+    def req(self, method, path, **kw):
+        return self.pages[path.split("/")[-1]]
+
+
+def _row(i, edited):
+    return {"id": i, "created_time": "2026-11-01T00:00:00.000Z", "last_edited_time": edited,
+            "properties": {"名前": {"type": "title", "title": [{"plain_text": f"題{i}"}]}}}
+
+
+def test_fetch_all_reuses_unchanged_pages_and_rereads_changed(monkeypatch):
+    monkeypatch.setenv("NOTION_DATABASE_ID", "DB")
+    mk = lambda: FakeNotion([_row("r1", "2026-11-01T00:00:00.000Z"), _row("r2", "2026-11-01T00:00:00.000Z")], [], [("c1", "子")], {"c1": _row("c1", "2026-11-01T00:00:00.000Z")})
+    first = m.fetch_all(lambda _: None, None, mk())
+    assert len(first) == 3
+    n2 = mk()
+    n2.rows[1] = _row("r2", "2026-11-02T00:00:00.000Z")  # r2 だけ更新された
+    second = m.fetch_all(lambda _: None, first, n2)
+    assert {p["id"] for p in second} == {"r1", "r2", "c1"}
+    assert sorted(n2.block_calls) == sorted([m.ARCHIVE_PAGE_ID, "r2"])  # 直下の確認と、更新された r2 だけ
+
+
+def test_sync_writes_cache_and_notes(tmp_path, monkeypatch):
+    monkeypatch.setenv("NOTION_DATABASE_ID", "DB")
+    v = tmp_path / "v"
+    v.mkdir()
+    n = FakeNotion([_row("r1", "2026-11-01T00:00:00.000Z")], [], [], {})
+    assert m.sync(str(v), lambda _: None, n)["生成物"] == 1
+    assert (v / ".notion_cache.json").exists() and (v / "06_Notion" / "コンテンツ生成物").exists()
