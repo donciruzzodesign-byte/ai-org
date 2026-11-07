@@ -31,6 +31,16 @@ REGIONS = {
 }
 
 
+# 名前に含まれていれば、その州の資料とみなす語(産地が明らかなものだけ)
+ALIASES = {
+    "キャンティ": "トスカーナ", "ブルネッロ": "トスカーナ", "ノービレ": "トスカーナ", "モレッリーノ": "トスカーナ",
+    "サン・ジミニャーノ": "トスカーナ", "Tuscan": "トスカーナ", "アルバーニャ": "エミリア・ロマーニャ",
+    "ピニョレット": "エミリア・ロマーニャ", "ピコリット": "フリウリ・ヴェネツィア・ジュリア",
+}
+# 台帳ファイル → (タグ, 保存フォルダ)
+ITEM_LEDGERS = {"講座の回.md": ("講座の回", "講座の回"), "シリーズ.md": ("シリーズ", "シリーズ"), "配布物.md": ("配布物", "配布物")}
+
+
 def _clean(s: str) -> str:
     return re.sub(r'[#^\[\]|\\/:]', "", s).strip()
 
@@ -62,7 +72,7 @@ def _write(path: str, lines: list) -> None:
 
 def _prune_generated(root: str) -> None:
     """前回の自動生成メモを消す(台帳から無くなった投稿・品種がグラフに残らないように)。手で作ったメモは消さない。"""
-    for sub in ("投稿", "品種", "州"):
+    for sub in ("投稿", "品種", "州", *[d for _, d in ITEM_LEDGERS.values()]):
         d = os.path.join(root, sub)
         if not os.path.isdir(d):
             continue
@@ -70,6 +80,20 @@ def _prune_generated(root: str) -> None:
             path = os.path.join(d, name)
             if name.endswith(".md") and open(path, encoding="utf-8").read().startswith(MARK):
                 os.remove(path)
+
+
+def _states_in(name: str, regions) -> list:
+    """名前に含まれる州(日本語名・英語名・ALIASES)を返す。"""
+    n = unicodedata.normalize("NFC", name).lower()
+    found = [ja for en, ja in REGIONS.items() if en.lower() in n or ja in name]
+    found += [ja for key, ja in ALIASES.items() if key.lower() in n]
+    return sorted(set(found))
+
+
+def _finder_link(path: str) -> list:
+    if not path.startswith("/"):
+        return []
+    return ["", f"保存場所: [Finderで開く](file://{quote(path)})", f"`{path}`"]
 
 
 def build(vault: str) -> dict:
@@ -102,12 +126,25 @@ def build(vault: str) -> dict:
                ["#投稿", "", f"# {theme}", "", f"- 作成日: {date}", f"- 記録元: [[投稿テーマ]]"] + [f"- {x}" for x in links])
         post_names.append(post)
 
+    item_count = 0
+    for ledger, (tag, sub) in ITEM_LEDGERS.items():
+        for r in vault_mod.read_rows(vault, ledger, 10**6):
+            name = _clean(r[0])
+            linked = _states_in(r[0], states)
+            for st in linked:
+                states[st].setdefault("items", []).append(name)
+            lines = [f"#{tag}", "", f"# {r[0]}", "", f"- 親: [[{ledger[:-3]}]]", f"- 種類: {r[1]}", f"- 作成日: {r[3]}"]
+            lines += [f"- 州: [[{st}]]" for st in linked] + _finder_link(r[4])
+            _write(os.path.join(root, sub, name + ".md"), lines)
+            item_count += 1
+
     _write(os.path.join(root, HUB + ".md"),
            ["#ハブ", "", f"# {HUB}", ""] + [f"- [[{s}]]" for s in states])
     for s, d in states.items():
         lines = ["#州", "", f"# {s}", "", f"- 親: [[{HUB}]]"]
         lines += [f"- 品種: [[{v}]]" for v in sorted(d["varieties"])]
         lines += [f"- 投稿: [[{p}]]" for p in d["posts"]]
+        lines += [f"- 資料: [[{i}]]" for i in sorted(d.get("items", []))]
         if s in folders:
             lines += ["", f"資料フォルダ: [Finderで開く](file://{quote(folders[s])})", f"`{folders[s]}`"]
         _write(os.path.join(root, "州", s + ".md"), lines)
@@ -116,7 +153,7 @@ def build(vault: str) -> dict:
         lines += [f"- 産地: [[{s}]]" for s in sorted(d["states"])]
         lines += [f"- 投稿: [[{p}]]" for p in d["posts"]]
         _write(os.path.join(root, "品種", v + ".md"), lines)
-    return {"州": len(states), "品種": len(varieties), "投稿": len(post_names)}
+    return {"州": len(states), "品種": len(varieties), "投稿": len(post_names), "資料": item_count}
 
 
 if __name__ == "__main__":

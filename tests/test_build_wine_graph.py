@@ -51,3 +51,16 @@ def test_stale_generated_notes_removed_but_handwritten_kept(tmp_path):
     assert not (v / "05_グラフ" / "投稿" / "2026-11-04 ピエモンテ州のネッビオーロ.md").exists()
     assert not (v / "05_グラフ" / "品種" / "ネッビオーロ.md").exists()
     assert hand.read_text(encoding="utf-8") == "自分のメモ"
+
+
+def test_item_notes_link_parent_state_and_finder(tmp_path):
+    v = _vault(tmp_path)
+    vault.append_row(str(v), "講座の回.md", ["2・Piemonte仮", "講座の回", "3ファイル", "2026-10-19", "/x/2・Piemonte仮", "登録済み"])
+    vault.append_row(str(v), "シリーズ.md", ["キャンティ", "リール", "2ファイル", "2026-10-19", "/x/キャンティ", "登録済み"])
+    vault.append_row(str(v), "配布物.md", ["公式LINE登録者プレゼント", "配布物", "1ファイル", "2026-10-19", "/x/g", "登録済み"])
+    assert build(str(v))["資料"] == 3
+    g = v / "05_グラフ"
+    lesson = (g / "講座の回" / "2・Piemonte仮.md").read_text(encoding="utf-8")
+    assert "[[講座の回]]" in lesson and "[[ピエモンテ]]" in lesson and "[Finderで開く](file:///x/" in lesson
+    assert "[[キャンティ]]" in (g / "州" / "トスカーナ.md").read_text(encoding="utf-8")
+    assert "[[ピエモンテ]]" not in (g / "配布物" / "公式LINE登録者プレゼント.md").read_text(encoding="utf-8")

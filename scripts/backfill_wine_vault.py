@@ -108,3 +108,6 @@ if __name__ == "__main__":
         _report(args.archive)
     result = backfill(args.archive, args.vault, dry_run=args.dry_run)
     print(("予定(書き込みなし): " if args.dry_run else "追記: ") + str(result))
+    if not args.dry_run:
+        from scripts.build_wine_graph import build as build_wine_graph
+        print("グラフ更新: " + str(build_wine_graph(args.vault)))
