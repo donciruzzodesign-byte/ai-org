@@ -37,3 +37,16 @@ def test_build_is_idempotent_and_keeps_ledger(tmp_path):
     first = build(str(v))
     assert build(str(v)) == first
     assert (v / "01_台帳" / "州別.md").read_text(encoding="utf-8") == before
+
+
+def test_stale_generated_notes_removed_but_handwritten_kept(tmp_path):
+    v = _vault(tmp_path)
+    build(str(v))
+    ledger = v / "01_台帳" / "投稿テーマ.md"
+    ledger.write_text("# 投稿テーマ.md\n# 名称｜種類｜切り口(一言)｜作成日｜場所(パスまたはURL)｜使用状況\n", encoding="utf-8")
+    hand = v / "05_グラフ" / "品種" / "手書き.md"
+    hand.write_text("自分のメモ", encoding="utf-8")
+    build(str(v))
+    assert not (v / "05_グラフ" / "投稿" / "2026-11-04 ピエモンテ州のネッビオーロ.md").exists()
+    assert not (v / "05_グラフ" / "品種" / "ネッビオーロ.md").exists()
+    assert hand.read_text(encoding="utf-8") == "自分のメモ"

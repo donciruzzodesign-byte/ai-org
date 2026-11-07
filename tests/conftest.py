@@ -8,7 +8,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
 @pytest.fixture(autouse=True)
 def _no_real_side_effects(monkeypatch, tmp_path):
-    """テストが本物のNotionと本物のログへ書き込まないようにする。
+    """テストが本物のNotion・ログ・ワイン台帳へ書き込まないようにする。
 
     例外を起こすテストが _report_failure 経由で「（失敗）」ページを本物のNotionに作り、
     logs/ に偽の失敗記録を残していたため。個別のテストが自分で patch した場合はそちらが優先される。
@@ -27,5 +27,6 @@ def _no_real_side_effects(monkeypatch, tmp_path):
         finally:
             runner.__file__ = original
 
+    monkeypatch.delenv("WINE_VAULT_PATH", raising=False)  # 本物のワイン台帳(Obsidian)へ書かない。必要なテストは自分で設定する
     monkeypatch.setattr(runner, "save_to_notion", lambda *a, **k: "(テスト: Notion保存なし)")
     monkeypatch.setattr(runner, "save_log", save_log_in_tmp)

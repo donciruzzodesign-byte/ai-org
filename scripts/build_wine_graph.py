@@ -59,8 +59,21 @@ def _write(path: str, lines: list) -> None:
         f.write("\n".join([MARK, ""] + lines) + "\n")
 
 
+def _prune_generated(root: str) -> None:
+    """前回の自動生成メモを消す(台帳から無くなった投稿・品種がグラフに残らないように)。手で作ったメモは消さない。"""
+    for sub in ("投稿", "品種", "州"):
+        d = os.path.join(root, sub)
+        if not os.path.isdir(d):
+            continue
+        for name in os.listdir(d):
+            path = os.path.join(d, name)
+            if name.endswith(".md") and open(path, encoding="utf-8").read().startswith(MARK):
+                os.remove(path)
+
+
 def build(vault: str) -> dict:
     root = os.path.join(vault, GRAPH_DIR)
+    _prune_generated(root)
     folders = {}  # 州名 -> 資料フォルダの場所
     for r in vault_mod.read_rows(vault, "州別.md", 10**6):
         ja = _region_of(r[0])
