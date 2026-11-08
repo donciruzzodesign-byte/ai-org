@@ -64,3 +64,15 @@ def test_item_notes_link_parent_state_and_finder(tmp_path):
     assert "[[講座の回]]" in lesson and "[[ピエモンテ]]" in lesson and "[Finderで開く](file:///x/" in lesson
     assert "[[キャンティ]]" in (g / "州" / "トスカーナ.md").read_text(encoding="utf-8")
     assert "[[ピエモンテ]]" not in (g / "配布物" / "公式LINE登録者プレゼント.md").read_text(encoding="utf-8")
+
+
+def test_status_tags_from_usage_column(tmp_path):
+    v = _vault(tmp_path)
+    vault.append_row(str(v), "講座の回.md", ["1・済み", "講座の回", "1ファイル", "2026-07-01", "/x/1", "投稿済み"])
+    vault.append_row(str(v), "講座の回.md", ["2・前", "講座の回", "1ファイル", "2026-07-02", "/x/2", "制作済み(未投稿)"])
+    build(str(v))
+    g = v / "05_グラフ" / "講座の回"
+    assert "#投稿済み" in (g / "1・済み.md").read_text(encoding="utf-8")
+    assert "#未投稿" in (g / "2・前.md").read_text(encoding="utf-8")
+    post = (v / "05_グラフ" / "投稿" / "2026-11-04 ピエモンテ州のネッビオーロ.md").read_text(encoding="utf-8")
+    assert "#状態未設定" in post
