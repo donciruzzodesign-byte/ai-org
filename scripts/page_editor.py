@@ -290,8 +290,14 @@ if __name__ == "__main__":
     ap.add_argument("--port", type=int, default=8766)
     a = ap.parse_args()
     d = os.path.abspath(a.dir)
-    srv = serve(d, a.port)
     url = f"http://127.0.0.1:{a.port}/"
+    try:
+        srv = serve(d, a.port)
+    except OSError:
+        # 使用中=すでに起動済み。エラーにせず、開くだけにする。
+        print(f"編集画面はすでに起動しています。ブラウザで開きます: {url}")
+        webbrowser.open(url)
+        sys.exit(0)
     print(f"編集画面: {url}  (終了: Ctrl+C)")
     threading.Timer(0.5, lambda: webbrowser.open(url)).start()
     try:
